@@ -36,6 +36,7 @@
  */
 
 #include "InstanceSettingsPage.h"
+#include "DesktopServices.h"
 #include "minecraft/MinecraftInstance.h"
 #include "minecraft/WorldList.h"
 #include "settings/Setting.h"
@@ -97,6 +98,10 @@ InstanceSettingsPage::InstanceSettingsPage(BaseInstance* inst, QWidget* parent)
     loadSettings();
 
     updateThresholds();
+    if (DesktopServices::isGameScope()) {
+        showFullScreen();
+        setFixedSize(this->width(), this->height());
+    }
 }
 
 InstanceSettingsPage::~InstanceSettingsPage()
