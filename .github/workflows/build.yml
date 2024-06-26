@@ -206,7 +206,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get -y update
-          sudo apt-get -y install ninja-build extra-cmake-modules scdoc appstream libxcb-cursor-dev libkf6archive-dev
+          sudo apt-get -y install ninja-build extra-cmake-modules scdoc appstream libxcb-cursor-dev
 
       - name: Install Dependencies (macOS)
         if: runner.os == 'macOS'
