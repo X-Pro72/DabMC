@@ -1293,7 +1293,6 @@ if(WIN32)
     $<TARGET_FILE:cpptrace::cpptrace>
     $<TARGET_FILE_DIR:Launcher_logic>
   )
-  install(FILES "$<TARGET_PDB_FILE:Launcher_logic>" DESTINATION "." OPTIONAL)
 endif()
 
 if(APPLE)
