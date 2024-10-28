@@ -49,6 +49,7 @@
 #include "pathmatcher/MultiMatcher.h"
 #include "pathmatcher/SimplePrefixMatcher.h"
 #include "tasks/Task.h"
+#include "qobject_tree/QObjectTree.h"
 #include "tools/GenericProfiler.h"
 #include "ui/InstanceWindow.h"
 #include "ui/MainWindow.h"
@@ -111,6 +112,7 @@
 
 #include "java/JavaInstallList.h"
 
+#include "ui/tools/WidgetGalleryWindow.h"
 #include "updater/ExternalUpdater.h"
 
 #include "tools/JProfiler.h"
@@ -127,9 +129,18 @@
 #include <FileSystem.h>
 #include <LocalPeer.h>
 
+#include <qtpreprocessorsupport.h>
 #include <stdlib.h>
 #include <sys.h>
+#include <QtLogging>
+#include <QtQml/QQmlComponent>
+#include <QtQml/QQmlContext>
+#include <QtQml/QQmlProperty>
+#include <QtQuick/QQuickItem>
+#include <QtQuickControls2/QQuickStyle>
 #include "SysInfo.h"
+
+#include "LambdaHelper.h"
 
 #ifdef Q_OS_LINUX
 #include <dlfcn.h>
@@ -165,6 +176,26 @@
 static const QLatin1String liveCheckFile("live.check");
 
 PixmapCache* PixmapCache::s_instance = nullptr;
+
+// PREVENT LINKER FORM OPTIMIZING OUT QML MODULES
+void qml_register_types_org_prismlauncher_pqcstyle();
+void qml_register_types_org_prismlauncher_desktop();
+void qml_register_types_org_prismlauncher_data();
+void qml_register_types_org_prismlauncher_ui();
+
+// HOLD A VOLATILE POINTER TO QML REGISTRATION FUNCTIONS
+// TO PREVENT LINKER FORM OPTIMISING THEM OUT
+void preventQmlLinkerOpt()
+{
+    volatile auto org_prismlauncher_pqcstyle_registration = &qml_register_types_org_prismlauncher_pqcstyle;
+    Q_UNUSED(org_prismlauncher_pqcstyle_registration);
+    volatile auto org_prismlauncher_desktop_registration = &qml_register_types_org_prismlauncher_desktop;
+    Q_UNUSED(org_prismlauncher_desktop_registration);
+    volatile auto org_prismlauncher_data_registration = &qml_register_types_org_prismlauncher_data;
+    Q_UNUSED(org_prismlauncher_data_registration);
+    volatile auto org_prismlauncher_ui_registration = &qml_register_types_org_prismlauncher_ui;
+    Q_UNUSED(org_prismlauncher_ui_registration);
+}
 
 namespace {
 
@@ -215,6 +246,7 @@ std::tuple<QDateTime, QString, QString, QString, QString> read_lock_File(const Q
 
 Application::Application(int& argc, char** argv) : QApplication(argc, argv)
 {
+    preventQmlLinkerOpt();
 #if defined Q_OS_WIN32
     // attach the parent console if stdout not already captured
     if (AttachWindowsConsole()) {
@@ -247,6 +279,7 @@ Application::Application(int& argc, char** argv) : QApplication(argc, argv)
           { "alive", "Write a small '" + liveCheckFile + "' file after the launcher starts" },
           { { "I", "import" }, "Import instance or resource from specified local path or URL", "url" },
           { "show", "Opens the window for the specified instance (by instance ID)", "show" } });
+
     // Has to be positional for some OS to handle that properly
     parser.addPositionalArgument("URL", "Import the resource(s) at the given URL(s) (same as -I / --import)", "[URL...]");
 
@@ -1196,6 +1229,12 @@ void Application::setupWizardFinished(int status)
 void Application::performMainStartupAction()
 {
     m_status = Application::Initialized;
+
+    // Setup Qml Engine
+    {
+        m_appQmlEngine = new AppQmlEngine(this);
+    }
+
     if (!m_instanceIdToLaunch.isEmpty()) {
         auto inst = instances()->getInstanceById(m_instanceIdToLaunch);
         if (inst) {
@@ -1578,6 +1617,27 @@ MainWindow* Application::showMainWindow(bool minimized)
         m_openWindows++;
     }
     return m_mainWindow;
+}
+
+void printNode(QObjectTreeItem* node, int level)
+{
+    if (!node) {
+        return;
+    }
+    qDebug() << level << node->data(0) << node->data(1) << node->data(2);
+    for (int i = 0; i < node->childCount(); ++i) {
+        auto child = node->child(i);
+        if (child) {
+            printNode(child, level + 1);
+        }
+    }
+}
+
+void Application::showWidgetGallery()
+{
+    auto widgetGallery = new WidgetGalleryWindow();
+    connect(widgetGallery, &WidgetGalleryWindow::isClosing, this, &Application::on_windowClose);
+    m_openWindows++;
 }
 
 InstanceWindow* Application::showInstanceWindow(InstancePtr instance, QString page)

@@ -261,6 +261,11 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent), ui(new Ui::MainWi
         connect(q, &QShortcut::activated, APPLICATION, &Application::quit);
     }
 
+    {
+        QShortcut* wgShortcut = new QShortcut(QKeySequence(tr("Ctrl+Shift+T", "WidgetGallery|Open")), this);
+        connect(wgShortcut, &QShortcut::activated, APPLICATION, &Application::showWidgetGallery);
+    }
+
     // Konami Code
     {
         secretEventFilter = new KonamiCode(this);
