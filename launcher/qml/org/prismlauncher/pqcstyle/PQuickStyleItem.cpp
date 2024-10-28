@@ -16,13 +16,27 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
+ *  This file incorporates work covered by the following copyright and
+ *  permission notice:
+ *
+ *    Copyright © 2017 Marco Martin <mart@kde.org>
+ *    Copyright © 2017 David Edmundson <davidedmundson@kde.org>
+ *    Copyright © 2019 David Redondo <david@david-redondo.de>
+ *    Copyright © 2023 ivan tkachenko <me@ratijas.tk>
+ *
+ *    Licensed under LGPL-3.0-only OR GPL-2.0-only OR
+ *    GPL-3.0-only OR LicenseRef-KFQF-Accepted-GPL OR
+ *    LicenseRef-Qt-Commercial
+ *      
+ *          https://community.kde.org/Policies/Licensing_Policy
  */
 
 /*
  * PQuickStyleItem is heavly inspired by and modified from qqc2-desktop-style by KDE
  *
  * https://invent.kde.org/frameworks/qqc2-desktop-style
- * https://github.com/KDE/qqc2-desktop-style/blob/master/plugin/kquickstyleitem.cpphttps://invent.kde.org/frameworks/qqc2-desktop-style/-/blob/master/plugin/kquickstyleitem.cpp
+ * https://github.com/KDE/qqc2-desktop-style/blob/master/plugin/kquickstyleitem.cpp
+ * https://invent.kde.org/frameworks/qqc2-desktop-style/-/blob/master/plugin/kquickstyleitem.cpp
  *
  * however it removed any dependence on other KDE dependencies such as kirigami
  *
@@ -173,6 +187,16 @@ PQuickStyleItem::~PQuickStyleItem()
     }
 
     m_styleoption = nullptr;
+}
+
+QPalette PQuickStyleItem::getResolvedPalette() {
+    if (s_qstyle) {
+        return s_qstyle->standardPalette();
+    } else if (!QString(classNameForItem()).isEmpty()){
+        return qApp->palette(classNameForItem());
+    } else {
+        return qApp->palette();
+    }
 }
 
 void PQuickStyleItem::initStyleOption()

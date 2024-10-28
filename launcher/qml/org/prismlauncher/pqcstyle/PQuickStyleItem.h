@@ -16,6 +16,19 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
+ *  This file incorporates work covered by the following copyright and
+ *  permission notice:
+ *
+ *    Copyright © 2017 Marco Martin <mart@kde.org>
+ *    Copyright © 2017 David Edmundson <davidedmundson@kde.org>
+ *    Copyright © 2019 David Redondo <david@david-redondo.de>
+ *    Copyright © 2023 ivan tkachenko <me@ratijas.tk>
+ *
+ *    Licensed under LGPL-3.0-only OR GPL-2.0-only OR
+ *    GPL-3.0-only OR LicenseRef-KFQF-Accepted-GPL OR
+ *    LicenseRef-Qt-Commercial
+ *      
+ *          https://community.kde.org/Policies/Licensing_Policy
  */
 
 /*
@@ -293,7 +306,7 @@ class PQuickStyleItem : public QQuickItem {
 
     void updateStyleOption();
     void resolvePalette();
-    virtual QPalette getResolvedPalette() { return style()->standardPalette(); }
+    virtual QPalette getResolvedPalette();
     int topPadding() const;
     int leftPadding() const;
     int rightPadding() const;
@@ -324,6 +337,7 @@ class PQuickStyleItem : public QQuickItem {
 
     // initialize and update style Option
     // impl specific
+    // should set m_preventMirroring and m_needsResolvePalette every call if different from defaults
     virtual void doInitStyleOption() {}
 
     virtual void setActiveControl(const QString& str)

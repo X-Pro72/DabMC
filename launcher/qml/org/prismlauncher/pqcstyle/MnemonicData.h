@@ -16,6 +16,14 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
+ *  This file incorporates work covered by the following copyright and
+ *  permission notice:
+ *
+ *    Copyright © 2017 Marco Martin <mart@kde.org>
+ *
+ *    Licensed under LGPL-2.0-or-later 
+ *          
+ *          https://community.kde.org/Policies/Licensing_Policy
  */
 
 /*

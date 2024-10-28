@@ -17,6 +17,17 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
+ *  This file incorporates work covered by the following copyright and
+ *  permission notice:
+ *
+ *    Copyright © 2017 Marco Martin <mart@kde.org>
+ *    Copyright © 2017 David Edmundson <davidedmundson@kde.org>
+ *
+ *    Licensed under LGPL-3.0-only OR GPL-2.0-only OR
+ *    GPL-3.0-only OR LicenseRef-KFQF-Accepted-GPL OR
+ *    LicenseRef-Qt-Commercial
+ *      
+ *          https://community.kde.org/Policies/Licensing_Policy
  */
 
 #pragma once
