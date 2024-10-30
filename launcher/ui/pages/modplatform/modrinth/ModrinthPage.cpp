@@ -367,7 +367,7 @@ void ModrinthPage::onVersionSelectionChanged(int index)
         selectedVersion = "";
         return;
     }
-    selectedVersion = ui->versionSelectionBox->currentData().toString();
+    selectedVersion = ui->versionSelectionBox->itemData(index).toString();
     suggestCurrent();
 }
 

@@ -91,6 +91,9 @@
 #include "tools/BaseProfiler.h"
 
 #include <QActionGroup>
+#include <QMainWindow>
+#include <QScreen>
+#include <QWindow>
 
 #ifdef Q_OS_LINUX
 #include "MangoHud.h"
@@ -530,7 +533,7 @@ QStringList MinecraftInstance::javaArguments()
 QString MinecraftInstance::getLauncher()
 {
     // use legacy launcher if the traits are set
-    if (traits().contains("legacyLaunch") || traits().contains("alphaLaunch"))
+    if (isLegacy())
         return "legacy";
 
     return "standard";
@@ -748,11 +751,30 @@ QString MinecraftInstance::createLaunchScript(AuthSessionPtr session, MinecraftT
     // window size, title and state, legacy
     {
         QString windowParams;
-        if (settings()->get("LaunchMaximized").toBool())
-            windowParams = "maximized";
-        else
+        if (settings()->get("LaunchMaximized").toBool()) {
+            // FIXME doesn't support maximisation
+            if (!isLegacy()) {
+                auto screen = QGuiApplication::primaryScreen();
+                auto screenGeometry = screen->availableSize();
+
+                // small hack to get the widow decorations
+                for (auto w : QApplication::topLevelWidgets()) {
+                    auto mainWindow = qobject_cast<QMainWindow*>(w);
+                    if (mainWindow) {
+                        auto m = mainWindow->windowHandle()->frameMargins();
+                        screenGeometry = screenGeometry.shrunkBy(m);
+                        break;
+                    }
+                }
+
+                windowParams = QString("%1x%2").arg(screenGeometry.width()).arg(screenGeometry.height());
+            } else {
+                windowParams = "maximized";
+            }
+        } else {
             windowParams =
                 QString("%1x%2").arg(settings()->get("MinecraftWinWidth").toInt()).arg(settings()->get("MinecraftWinHeight").toInt());
+        }
         launchScript += "windowTitle " + windowTitle() + "\n";
         launchScript += "windowParams " + windowParams + "\n";
     }
@@ -1173,7 +1195,7 @@ std::shared_ptr<ModFolderModel> MinecraftInstance::loaderModList()
 {
     if (!m_loader_mod_list) {
         bool is_indexed = !APPLICATION->settings()->get("ModMetadataDisabled").toBool();
-        m_loader_mod_list.reset(new ModFolderModel(modsRoot(), this, is_indexed));
+        m_loader_mod_list.reset(new ModFolderModel(modsRoot(), this, is_indexed, true));
     }
     return m_loader_mod_list;
 }
@@ -1182,7 +1204,7 @@ std::shared_ptr<ModFolderModel> MinecraftInstance::coreModList()
 {
     if (!m_core_mod_list) {
         bool is_indexed = !APPLICATION->settings()->get("ModMetadataDisabled").toBool();
-        m_core_mod_list.reset(new ModFolderModel(coreModsDir(), this, is_indexed));
+        m_core_mod_list.reset(new ModFolderModel(coreModsDir(), this, is_indexed, true));
     }
     return m_core_mod_list;
 }
@@ -1199,7 +1221,8 @@ std::shared_ptr<ModFolderModel> MinecraftInstance::nilModList()
 std::shared_ptr<ResourcePackFolderModel> MinecraftInstance::resourcePackList()
 {
     if (!m_resource_pack_list) {
-        m_resource_pack_list.reset(new ResourcePackFolderModel(resourcePacksDir(), this));
+        bool is_indexed = !APPLICATION->settings()->get("ModMetadataDisabled").toBool();
+        m_resource_pack_list.reset(new ResourcePackFolderModel(resourcePacksDir(), this, is_indexed, true));
     }
     return m_resource_pack_list;
 }
@@ -1207,7 +1230,8 @@ std::shared_ptr<ResourcePackFolderModel> MinecraftInstance::resourcePackList()
 std::shared_ptr<TexturePackFolderModel> MinecraftInstance::texturePackList()
 {
     if (!m_texture_pack_list) {
-        m_texture_pack_list.reset(new TexturePackFolderModel(texturePacksDir(), this));
+        bool is_indexed = !APPLICATION->settings()->get("ModMetadataDisabled").toBool();
+        m_texture_pack_list.reset(new TexturePackFolderModel(texturePacksDir(), this, is_indexed, true));
     }
     return m_texture_pack_list;
 }
@@ -1215,9 +1239,15 @@ std::shared_ptr<TexturePackFolderModel> MinecraftInstance::texturePackList()
 std::shared_ptr<ShaderPackFolderModel> MinecraftInstance::shaderPackList()
 {
     if (!m_shader_pack_list) {
-        m_shader_pack_list.reset(new ShaderPackFolderModel(shaderPacksDir(), this));
+        bool is_indexed = !APPLICATION->settings()->get("ModMetadataDisabled").toBool();
+        m_shader_pack_list.reset(new ShaderPackFolderModel(shaderPacksDir(), this, is_indexed, true));
     }
     return m_shader_pack_list;
+}
+
+QList<std::shared_ptr<ResourceFolderModel>> MinecraftInstance::resourceLists()
+{
+    return { loaderModList(), coreModList(), nilModList(), resourcePackList(), texturePackList(), shaderPackList() };
 }
 
 std::shared_ptr<WorldList> MinecraftInstance::worldList()
