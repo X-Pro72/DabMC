@@ -27,30 +27,29 @@
  *    Licensed under LGPL-3.0-only OR GPL-2.0-only OR
  *    GPL-3.0-only OR LicenseRef-KFQF-Accepted-GPL OR
  *    LicenseRef-Qt-Commercial
- *      
+ *
  *          https://community.kde.org/Policies/Licensing_Policy
  */
 
-#pragma once
-
+#include "Splitter.h"
 #include "PQuickStyleItem.h"
 
-class PStyleButton : public PQuickStyleItem {
-    Q_OBJECT
-    QML_ELEMENT
+#include <QApplication>
+#include <QSplitter>
+#include <QStyle>
 
-   public:
-    PStyleButton(QQuickItem* parent = nullptr);
-    ~PStyleButton() = default;
+PStyleSplitter::PStyleSplitter(QQuickItem* parent) : PQuickStyleItem(parent)
+{
+    m_type = QStringLiteral("splitter");
+}
 
-   public:
-    void doInitStyleOption() override;
-    void doPaint(QPainter* painter) override;
+QSize PStyleSplitter::getContentSize(int, int)
+{
+    const auto hw = PQuickStyleItem::style()->pixelMetric(QStyle::PM_SplitterWidth);
+    return PQuickStyleItem::style()->sizeFromContents(QStyle::CT_Splitter, m_styleoption, QSize(hw, hw));
+}
 
-    QSize getContentSize(int width, int height) override;
-
-   protected:
-    const char* classNameForItem() const override { return "QPushButton"; }
-
-    qreal baselineOffset() const override;
-};
+void PStyleSplitter::doPaint(QPainter* painter)
+{
+    PQuickStyleItem::style()->drawControl(QStyle::CE_Splitter, m_styleoption, painter);
+}

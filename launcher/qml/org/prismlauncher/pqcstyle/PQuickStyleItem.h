@@ -27,7 +27,7 @@
  *    Licensed under LGPL-3.0-only OR GPL-2.0-only OR
  *    GPL-3.0-only OR LicenseRef-KFQF-Accepted-GPL OR
  *    LicenseRef-Qt-Commercial
- *      
+ *
  *          https://community.kde.org/Policies/Licensing_Policy
  */
 
@@ -418,7 +418,7 @@ class PQuickStyleItem : public QQuickItem {
 
     void geometryChange(const QRectF& newGeometry, const QRectF& oldGeometry) override;
 
-    virtual QIcon iconFromIconProperty() const;
+    virtual QIcon iconFromIconProperty(const QString& propName = "icon", const QColor &customColor = Qt::transparent) const;
     virtual int padding(Qt::Edge edge) const
     {
         Q_UNUSED(edge);

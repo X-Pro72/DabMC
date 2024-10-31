@@ -27,30 +27,41 @@
  *    Licensed under LGPL-3.0-only OR GPL-2.0-only OR
  *    GPL-3.0-only OR LicenseRef-KFQF-Accepted-GPL OR
  *    LicenseRef-Qt-Commercial
- *      
+ *
  *          https://community.kde.org/Policies/Licensing_Policy
  */
 
-#pragma once
-
+#include "TabFrame.h"
 #include "PQuickStyleItem.h"
 
-class PStyleButton : public PQuickStyleItem {
-    Q_OBJECT
-    QML_ELEMENT
+#include <QApplication>
+#include <QStyle>
+#include <QStyleOptionTabwidgetFrame>
 
-   public:
-    PStyleButton(QQuickItem* parent = nullptr);
-    ~PStyleButton() = default;
+PStyleTabFrame::PStyleTabFrame(QQuickItem* parent) : PQuickStyleItem(parent)
+{
+    m_type = QStringLiteral("tabframe");
+}
 
-   public:
-    void doInitStyleOption() override;
-    void doPaint(QPainter* painter) override;
+void PStyleTabFrame::doInitStyleOption()
+{
+    if (!m_styleoption) {
+        m_styleoption = new QStyleOptionTabWidgetFrame();
+    }
+    QStyleOptionTabWidgetFrame* opt = qstyleoption_cast<QStyleOptionTabWidgetFrame*>(m_styleoption);
 
-    QSize getContentSize(int width, int height) override;
+    opt->selectedTabRect = m_properties[QStringLiteral("selectedTabRect")].toRect();
+    opt->shape = m_properties[QStringLiteral("orientation")] == Qt::BottomEdge ? QTabBar::RoundedSouth : QTabBar::RoundedNorth;
+    if (minimum()) {
+        opt->selectedTabRect = QRect(value(), 0, minimum(), height());
+    }
+    opt->tabBarSize = QSize(minimum(), height());
+    // oxygen style needs this hack
+    opt->leftCornerWidgetSize = QSize(value(), 0);
+}
 
-   protected:
-    const char* classNameForItem() const override { return "QPushButton"; }
 
-    qreal baselineOffset() const override;
-};
+void PStyleTabFrame::doPaint(QPainter* painter)
+{
+    PQuickStyleItem::style()->drawPrimitive(QStyle::PE_FrameTabWidget, m_styleoption, painter);
+}

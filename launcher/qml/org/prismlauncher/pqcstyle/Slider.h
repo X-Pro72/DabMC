@@ -1,3 +1,4 @@
+
 // SPDX-License-Identifier: GPL-3.0-only
 // SPDX-FileCopyrightText: 2024 Rachel Powers <508861+Ryex@users.noreply.github.com>
 /*
@@ -27,7 +28,7 @@
  *    Licensed under LGPL-3.0-only OR GPL-2.0-only OR
  *    GPL-3.0-only OR LicenseRef-KFQF-Accepted-GPL OR
  *    LicenseRef-Qt-Commercial
- *      
+ *
  *          https://community.kde.org/Policies/Licensing_Policy
  */
 
@@ -35,22 +36,23 @@
 
 #include "PQuickStyleItem.h"
 
-class PStyleButton : public PQuickStyleItem {
+class PStyleSlider : public PQuickStyleItem {
     Q_OBJECT
     QML_ELEMENT
 
    public:
-    PStyleButton(QQuickItem* parent = nullptr);
-    ~PStyleButton() = default;
+    PStyleSlider(QQuickItem* parent = nullptr);
+    ~PStyleSlider() = default;
 
    public:
     void doInitStyleOption() override;
     void doPaint(QPainter* painter) override;
 
     QSize getContentSize(int width, int height) override;
+    QRectF subControlRect(const QString& subcontrolString) override;
 
    protected:
-    const char* classNameForItem() const override { return "QPushButton"; }
+    const char* classNameForItem() const override { return "QSlider"; }
 
     qreal baselineOffset() const override;
 };

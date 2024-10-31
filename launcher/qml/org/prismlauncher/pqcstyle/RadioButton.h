@@ -35,13 +35,13 @@
 
 #include "PQuickStyleItem.h"
 
-class PStyleButton : public PQuickStyleItem {
+class PStyleRadioButton : public PQuickStyleItem {
     Q_OBJECT
     QML_ELEMENT
 
    public:
-    PStyleButton(QQuickItem* parent = nullptr);
-    ~PStyleButton() = default;
+    PStyleRadioButton(QQuickItem* parent = nullptr);
+    ~PStyleRadioButton() = default;
 
    public:
     void doInitStyleOption() override;
@@ -50,7 +50,7 @@ class PStyleButton : public PQuickStyleItem {
     QSize getContentSize(int width, int height) override;
 
    protected:
-    const char* classNameForItem() const override { return "QPushButton"; }
+    const char* classNameForItem() const override { return "QRadioButton"; }
 
     qreal baselineOffset() const override;
 };

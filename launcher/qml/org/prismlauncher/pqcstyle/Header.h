@@ -35,13 +35,13 @@
 
 #include "PQuickStyleItem.h"
 
-class PStyleButton : public PQuickStyleItem {
+class PStyleHeader : public PQuickStyleItem {
     Q_OBJECT
     QML_ELEMENT
 
    public:
-    PStyleButton(QQuickItem* parent = nullptr);
-    ~PStyleButton() = default;
+    PStyleHeader(QQuickItem* parent = nullptr);
+    ~PStyleHeader() = default;
 
    public:
     void doInitStyleOption() override;
@@ -50,7 +50,5 @@ class PStyleButton : public PQuickStyleItem {
     QSize getContentSize(int width, int height) override;
 
    protected:
-    const char* classNameForItem() const override { return "QPushButton"; }
-
-    qreal baselineOffset() const override;
+    const char* classNameForItem() const override { return "QHeaderView"; }
 };

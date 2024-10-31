@@ -35,22 +35,14 @@
 
 #include "PQuickStyleItem.h"
 
-class PStyleButton : public PQuickStyleItem {
+class PStyleFocusFrame : public PQuickStyleItem {
     Q_OBJECT
     QML_ELEMENT
 
    public:
-    PStyleButton(QQuickItem* parent = nullptr);
-    ~PStyleButton() = default;
+    PStyleFocusFrame(QQuickItem* parent = nullptr);
+    ~PStyleFocusFrame() = default;
 
    public:
-    void doInitStyleOption() override;
     void doPaint(QPainter* painter) override;
-
-    QSize getContentSize(int width, int height) override;
-
-   protected:
-    const char* classNameForItem() const override { return "QPushButton"; }
-
-    qreal baselineOffset() const override;
 };

@@ -27,7 +27,7 @@
  *    Licensed under LGPL-3.0-only OR GPL-2.0-only OR
  *    GPL-3.0-only OR LicenseRef-KFQF-Accepted-GPL OR
  *    LicenseRef-Qt-Commercial
- *      
+ *
  *          https://community.kde.org/Policies/Licensing_Policy
  */
 
@@ -189,10 +189,11 @@ PQuickStyleItem::~PQuickStyleItem()
     m_styleoption = nullptr;
 }
 
-QPalette PQuickStyleItem::getResolvedPalette() {
+QPalette PQuickStyleItem::getResolvedPalette()
+{
     if (s_qstyle) {
         return s_qstyle->standardPalette();
-    } else if (!QString(classNameForItem()).isEmpty()){
+    } else if (!QString(classNameForItem()).isEmpty()) {
         return qApp->palette(classNameForItem());
     } else {
         return qApp->palette();
@@ -284,10 +285,11 @@ void PQuickStyleItem::updateStyleOption()
     }
 }
 
-QIcon PQuickStyleItem::iconFromIconProperty() const
+QIcon PQuickStyleItem::iconFromIconProperty(const QString& propName, const QColor& customColor) const
 {
     QIcon icon;
-    const QVariant iconProperty = m_properties[QStringLiteral("icon")];
+    const QVariant iconProperty = m_properties[propName];
+    bool isSymbolic = false;
     switch (iconProperty.userType()) {
         case QMetaType::QIcon:
             icon = iconProperty.value<QIcon>();
@@ -459,14 +461,22 @@ QIcon PQuickStyleItem::iconFromIconProperty() const
                     icon = s_qstyle->standardIcon(QStyle::SP_DialogIgnoreButton);
                 } else if (iconSource == QStringLiteral("SP_RestoreDefaultsButton")) {
                     icon = s_qstyle->standardIcon(QStyle::SP_RestoreDefaultsButton);
+                } else if (QIcon::hasThemeIcon(iconSource)) {
+                    icon = QIcon::fromTheme(iconSource);
                 } else {
-                    qWarning(pqcstyleC) << "unable to load icon" << iconSource << "from iconSource property";
+                    qWarning(pqcstyleC) << "unable to load icon" << iconSource << "from " << propName << "property";
+                }
+                if (iconSource.endsWith(QLatin1String("-symbolic"))) {
+                    isSymbolic = true;
                 }
             }
             break;
         }
         default:
             break;
+    }
+    if (!icon.isNull() && (isSymbolic || customColor != Qt::transparent)) {
+        icon.setIsMask(true);
     }
     return icon;
 }

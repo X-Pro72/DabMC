@@ -27,30 +27,36 @@
  *    Licensed under LGPL-3.0-only OR GPL-2.0-only OR
  *    GPL-3.0-only OR LicenseRef-KFQF-Accepted-GPL OR
  *    LicenseRef-Qt-Commercial
- *      
+ *
  *          https://community.kde.org/Policies/Licensing_Policy
  */
 
-#pragma once
-
+#include "MenuBar.h"
 #include "PQuickStyleItem.h"
 
-class PStyleButton : public PQuickStyleItem {
-    Q_OBJECT
-    QML_ELEMENT
+#include <QApplication>
+#include <QStyle>
+#include <QStyleOptionMenuItem>
 
-   public:
-    PStyleButton(QQuickItem* parent = nullptr);
-    ~PStyleButton() = default;
+PStyleMenuBar::PStyleMenuBar(QQuickItem* parent) : PQuickStyleItem(parent)
+{
+    m_type = QStringLiteral("menubar");
+}
 
-   public:
-    void doInitStyleOption() override;
-    void doPaint(QPainter* painter) override;
+void PStyleMenuBar::doInitStyleOption()
+{
+    if (!m_styleoption) {
+        QStyleOptionMenuItem* menuOpt = new QStyleOptionMenuItem();
+        menuOpt->menuItemType = QStyleOptionMenuItem::EmptyArea;
+        m_styleoption = menuOpt;
+    }
+}
 
-    QSize getContentSize(int width, int height) override;
+QSize PStyleMenuBar::getContentSize(int width, int height)
+{
+    return PQuickStyleItem::style()->sizeFromContents(QStyle::CT_MenuBar, m_styleoption, QSize(width, height));
+}
 
-   protected:
-    const char* classNameForItem() const override { return "QPushButton"; }
-
-    qreal baselineOffset() const override;
-};
+void PStyleMenuBar::doPaint(QPainter* painter)
+{
+    PQuickStyleItem::style()->drawControl(QStyle::CE_MenuBarEmptyArea, m_styleoption, painter);}

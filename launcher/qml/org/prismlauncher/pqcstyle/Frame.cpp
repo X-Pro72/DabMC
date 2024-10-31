@@ -27,30 +27,38 @@
  *    Licensed under LGPL-3.0-only OR GPL-2.0-only OR
  *    GPL-3.0-only OR LicenseRef-KFQF-Accepted-GPL OR
  *    LicenseRef-Qt-Commercial
- *      
+ *
  *          https://community.kde.org/Policies/Licensing_Policy
  */
 
-#pragma once
-
+#include "Frame.h"
 #include "PQuickStyleItem.h"
 
-class PStyleButton : public PQuickStyleItem {
-    Q_OBJECT
-    QML_ELEMENT
+#include <QApplication>
+#include <QPainter>
+#include <QStyle>
+#include <QStyleOptionFrame>
 
-   public:
-    PStyleButton(QQuickItem* parent = nullptr);
-    ~PStyleButton() = default;
+PStyleFrame::PStyleFrame(QQuickItem* parent) : PQuickStyleItem(parent)
+{
+    m_type = QStringLiteral("frame");
+}
 
-   public:
-    void doInitStyleOption() override;
-    void doPaint(QPainter* painter) override;
+void PStyleFrame::doInitStyleOption()
+{
+    if (!m_styleoption) {
+        m_styleoption = new QStyleOptionFrame();
+    }
 
-    QSize getContentSize(int width, int height) override;
+    QStyleOptionFrame* opt = qstyleoption_cast<QStyleOptionFrame*>(m_styleoption);
+    opt->frameShape = QFrame::StyledPanel;
+    opt->lineWidth = PQuickStyleItem::style()->pixelMetric(QStyle::PM_DefaultFrameWidth, m_styleoption, nullptr);
+    opt->midLineWidth = opt->lineWidth;
+}
 
-   protected:
-    const char* classNameForItem() const override { return "QPushButton"; }
-
-    qreal baselineOffset() const override;
-};
+void PStyleFrame::doPaint(QPainter* painter)
+{
+    m_styleoption->state |= QStyle::State_Sunken;
+    m_styleoption->state &= ~QStyle::State_Raised;
+    PQuickStyleItem::style()->drawControl(QStyle::CE_ShapedFrame, m_styleoption, painter);
+}

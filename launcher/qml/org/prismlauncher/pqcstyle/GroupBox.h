@@ -27,7 +27,7 @@
  *    Licensed under LGPL-3.0-only OR GPL-2.0-only OR
  *    GPL-3.0-only OR LicenseRef-KFQF-Accepted-GPL OR
  *    LicenseRef-Qt-Commercial
- *      
+ *
  *          https://community.kde.org/Policies/Licensing_Policy
  */
 
@@ -35,13 +35,13 @@
 
 #include "PQuickStyleItem.h"
 
-class PStyleButton : public PQuickStyleItem {
+class PStyleGroupBox : public PQuickStyleItem {
     Q_OBJECT
     QML_ELEMENT
 
    public:
-    PStyleButton(QQuickItem* parent = nullptr);
-    ~PStyleButton() = default;
+    PStyleGroupBox(QQuickItem* parent = nullptr);
+    ~PStyleGroupBox() = default;
 
    public:
     void doInitStyleOption() override;
@@ -50,7 +50,5 @@ class PStyleButton : public PQuickStyleItem {
     QSize getContentSize(int width, int height) override;
 
    protected:
-    const char* classNameForItem() const override { return "QPushButton"; }
-
-    qreal baselineOffset() const override;
+    const char* classNameForItem() const override { return "QGroupBox"; }
 };

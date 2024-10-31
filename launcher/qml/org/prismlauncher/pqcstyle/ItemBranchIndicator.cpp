@@ -27,30 +27,50 @@
  *    Licensed under LGPL-3.0-only OR GPL-2.0-only OR
  *    GPL-3.0-only OR LicenseRef-KFQF-Accepted-GPL OR
  *    LicenseRef-Qt-Commercial
- *      
+ *
  *          https://community.kde.org/Policies/Licensing_Policy
  */
 
-#pragma once
-
+#include "ItemBranchIndicator.h"
 #include "PQuickStyleItem.h"
 
-class PStyleButton : public PQuickStyleItem {
-    Q_OBJECT
-    QML_ELEMENT
+#include <QApplication>
+#include <QStyle>
+#include <QStyleOption>
 
-   public:
-    PStyleButton(QQuickItem* parent = nullptr);
-    ~PStyleButton() = default;
+PStyleItemBranchIndicator::PStyleItemBranchIndicator(QQuickItem* parent) : PQuickStyleItem(parent)
+{
+    m_type = QStringLiteral("itembranchindicator");
+}
 
-   public:
-    void doInitStyleOption() override;
-    void doPaint(QPainter* painter) override;
+void PStyleItemBranchIndicator::doInitStyleOption()
+{
+    if (!m_styleoption) {
+        m_styleoption = new QStyleOption;
+    }
 
-    QSize getContentSize(int width, int height) override;
+    if (m_properties.value(QStringLiteral("isItem")).toBool()) {
+        m_styleoption->state = QStyle::State_Item;
+    }
+    if (m_properties.value(QStringLiteral("hasChildren")).toBool()) {
+        m_styleoption->state |= QStyle::State_Children;
+    }
+    if (m_properties.value(QStringLiteral("hasSibling")).toBool()) {  // Even this one could go away
+        m_styleoption->state |= QStyle::State_Sibling;
+    }
+    if (m_on) {
+        m_styleoption->state |= QStyle::State_Open;
+    }
+}
+QRectF PStyleItemBranchIndicator::subControlRect(const QString&)
+{
+    initStyleOption();
+    QStyleOption opt;
+    opt.rect = QRect(0, 0, implicitWidth(), implicitHeight());
+    return PQuickStyleItem::style()->subElementRect(QStyle::SE_TreeViewDisclosureItem, &opt, nullptr);
+}
 
-   protected:
-    const char* classNameForItem() const override { return "QPushButton"; }
-
-    qreal baselineOffset() const override;
-};
+void PStyleItemBranchIndicator::doPaint(QPainter* painter)
+{
+    PQuickStyleItem::style()->drawPrimitive(QStyle::PE_IndicatorBranch, m_styleoption, painter);
+}

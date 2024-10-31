@@ -31,26 +31,48 @@
  *          https://community.kde.org/Policies/Licensing_Policy
  */
 
-#pragma once
-
+#include "Item.h"
 #include "PQuickStyleItem.h"
 
-class PStyleButton : public PQuickStyleItem {
-    Q_OBJECT
-    QML_ELEMENT
+#include <QApplication>
+#include <QPainter>
+#include <QPixmapCache>
+#include <QStyle>
+#include <QStyleOptionViewItem>
+#include <QWidget>
 
-   public:
-    PStyleButton(QQuickItem* parent = nullptr);
-    ~PStyleButton() = default;
+PStyleItem::PStyleItem(QQuickItem* parent) : PQuickStyleItem(parent)
+{
+    m_type = QStringLiteral("item");
+}
 
-   public:
-    void doInitStyleOption() override;
-    void doPaint(QPainter* painter) override;
+void PStyleItem::doInitStyleOption()
+{
+    if (!m_styleoption) {
+        m_styleoption = new QStyleOptionViewItem();
+    }
+    QStyleOptionViewItem* opt = qstyleoption_cast<QStyleOptionViewItem*>(m_styleoption);
+    opt->features = QStyleOptionViewItem::HasDisplay;
+    opt->text = text();
+    opt->textElideMode = Qt::ElideRight;
+    opt->displayAlignment = Qt::AlignLeft | Qt::AlignVCenter;
+    opt->decorationAlignment = Qt::AlignCenter;
+    resolvePalette();
+    m_needsResolvePalette = false;
+    QPalette pal = m_styleoption->palette;
+    pal.setBrush(QPalette::Base, Qt::NoBrush);
+    m_styleoption->palette = pal;
+    const QFont font = qApp->font("QAbstractItemView");
+    opt->font = font;
+    opt->fontMetrics = QFontMetrics(font);
+}
 
-    QSize getContentSize(int width, int height) override;
+QSize PStyleItem::getContentSize(int width, int height)
+{
+    return PQuickStyleItem::style()->sizeFromContents(QStyle::CT_ItemViewItem, m_styleoption, QSize(width, height));
+}
 
-   protected:
-    const char* classNameForItem() const override { return "QPushButton"; }
-
-    qreal baselineOffset() const override;
-};
+void PStyleItem::doPaint(QPainter* painter)
+{
+    PQuickStyleItem::style()->drawControl(QStyle::CE_ItemViewItem, m_styleoption, painter);
+}

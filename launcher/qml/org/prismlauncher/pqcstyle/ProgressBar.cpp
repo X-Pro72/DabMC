@@ -27,30 +27,56 @@
  *    Licensed under LGPL-3.0-only OR GPL-2.0-only OR
  *    GPL-3.0-only OR LicenseRef-KFQF-Accepted-GPL OR
  *    LicenseRef-Qt-Commercial
- *      
+ *
  *          https://community.kde.org/Policies/Licensing_Policy
  */
 
-#pragma once
-
 #include "PQuickStyleItem.h"
+#include "ProgressBar.h"
 
-class PStyleButton : public PQuickStyleItem {
-    Q_OBJECT
-    QML_ELEMENT
+#include <QApplication>
+#include <QPainter>
+#include <QStyle>
+#include <QStyleOptionProgressBar>
 
-   public:
-    PStyleButton(QQuickItem* parent = nullptr);
-    ~PStyleButton() = default;
+PStyleProgressBar::PStyleProgressBar(QQuickItem* parent) : PQuickStyleItem(parent)
+{
+    m_type = QStringLiteral("progressbar");
+}
 
-   public:
-    void doInitStyleOption() override;
-    void doPaint(QPainter* painter) override;
+void PStyleProgressBar::doInitStyleOption()
+{
+    if (!m_styleoption) {
+        m_styleoption = new QStyleOptionProgressBar();
+    }
 
-    QSize getContentSize(int width, int height) override;
+    QStyleOptionProgressBar* opt = qstyleoption_cast<QStyleOptionProgressBar*>(m_styleoption);
+    if (horizontal()) {
+        opt->state |= QStyle::State_Horizontal;
+    } else {
+        opt->state &= ~QStyle::State_Horizontal;
+    }
+    opt->minimum = qMax(0, minimum());
+    opt->maximum = qMax(0, maximum());
+    opt->progress = value();
+}
 
-   protected:
-    const char* classNameForItem() const override { return "QPushButton"; }
+QSize PStyleProgressBar::getContentSize(int width, int height)
+{
+    QSize size;
+    size = PQuickStyleItem::style()->sizeFromContents(QStyle::CT_ProgressBar, m_styleoption, QSize(width, height));
+    return size;
+}
 
-    qreal baselineOffset() const override;
-};
+qreal PStyleProgressBar::baselineOffset() const
+{
+    QRect r;
+    r = m_styleoption->rect;
+    r.adjust(0, 0, 0, -2);
+    return baselineOffsetFromRect(r);
+}
+
+void PStyleProgressBar::doPaint(QPainter* painter)
+{
+    PQuickStyleItem::style()->drawControl(QStyle::CE_ProgressBar, m_styleoption, painter);
+}

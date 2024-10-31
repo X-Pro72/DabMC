@@ -1,3 +1,4 @@
+
 // SPDX-License-Identifier: GPL-3.0-only
 // SPDX-FileCopyrightText: 2024 Rachel Powers <508861+Ryex@users.noreply.github.com>
 /*
@@ -35,22 +36,20 @@
 
 #include "PQuickStyleItem.h"
 
-class PStyleButton : public PQuickStyleItem {
+class PStyleSplitter : public PQuickStyleItem {
     Q_OBJECT
     QML_ELEMENT
 
    public:
-    PStyleButton(QQuickItem* parent = nullptr);
-    ~PStyleButton() = default;
+    PStyleSplitter(QQuickItem* parent = nullptr);
+    ~PStyleSplitter() = default;
 
    public:
-    void doInitStyleOption() override;
     void doPaint(QPainter* painter) override;
 
     QSize getContentSize(int width, int height) override;
 
    protected:
-    const char* classNameForItem() const override { return "QPushButton"; }
+    const char* classNameForItem() const override { return "QSplitter"; }
 
-    qreal baselineOffset() const override;
 };

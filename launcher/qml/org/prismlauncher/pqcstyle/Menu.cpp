@@ -27,30 +27,53 @@
  *    Licensed under LGPL-3.0-only OR GPL-2.0-only OR
  *    GPL-3.0-only OR LicenseRef-KFQF-Accepted-GPL OR
  *    LicenseRef-Qt-Commercial
- *      
+ *
  *          https://community.kde.org/Policies/Licensing_Policy
  */
 
-#pragma once
-
+#include "Menu.h"
 #include "PQuickStyleItem.h"
 
-class PStyleButton : public PQuickStyleItem {
-    Q_OBJECT
-    QML_ELEMENT
+#include <QApplication>
+#include <QStyle>
+#include <QStyleOptionMenuItem>
+#include <QPainter>
 
-   public:
-    PStyleButton(QQuickItem* parent = nullptr);
-    ~PStyleButton() = default;
+PStyleMenu::PStyleMenu(QQuickItem* parent) : PQuickStyleItem(parent)
+{
+    m_type = QStringLiteral("menu");
+}
 
-   public:
-    void doInitStyleOption() override;
-    void doPaint(QPainter* painter) override;
+void PStyleMenu::doInitStyleOption()
+{
+    if (!m_styleoption) {
+        m_styleoption = new QStyleOptionMenuItem();
+    }
+}
 
-    QSize getContentSize(int width, int height) override;
+QSize PStyleMenu::getContentSize(int width, int height)
+{
+    return PQuickStyleItem::style()->sizeFromContents(QStyle::CT_Menu, m_styleoption, QSize(width, height));
+}
 
-   protected:
-    const char* classNameForItem() const override { return "QPushButton"; }
+void PStyleMenu::doPaint(QPainter* painter)
+{
+    QStyleHintReturnMask val;
+    PQuickStyleItem::style()->styleHint(QStyle::SH_Menu_Mask, m_styleoption, nullptr, &val);
+    painter->save();
+    painter->setClipRegion(val.region);
+    painter->fillRect(m_styleoption->rect, m_styleoption->palette.window());
+    painter->restore();
+    PQuickStyleItem::style()->drawPrimitive(QStyle::PE_PanelMenu, m_styleoption, painter);
 
-    qreal baselineOffset() const override;
-};
+    if (int fw = PQuickStyleItem::style()->pixelMetric(QStyle::PM_MenuPanelWidth)) {
+        QStyleOptionFrame frame;
+        frame.state = QStyle::State_None;
+        frame.lineWidth = fw;
+        frame.midLineWidth = 0;
+        frame.rect = m_styleoption->rect;
+        frame.styleObject = this;
+        frame.palette = m_styleoption->palette;
+        PQuickStyleItem::style()->drawPrimitive(QStyle::PE_FrameMenu, &frame, painter);
+    }
+}

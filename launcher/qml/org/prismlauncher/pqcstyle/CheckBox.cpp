@@ -27,29 +27,35 @@
  *    Licensed under LGPL-3.0-only OR GPL-2.0-only OR
  *    GPL-3.0-only OR LicenseRef-KFQF-Accepted-GPL OR
  *    LicenseRef-Qt-Commercial
- *      
+ *
  *          https://community.kde.org/Policies/Licensing_Policy
  */
 
-#include "Button.h"
+#include "CheckBox.h"
 #include "PQuickStyleItem.h"
 
 #include <QApplication>
 #include <QStyle>
 #include <QStyleOptionButton>
 
-PStyleButton::PStyleButton(QQuickItem* parent) : PQuickStyleItem(parent)
+PStyleCheckBox::PStyleCheckBox(QQuickItem* parent) : PQuickStyleItem(parent)
 {
-    m_type = QStringLiteral("button");
+    m_type = QStringLiteral("checkbox");
 }
 
-void PStyleButton::doInitStyleOption()
+void PStyleCheckBox::doInitStyleOption()
 {
     if (!m_styleoption) {
         m_styleoption = new QStyleOptionButton();
     }
 
     QStyleOptionButton* opt = qstyleoption_cast<QStyleOptionButton*>(m_styleoption);
+    if (!on()) {
+        opt->state |= QStyle::State_Off;
+    }
+    if (m_properties.value(QStringLiteral("partiallyChecked")).toBool()) {
+        opt->state |= QStyle::State_NoChange;
+    }
     opt->text = text();
 
     if (m_iconDirty || opt->icon.isNull()) {
@@ -68,42 +74,26 @@ void PStyleButton::doInitStyleOption()
         }
     }
     opt->iconSize = iconSize;
-    opt->features = activeControl() == QLatin1String("default") ? QStyleOptionButton::DefaultButton : QStyleOptionButton::None;
-    if (m_flat) {
-        opt->features |= QStyleOptionButton::Flat;
-    }
-    const QFont font = qApp->font("QPushButton");
-    opt->fontMetrics = QFontMetrics(font);
-    bool hasMenu = m_properties[QStringLiteral("menu")].toBool();
-    if (hasMenu) {
-        opt->features |= QStyleOptionButton::HasMenu;
-    }
 }
 
-QSize PStyleButton::getContentSize(int width, int height)
+QSize PStyleCheckBox::getContentSize(int, int)
 {
+    auto contentType = QStyle::CT_CheckBox;
     QStyleOptionButton* btn = qstyleoption_cast<QStyleOptionButton*>(m_styleoption);
-
-    int contentWidth = btn->fontMetrics.boundingRect(btn->text).width();
-    int contentHeight = btn->fontMetrics.height();
-
+    QSize contentSize = btn->fontMetrics.size(Qt::TextShowMnemonic, btn->text);
     if (!btn->icon.isNull()) {
-        //+4 matches a hardcoded value in QStyle and acts as a margin between the icon and the text.
-        contentWidth += btn->iconSize.width() + 4;
-        contentHeight = qMax(btn->fontMetrics.height(), btn->iconSize.height());
+        contentSize.setWidth(contentSize.width() + btn->iconSize.width());
+        contentSize.setHeight(std::max(contentSize.height(), btn->iconSize.height()));
     }
-
-    int newWidth = qMax(width, contentWidth);
-    int newHeight = qMax(height, contentHeight);
-    return PQuickStyleItem::style()->sizeFromContents(QStyle::CT_PushButton, m_styleoption, QSize(newWidth, newHeight));
+    return PQuickStyleItem::style()->sizeFromContents(contentType, m_styleoption, contentSize);
 }
 
-qreal PStyleButton::baselineOffset() const
+qreal PStyleCheckBox::baselineOffset() const
 {
-    QRect r = PQuickStyleItem::style()->subElementRect(QStyle::SE_PushButtonContents, m_styleoption);
+    QRect r = PQuickStyleItem::style()->subElementRect(QStyle::SE_CheckBoxContents, m_styleoption);
     return baselineOffsetFromRect(r);
 }
-void PStyleButton::doPaint(QPainter* painter)
+void PStyleCheckBox::doPaint(QPainter* painter)
 {
-    PQuickStyleItem::style()->drawControl(QStyle::CE_PushButton, m_styleoption, painter);
+    PQuickStyleItem::style()->drawControl(QStyle::CE_CheckBox, m_styleoption, painter);
 }

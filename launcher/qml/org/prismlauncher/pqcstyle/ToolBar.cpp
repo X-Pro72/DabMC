@@ -27,30 +27,42 @@
  *    Licensed under LGPL-3.0-only OR GPL-2.0-only OR
  *    GPL-3.0-only OR LicenseRef-KFQF-Accepted-GPL OR
  *    LicenseRef-Qt-Commercial
- *      
+ *
  *          https://community.kde.org/Policies/Licensing_Policy
  */
 
-#pragma once
-
+#include "ToolBar.h"
 #include "PQuickStyleItem.h"
 
-class PStyleButton : public PQuickStyleItem {
-    Q_OBJECT
-    QML_ELEMENT
+#include <QApplication>
+#include <QPainter>
+#include <QStyle>
+#include <QStyleOptionToolBar>
 
-   public:
-    PStyleButton(QQuickItem* parent = nullptr);
-    ~PStyleButton() = default;
+PStyleToolBar::PStyleToolBar(QQuickItem* parent) : PQuickStyleItem(parent)
+{
+    m_type = QStringLiteral("toolbar");
+}
 
-   public:
-    void doInitStyleOption() override;
-    void doPaint(QPainter* painter) override;
+void PStyleToolBar::doInitStyleOption()
+{
+    if (!m_styleoption) {
+        m_styleoption = new QStyleOptionToolBar();
+    }
+}
 
-    QSize getContentSize(int width, int height) override;
+QSize PStyleToolBar::getContentSize(int, int)
+{
+    return QSize(200, styleName().contains(QLatin1String("windows")) ? 30 : 42);
+}
 
-   protected:
-    const char* classNameForItem() const override { return "QPushButton"; }
-
-    qreal baselineOffset() const override;
-};
+void PStyleToolBar::doPaint(QPainter* painter)
+{
+    painter->fillRect(m_styleoption->rect, m_styleoption->palette.window().color());
+    PQuickStyleItem::style()->drawControl(QStyle::CE_ToolBar, m_styleoption, painter);
+    painter->save();
+    painter->setPen(styleName() != QLatin1String("fusion") ? m_styleoption->palette.dark().color().darker(120)
+                                                           : m_styleoption->palette.window().color().lighter(107));
+    painter->drawLine(m_styleoption->rect.bottomLeft(), m_styleoption->rect.bottomRight());
+    painter->restore();
+}

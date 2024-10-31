@@ -27,30 +27,33 @@
  *    Licensed under LGPL-3.0-only OR GPL-2.0-only OR
  *    GPL-3.0-only OR LicenseRef-KFQF-Accepted-GPL OR
  *    LicenseRef-Qt-Commercial
- *      
+ *
  *          https://community.kde.org/Policies/Licensing_Policy
  */
 
-#pragma once
-
+#include "FocusRect.h"
 #include "PQuickStyleItem.h"
 
-class PStyleButton : public PQuickStyleItem {
-    Q_OBJECT
-    QML_ELEMENT
+#include <QApplication>
+#include <QStyle>
+#include <QStyleOptionFocusRect>
 
-   public:
-    PStyleButton(QQuickItem* parent = nullptr);
-    ~PStyleButton() = default;
+PStyleFocusRect::PStyleFocusRect(QQuickItem* parent) : PQuickStyleItem(parent)
+{
+    m_type = QStringLiteral("focusrect");
+}
 
-   public:
-    void doInitStyleOption() override;
-    void doPaint(QPainter* painter) override;
+void PStyleFocusRect::doInitStyleOption()
+{
+    if (!m_styleoption) {
+        m_styleoption = new QStyleOptionFocusRect();
+    }
+    // Needed on windows
+    m_styleoption->state |= QStyle::State_KeyboardFocusChange;
+}
 
-    QSize getContentSize(int width, int height) override;
+void PStyleFocusRect::doPaint(QPainter* painter)
+{
+    PQuickStyleItem::style()->drawPrimitive(QStyle::PE_FrameFocusRect, m_styleoption, painter);
+}
 
-   protected:
-    const char* classNameForItem() const override { return "QPushButton"; }
-
-    qreal baselineOffset() const override;
-};
