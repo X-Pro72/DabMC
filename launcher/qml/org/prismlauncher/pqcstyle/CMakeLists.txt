@@ -21,9 +21,8 @@ qt_add_qml_module(org_prismlauncher_pqcstyle
   URI "org.prismlauncher.pqcstyle"
   VERSION 1.0
   STATIC
-  SOURCES ${PQCSTYLE_CPP_SOURCES}
 )
-target_include_directories(org_prismlauncher_pqcstyle PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/org.prismlauncher.pqcstyle")
+target_include_directories(org_prismlauncher_pqcstyle PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/..)
 
 set(PQCSTYLE_CPP_SOURCES
   "PQuickStyleItem.h"
@@ -31,8 +30,6 @@ set(PQCSTYLE_CPP_SOURCES
   "PStylePalette.cpp"
   "PStylePalette.h"
   "PQuickPadding.h"
-  "MnemonicData.h"
-  "MnemonicData.cpp"
 
   # items
   "Button.cpp"

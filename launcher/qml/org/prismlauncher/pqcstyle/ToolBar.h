@@ -48,7 +48,4 @@ class PStyleToolBar : public PQuickStyleItem {
     void doPaint(QPainter* painter) override;
 
     QSize getContentSize(int width, int height) override;
-
-   protected:
-    qreal baselineOffset() const override;
 };

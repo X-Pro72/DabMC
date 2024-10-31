@@ -21,6 +21,7 @@ CMakeCache.txt
 /.vs
 cmake-build-*/
 Debug
+**/.qmlls.ini
 
 # Build dirs
 build

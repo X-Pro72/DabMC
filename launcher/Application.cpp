@@ -178,7 +178,9 @@ static const QLatin1String liveCheckFile("live.check");
 PixmapCache* PixmapCache::s_instance = nullptr;
 
 // PREVENT LINKER FORM OPTIMIZING OUT QML MODULES
+void qml_register_types_org_prismlauncher_platform();
 void qml_register_types_org_prismlauncher_pqcstyle();
+void qml_register_types_org_prismlauncher_primitives();
 void qml_register_types_org_prismlauncher_desktop();
 void qml_register_types_org_prismlauncher_data();
 void qml_register_types_org_prismlauncher_ui();
@@ -187,8 +189,12 @@ void qml_register_types_org_prismlauncher_ui();
 // TO PREVENT LINKER FORM OPTIMISING THEM OUT
 void preventQmlLinkerOpt()
 {
+    volatile auto org_prismlauncher_platform_registration = &qml_register_types_org_prismlauncher_platform;
+    Q_UNUSED(org_prismlauncher_platform_registration);
     volatile auto org_prismlauncher_pqcstyle_registration = &qml_register_types_org_prismlauncher_pqcstyle;
     Q_UNUSED(org_prismlauncher_pqcstyle_registration);
+    volatile auto org_prismlauncher_primitives_registration = &qml_register_types_org_prismlauncher_primitives;
+    Q_UNUSED(org_prismlauncher_primitives_registration);
     volatile auto org_prismlauncher_desktop_registration = &qml_register_types_org_prismlauncher_desktop;
     Q_UNUSED(org_prismlauncher_desktop_registration);
     volatile auto org_prismlauncher_data_registration = &qml_register_types_org_prismlauncher_data;

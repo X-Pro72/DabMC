@@ -31,6 +31,7 @@
 import QtQuick
 import QtQuick.Templates as T
 import org.prismlauncher.pqcstyle as PrismStyle
+import org.prismlauncher.platform as Platform
 
 T.Button {
     id: controlRoot
@@ -45,13 +46,13 @@ T.Button {
 
     hoverEnabled: Qt.styleHints.useHoverEffects
 
-    PrismStyle.MnemonicData.enabled: enabled && visible
-    PrismStyle.MnemonicData.controlType: PrismStyle.MnemonicData.ActionElement
-    PrismStyle.MnemonicData.label: display !== T.AbstractButton.IconOnly ? text : ""
+    Platform.MnemonicData.enabled: enabled && visible
+    Platform.MnemonicData.controlType: Platform.MnemonicData.ActionElement
+    Platform.MnemonicData.label: display !== T.AbstractButton.IconOnly ? text : ""
     Shortcut {
         //in case of explicit & the button manages it by itself
         enabled: !(RegExp(/\&[^\&]/).test(controlRoot.text))
-        sequence: controlRoot.PrismStyle.MnemonicData.sequence
+        sequence: controlRoot.Platform.MnemonicData.sequence
         onActivated: controlRoot.clicked()
     }
     background: PrismStyle.PStyleButton {

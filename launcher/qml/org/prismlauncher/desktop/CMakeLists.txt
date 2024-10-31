@@ -23,6 +23,7 @@ qt_add_qml_module(org_prismlauncher_desktop
   STATIC
   IMPORTS
     "org.prismlauncher.pqcstyle"
+    "org.prismlauncher.platform"
   QML_FILES ${DESKTOP_QML_SOURCES}
 )
 set(DESKTOP_QML_SOURCES
@@ -35,4 +36,5 @@ target_link_libraries(org_prismlauncher_desktop
     PUBLIC
     Qt${QT_VERSION_MAJOR}::QuickControls2
     org_prismlauncher_pqcstyle
+    org_prismlauncher_platform
 )

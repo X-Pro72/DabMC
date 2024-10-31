@@ -75,7 +75,7 @@ void PStyleScrollBar::doInitStyleOption()
     setTransient(PQuickStyleItem::style()->styleHint(QStyle::SH_ScrollBar_Transient, m_styleoption));
 }
 
-QSize PStyleScrollBar::getContentSize(int width, int height)
+QSize PStyleScrollBar::getContentSize(int, int)
 {
     QSize size;
     const auto opt = qstyleoption_cast<const QStyleOptionSlider*>(m_styleoption);

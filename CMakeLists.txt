@@ -329,6 +329,7 @@ elseif(Launcher_QT_VERSION_MAJOR EQUAL 6)
         QuickControls2
         QmlImportScanner
         Svg
+        ShaderTools
     )
     find_package(Qt6 REQUIRED COMPONENTS ${QT_COMPONENTS})
     list(APPEND Launcher_QT_LIBS Qt6::Core5Compat)

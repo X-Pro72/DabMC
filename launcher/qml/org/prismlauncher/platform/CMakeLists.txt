@@ -1,3 +1,4 @@
+
 # SPDX-FileCopyrightText: 2024 Rachel Powers <508861+Ryex@users.noreply.github.com>
 #
 # SPDX-License-Identifier: GPL-3.0-only
@@ -17,28 +18,22 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-# turns out this ECM module in unreliable,
-# we need qt6 > 6.2 and preferably > 6.5 anyway
-# include(ECMQmlModule)
-
-qt_policy(SET QTP0001 NEW)
-
-add_subdirectory(org/prismlauncher/platform)
-add_subdirectory(org/prismlauncher/pqcstyle)
-add_subdirectory(org/prismlauncher/primitives)
-add_subdirectory(org/prismlauncher/desktop)
-add_subdirectory(org/prismlauncher/data)
-add_subdirectory(org/prismlauncher/ui)
-
-target_link_libraries(Launcher_logic
-    PUBLIC
-    org_prismlauncher_platform
-    org_prismlauncher_pqcstyle
-    org_prismlauncher_primitives
-    org_prismlauncher_desktop
-    org_prismlauncher_data
-    org_prismlauncher_ui
+qt_add_qml_module(org_prismlauncher_platform
+  URI "org.prismlauncher.platform"
+  VERSION 1.0
+  STATIC
 )
 
-target_sources(Launcher_logic PUBLIC qtquickcontrols2.qrc)
+set(PLATFORM_CPP_SOURCES
+  "Units.cpp"
+  "Units.h"
+  "MnemonicData.h"
+  "MnemonicData.cpp"
 
+)
+
+target_sources(org_prismlauncher_platform PRIVATE ${PLATFORM_CPP_SOURCES})
+target_link_libraries(org_prismlauncher_platform
+    PUBLIC
+    Qt${QT_VERSION_MAJOR}::Quick
+)

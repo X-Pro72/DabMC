@@ -152,6 +152,8 @@ PQuickStyleItem::PQuickStyleItem(QQuickItem* parent)
 
 PQuickStyleItem::~PQuickStyleItem()
 {
+    // QStyleOption's Destructor isn't virtual :(
+
     if (const QStyleOptionButton* aux = qstyleoption_cast<const QStyleOptionButton*>(m_styleoption)) {
         delete aux;
     } else if (const QStyleOptionViewItem* aux = qstyleoption_cast<const QStyleOptionViewItem*>(m_styleoption)) {
