@@ -66,8 +66,8 @@ jobs:
             qt_ver: 6
             qt_host: linux
             qt_arch: ""
-            qt_version: "6.2.4"
-            qt_modules: "qt5compat qtimageformats qtnetworkauth"
+            qt_version: "6.4.2"
+            qt_modules: "qt5compat qtimageformats qtnetworkauth qtshadertools"
 
           - os: windows-2022
             name: "Windows-MinGW-w64"
@@ -83,7 +83,7 @@ jobs:
             qt_host: windows
             qt_arch: ""
             qt_version: "6.7.3"
-            qt_modules: "qt5compat qtimageformats qtnetworkauth"
+            qt_modules: "qt5compat qtimageformats qtnetworkauth qtshadertools"
             nscurl_tag: "v24.9.26.122"
             nscurl_sha256: "AEE6C4BE3CB6455858E9C1EE4B3AFE0DB9960FA03FE99CCDEDC28390D57CCBB0"
 
@@ -96,7 +96,7 @@ jobs:
             qt_host: windows
             qt_arch: "win64_msvc2019_arm64"
             qt_version: "6.7.3"
-            qt_modules: "qt5compat qtimageformats qtnetworkauth"
+            qt_modules: "qt5compat qtimageformats qtnetworkauth qtshadertools"
             nscurl_tag: "v24.9.26.122"
             nscurl_sha256: "AEE6C4BE3CB6455858E9C1EE4B3AFE0DB9960FA03FE99CCDEDC28390D57CCBB0"
 
@@ -107,7 +107,7 @@ jobs:
             qt_host: mac
             qt_arch: ""
             qt_version: "6.7.3"
-            qt_modules: "qt5compat qtimageformats qtnetworkauth"
+            qt_modules: "qt5compat qtimageformats qtnetworkauth qtshadertools"
 
           - os: macos-14
             name: macOS-Legacy
@@ -152,12 +152,14 @@ jobs:
             extra-cmake-modules:p
             ninja:p
             qt6-base:p
+            qt6-declarative:p
             qt6-svg:p
             qt6-imageformats:p
             quazip-qt6:p
             ccache:p
             qt6-5compat:p
             qt6-networkauth:p
+            qt6-shadertools:p
             cmark:p
 
       - name: Force newer ccache
@@ -216,7 +218,7 @@ jobs:
 
       - name: Install host Qt (Windows MSVC arm64)
         if: runner.os == 'Windows' && matrix.architecture == 'arm64'
-        uses: jurplel/install-qt-action@v3
+        uses: jurplel/install-qt-action@v4
         with:
           aqtversion: "==3.1.*"
           py7zrversion: ">=0.20.2"
@@ -232,7 +234,7 @@ jobs:
 
       - name: Install Qt (macOS, Linux & Windows MSVC)
         if: matrix.msystem == ''
-        uses: jurplel/install-qt-action@v3
+        uses: jurplel/install-qt-action@v4
         with:
           aqtversion: "==3.1.*"
           py7zrversion: ">=0.20.2"
@@ -242,6 +244,7 @@ jobs:
           modules: ${{ matrix.qt_modules }}
           tools: ${{ matrix.qt_tools }}
           cache: ${{ inputs.is_qt_cached }}
+          archives: "qtbase qtsvg qtdeclarative qtgamepad qtgraphicaleffects qtimageformats"
 
       - name: Install MSVC (Windows MSVC)
         if: runner.os == 'Windows' # We want this for MinGW builds as well, as we need SignTool

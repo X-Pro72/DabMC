@@ -134,17 +134,15 @@ QVariant QtResourceModel::data(const QModelIndex& index, int role) const
     if (!index.isValid() || index.model() != this)
         return QVariant();
 
+    auto column = index.column();
     switch (role) {
         case Qt::DisplayRole:
-            switch (index.column()) {
-                case NameColumn:
-                    return this->name(index);
-                case SizeColumn:
-                    // TODO: actually report size
-                    return this->size(index);
-                default:
-                    break;
+            if (column == NameColumn) {
+                return this->name(index);
+            } else if (column == SizeColumn) {
+                return this->size(index);
             }
+            break;
         case FilePathRole:
             return filePath(index);
         case FileNameRole:
@@ -248,7 +246,8 @@ QString QtResourceModel::name(const QModelIndex& index) const
     return indexNode->fileName;
 }
 
-qint64 QtResourceModel::size(const QModelIndex& index) const {
+qint64 QtResourceModel::size(const QModelIndex& index) const
+{
     if (!index.isValid()) {
         return 0;
     }

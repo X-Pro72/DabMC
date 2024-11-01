@@ -49,7 +49,6 @@
 #include "pathmatcher/MultiMatcher.h"
 #include "pathmatcher/SimplePrefixMatcher.h"
 #include "tasks/Task.h"
-#include "qobject_tree/QObjectTree.h"
 #include "tools/GenericProfiler.h"
 #include "ui/InstanceWindow.h"
 #include "ui/MainWindow.h"
@@ -505,7 +504,7 @@ Application::Application(int& argc, char** argv) : QApplication(argc, argv)
         foundLoggingRules = QFile::exists(logRulesPath);
 
         // search the dataPath()
-        // seach app data standard path
+        // search app data standard path
         if (!foundLoggingRules && !isPortable() && dirParam.isEmpty() && dataDirEnv.isEmpty()) {
             logRulesPath = QStandardPaths::locate(QStandardPaths::AppDataLocation, FS::PathCombine("..", logRulesFile));
             if (!logRulesPath.isEmpty()) {
@@ -513,7 +512,7 @@ Application::Application(int& argc, char** argv) : QApplication(argc, argv)
                 foundLoggingRules = true;
             }
         }
-        // seach root path
+        // search root path
         if (!foundLoggingRules) {
 #if defined(Q_OS_LINUX) || defined(Q_OS_FREEBSD) || defined(Q_OS_OPENBSD)
             logRulesPath = FS::PathCombine(m_rootPath, "share", BuildConfig.LAUNCHER_NAME, logRulesFile);
@@ -1296,7 +1295,7 @@ void Application::performMainStartupAction()
         qDebug() << "<> Updater started.";
     }
 
-    {  // delete instances tmp dirctory
+    {  // delete instances tmp directory
         auto instDir = m_settings->get("InstanceDir").toString();
         const QString tempRoot = FS::PathCombine(instDir, ".tmp");
         FS::deletePath(tempRoot);
@@ -1625,20 +1624,6 @@ MainWindow* Application::showMainWindow(bool minimized)
     return m_mainWindow;
 }
 
-void printNode(QObjectTreeItem* node, int level)
-{
-    if (!node) {
-        return;
-    }
-    qDebug() << level << node->data(0) << node->data(1) << node->data(2);
-    for (int i = 0; i < node->childCount(); ++i) {
-        auto child = node->child(i);
-        if (child) {
-            printNode(child, level + 1);
-        }
-    }
-}
-
 void Application::showWidgetGallery()
 {
     auto widgetGallery = new WidgetGalleryWindow();
@@ -1805,7 +1790,7 @@ QString Application::getJarPath(QString jarFile)
         FS::PathCombine(m_rootPath, "share", BuildConfig.LAUNCHER_NAME),
 #endif
         FS::PathCombine(m_rootPath, "jars"), FS::PathCombine(applicationDirPath(), "jars"),
-        FS::PathCombine(applicationDirPath(), "..", "jars")  // from inside build dir, for debuging
+        FS::PathCombine(applicationDirPath(), "..", "jars")  // from inside build dir, for debugging
     };
     for (QString p : potentialPaths) {
         QString jarPath = FS::PathCombine(p, jarFile);

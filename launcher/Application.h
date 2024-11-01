@@ -55,7 +55,6 @@
 
 #include "AppQmlEngine.h"
 #include "minecraft/launch/MinecraftTarget.h"
-#include "qobject_tree/QObjectTree.h"
 
 class LaunchController;
 class LocalPeer;

@@ -327,7 +327,6 @@ elseif(Launcher_QT_VERSION_MAJOR EQUAL 6)
         Quick
         QuickWidgets
         QuickControls2
-        QmlImportScanner
         Svg
         ShaderTools
     )

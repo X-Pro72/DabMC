@@ -36,7 +36,7 @@
 
 #include <QApplication>
 #include <QStyle>
-#include <QStyleOptionTabwidgetFrame>
+#include <QtWidgets/QStyleOptionTabwidgetFrame>
 
 PStyleTabFrame::PStyleTabFrame(QQuickItem* parent) : PQuickStyleItem(parent)
 {

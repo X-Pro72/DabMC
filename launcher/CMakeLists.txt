@@ -591,11 +591,6 @@ set(MODELS_SOURCES
     models/QtResourcesModel.h
 )
 
-set(QOBJECTTREE_SOURCES
-    qobject_tree/QObjectTree.cpp
-    qobject_tree/QObjectTree.h
-)
-
 set(QMLHELPER_SOURCES
     LambdaHelper.h
 )
@@ -792,7 +787,6 @@ set(LOGIC_SOURCES
     ${TECHNIC_SOURCES}
     ${ATLAUNCHER_SOURCES}
     ${MODELS_SOURCES}
-    ${QOBJECTTREE_SOURCES}
     ${QMLHELPER_SOURCES}
     ${QML_ENGINE_SOURCES}
     ${WIDGET_GALLERY_SOURCES}
@@ -1339,6 +1333,7 @@ target_link_libraries(Launcher_logic
 
 if (UNIX AND NOT CYGWIN AND NOT APPLE)
     target_link_libraries(Launcher_logic
+        PUBLIC
         gamemode
     )
 endif()
