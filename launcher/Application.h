@@ -44,10 +44,16 @@
 #include <QIcon>
 #include <QMutex>
 #include <QUrl>
+#include <QtQml/QQmlComponent>
+#include <QtQml/QQmlEngine>
+#include <QtQml/QQmlFileSelector>
+#include <QtQuick/QQuickWindow>
+#include <QtQuickWidgets/QQuickWidget>
 #include <memory>
 
 #include <BaseInstance.h>
 
+#include "AppQmlEngine.h"
 #include "minecraft/launch/MinecraftTarget.h"
 
 class LaunchController;
@@ -194,6 +200,21 @@ class Application : public QApplication {
 
     QUrl normalizeImportUrl(QString const& url);
 
+    QQmlComponent* loadQmlComponent(const QUrl& url)
+    {
+        if (m_appQmlEngine) {
+            return m_appQmlEngine->load(url);
+        }
+        return nullptr;
+    }
+    QQuickWidget* newQmlWidget(const QUrl& url, QWidget* parent = nullptr)
+    {
+        if (m_appQmlEngine) {
+            return m_appQmlEngine->newWidget(url, parent);
+        }
+        return nullptr;
+    }
+
    signals:
     void updateAllowedChanged(bool status);
     void globalSettingsAboutToOpen();
@@ -215,6 +236,8 @@ class Application : public QApplication {
                 const QString& offlineName = QString());
     bool kill(InstancePtr instance);
     void closeCurrentWindow();
+
+    void showWidgetGallery();
 
    private slots:
     void on_windowClose();
@@ -294,6 +317,8 @@ class Application : public QApplication {
     LocalPeer* m_peerInstance = nullptr;
 
     SetupWizard* m_setupWizard = nullptr;
+
+    AppQmlEngine* m_appQmlEngine = nullptr;
 
    public:
     QString m_detectedGLFWPath;

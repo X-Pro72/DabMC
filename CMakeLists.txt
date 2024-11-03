@@ -312,7 +312,25 @@ if(Launcher_QT_VERSION_MAJOR EQUAL 5)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUNICODE -D_UNICODE")
 elseif(Launcher_QT_VERSION_MAJOR EQUAL 6)
     set(QT_VERSION_MAJOR 6)
-    find_package(Qt6 REQUIRED COMPONENTS Core CoreTools Widgets Concurrent Network Test Xml Core5Compat NetworkAuth)
+    set(QT_COMPONENTS
+        Core
+        CoreTools
+        Gui
+        Widgets
+        Concurrent
+        Network
+        Test
+        Xml
+        Core5Compat
+        NetworkAuth
+        Qml
+        Quick
+        QuickWidgets
+        QuickControls2
+        Svg
+        ShaderTools
+    )
+    find_package(Qt6 REQUIRED COMPONENTS ${QT_COMPONENTS})
     list(APPEND Launcher_QT_LIBS Qt6::Core5Compat)
 
     if(NOT Launcher_FORCE_BUNDLED_LIBS)

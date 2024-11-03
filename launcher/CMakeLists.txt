@@ -1,8 +1,8 @@
 project(application)
 
-################################ FILES ################################
+# ############################### FILES ################################
 
-######## Sources and headers ########
+# ####### Sources and headers ########
 
 set(CORE_SOURCES
     # LOGIC - Base classes and infrastructure
@@ -97,7 +97,7 @@ set(CORE_SOURCES
     MTPixmapCache.h
 )
 if (UNIX AND NOT CYGWIN AND NOT APPLE)
-set(CORE_SOURCES
+    set(CORE_SOURCES
     ${CORE_SOURCES}
 
     # MangoHud
@@ -586,6 +586,27 @@ set(ATLAUNCHER_SOURCES
     modplatform/atlauncher/ATLShareCode.h
 )
 
+set(MODELS_SOURCES
+    models/QtResourcesModel.cpp
+    models/QtResourcesModel.h
+)
+
+set(QMLHELPER_SOURCES
+    LambdaHelper.h
+)
+
+set(QML_ENGINE_SOURCES
+    AppQmlEngine.h
+    AppQmlEngine.cpp
+)
+
+set(WIDGET_GALLERY_SOURCES
+    ui/tools/WidgetGalleryWindow.h
+    ui/tools/WidgetGalleryWindow.cpp
+    ui/tools/WidgetGalleryWidgetsPane.h
+    ui/tools/WidgetGalleryWidgetsPane.cpp
+)
+
 set(LINKEXE_SOURCES
     WindowsConsole.cpp
     WindowsConsole.h
@@ -657,7 +678,7 @@ set(PRISMUPDATER_SOURCES
 
 )
 
-######## Logging categories ########
+# ####### Logging categories ########
 
 ecm_qt_declare_logging_category(CORE_SOURCES
     HEADER Logging.h
@@ -740,7 +761,7 @@ if(KDE_INSTALL_LOGGINGCATEGORIESDIR)  # only install if there is a standard path
     )
 endif()
 
-################################ COMPILE ################################
+# ############################### COMPILE ################################
 
 set(LOGIC_SOURCES
     ${CORE_SOURCES}
@@ -765,6 +786,10 @@ set(LOGIC_SOURCES
     ${PACKWIZ_SOURCES}
     ${TECHNIC_SOURCES}
     ${ATLAUNCHER_SOURCES}
+    ${MODELS_SOURCES}
+    ${QMLHELPER_SOURCES}
+    ${QML_ENGINE_SOURCES}
+    ${WIDGET_GALLERY_SOURCES}
 )
 
 if(APPLE AND Launcher_ENABLE_UPDATER)
@@ -1144,7 +1169,7 @@ SET(LAUNCHER_SOURCES
 )
 
 if (NOT Apple)
-set(LAUNCHER_SOURCES
+    set(LAUNCHER_SOURCES
     ${LAUNCHER_SOURCES}
 
     ui/dialogs/UpdateAvailableDialog.h
@@ -1256,7 +1281,7 @@ qt_wrap_ui(PRISMUPDATER_UI
     ui/dialogs/ProgressDialog.ui
 )
 
-######## Windows resource files ########
+# ####### Windows resource files ########
 if(WIN32)
     set(LAUNCHER_RCS ${CMAKE_CURRENT_BINARY_DIR}/../${Launcher_Branding_WindowsRC})
 endif()
@@ -1265,6 +1290,28 @@ include(CompilerWarnings)
 
 # Add executable
 add_library(Launcher_logic STATIC ${LOGIC_SOURCES} ${LAUNCHER_SOURCES} ${LAUNCHER_UI} ${LAUNCHER_RESOURCES})
+
+add_subdirectory(qml)
+
+# =======================================================
+# Prevent skipping of Autogen targets under Visual studio
+# =======================================================
+set(target "Launcher_logic")
+string(MAKE_C_IDENTIFIER "ddf_${target}" dummy_dependency_file)
+set(dummy_out_file "${CMAKE_CURRENT_BINARY_DIR}/${dummy_dependency_file}.h")
+
+# The content shouldn't be empty so we don't trigger AUTOMOC warnings about it.
+file(GENERATE OUTPUT "${dummy_out_file}" CONTENT "//")
+set_source_files_properties("${dummy_out_file}" PROPERTIES
+                    GENERATED TRUE
+                    SKIP_AUTOGEN OFF)
+target_sources("${target}" PRIVATE "${dummy_out_file}")
+
+# =======================================================
+
+if(BUILD_TESTING)
+    target_compile_definitions(Launcher_logic PUBLIC LAUNCHER_TEST)
+endif()
 set_project_warnings(Launcher_logic
     "${Launcher_MSVC_WARNINGS}"
     "${Launcher_CLANG_WARNINGS}"
@@ -1272,6 +1319,7 @@ set_project_warnings(Launcher_logic
 target_include_directories(Launcher_logic PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_definitions(Launcher_logic PUBLIC LAUNCHER_APPLICATION)
 target_link_libraries(Launcher_logic
+    PUBLIC
     systeminfo
     Launcher_murmur2
     nbt++
@@ -1285,11 +1333,13 @@ target_link_libraries(Launcher_logic
 
 if (UNIX AND NOT CYGWIN AND NOT APPLE)
     target_link_libraries(Launcher_logic
+        PUBLIC
         gamemode
     )
 endif()
 
 target_link_libraries(Launcher_logic
+    PUBLIC
     Qt${QT_VERSION_MAJOR}::Core
     Qt${QT_VERSION_MAJOR}::Xml
     Qt${QT_VERSION_MAJOR}::Network
@@ -1297,9 +1347,14 @@ target_link_libraries(Launcher_logic
     Qt${QT_VERSION_MAJOR}::Gui
     Qt${QT_VERSION_MAJOR}::Widgets
     Qt${QT_VERSION_MAJOR}::NetworkAuth
+    Qt${QT_VERSION_MAJOR}::Qml
+    Qt${QT_VERSION_MAJOR}::Quick
+    Qt${QT_VERSION_MAJOR}::QuickControls2
+    Qt${QT_VERSION_MAJOR}::QuickWidgets
     ${Launcher_QT_LIBS}
 )
 target_link_libraries(Launcher_logic
+    PUBLIC
     QuaZip::QuaZip
     cmark::cmark
     LocalPeer
@@ -1310,21 +1365,22 @@ if(APPLE)
     set(CMAKE_INSTALL_RPATH "@loader_path/../Frameworks/")
 
     if(Launcher_ENABLE_UPDATER)
-      file(DOWNLOAD ${MACOSX_SPARKLE_DOWNLOAD_URL} ${CMAKE_BINARY_DIR}/Sparkle.tar.xz EXPECTED_HASH SHA256=${MACOSX_SPARKLE_SHA256})
-      file(ARCHIVE_EXTRACT INPUT ${CMAKE_BINARY_DIR}/Sparkle.tar.xz DESTINATION ${CMAKE_BINARY_DIR}/frameworks/Sparkle)
+        file(DOWNLOAD ${MACOSX_SPARKLE_DOWNLOAD_URL} ${CMAKE_BINARY_DIR}/Sparkle.tar.xz EXPECTED_HASH SHA256=${MACOSX_SPARKLE_SHA256})
+        file(ARCHIVE_EXTRACT INPUT ${CMAKE_BINARY_DIR}/Sparkle.tar.xz DESTINATION ${CMAKE_BINARY_DIR}/frameworks/Sparkle)
 
-      find_library(SPARKLE_FRAMEWORK Sparkle "${CMAKE_BINARY_DIR}/frameworks/Sparkle")
-      add_compile_definitions(SPARKLE_ENABLED)
+        find_library(SPARKLE_FRAMEWORK Sparkle "${CMAKE_BINARY_DIR}/frameworks/Sparkle")
+        add_compile_definitions(SPARKLE_ENABLED)
     endif()
 
     target_link_libraries(Launcher_logic
+        PUBLIC
         "-framework AppKit"
         "-framework Carbon"
         "-framework Foundation"
         "-framework ApplicationServices"
     )
     if(Launcher_ENABLE_UPDATER)
-      target_link_libraries(Launcher_logic ${SPARKLE_FRAMEWORK})
+        target_link_libraries(Launcher_logic PUBLIC ${SPARKLE_FRAMEWORK})
     endif()
 endif()
 
@@ -1436,7 +1492,7 @@ if (UNIX AND APPLE AND Launcher_ENABLE_UPDATER)
     install(DIRECTORY ${MACOSX_SPARKLE_DIR}/Sparkle.framework DESTINATION ${FRAMEWORK_DEST_DIR} USE_SOURCE_PERMISSIONS)
 endif()
 
-#### The bundle mess! ####
+# ### The bundle mess! ####
 # Bundle utilities are used to complete the portable packages - they add all the libraries that would otherwise be missing on the target system.
 # NOTE: it seems that this absolutely has to be here, and nowhere else.
 if(INSTALL_BUNDLE STREQUAL "full")

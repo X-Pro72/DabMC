@@ -111,6 +111,7 @@
 
 #include "java/JavaInstallList.h"
 
+#include "ui/tools/WidgetGalleryWindow.h"
 #include "updater/ExternalUpdater.h"
 
 #include "tools/JProfiler.h"
@@ -127,9 +128,18 @@
 #include <FileSystem.h>
 #include <LocalPeer.h>
 
+#include <qtpreprocessorsupport.h>
 #include <stdlib.h>
 #include <sys.h>
+#include <QtLogging>
+#include <QtQml/QQmlComponent>
+#include <QtQml/QQmlContext>
+#include <QtQml/QQmlProperty>
+#include <QtQuick/QQuickItem>
+#include <QtQuickControls2/QQuickStyle>
 #include "SysInfo.h"
+
+#include "LambdaHelper.h"
 
 #ifdef Q_OS_LINUX
 #include <dlfcn.h>
@@ -165,6 +175,32 @@
 static const QLatin1String liveCheckFile("live.check");
 
 PixmapCache* PixmapCache::s_instance = nullptr;
+
+// PREVENT LINKER FORM OPTIMIZING OUT QML MODULES
+void qml_register_types_org_prismlauncher_platform();
+void qml_register_types_org_prismlauncher_pqcstyle();
+void qml_register_types_org_prismlauncher_primitives();
+void qml_register_types_org_prismlauncher_desktop();
+void qml_register_types_org_prismlauncher_data();
+void qml_register_types_org_prismlauncher_ui();
+
+// HOLD A VOLATILE POINTER TO QML REGISTRATION FUNCTIONS
+// TO PREVENT LINKER FORM OPTIMISING THEM OUT
+void preventQmlLinkerOpt()
+{
+    volatile auto org_prismlauncher_platform_registration = &qml_register_types_org_prismlauncher_platform;
+    Q_UNUSED(org_prismlauncher_platform_registration);
+    volatile auto org_prismlauncher_pqcstyle_registration = &qml_register_types_org_prismlauncher_pqcstyle;
+    Q_UNUSED(org_prismlauncher_pqcstyle_registration);
+    volatile auto org_prismlauncher_primitives_registration = &qml_register_types_org_prismlauncher_primitives;
+    Q_UNUSED(org_prismlauncher_primitives_registration);
+    volatile auto org_prismlauncher_desktop_registration = &qml_register_types_org_prismlauncher_desktop;
+    Q_UNUSED(org_prismlauncher_desktop_registration);
+    volatile auto org_prismlauncher_data_registration = &qml_register_types_org_prismlauncher_data;
+    Q_UNUSED(org_prismlauncher_data_registration);
+    volatile auto org_prismlauncher_ui_registration = &qml_register_types_org_prismlauncher_ui;
+    Q_UNUSED(org_prismlauncher_ui_registration);
+}
 
 namespace {
 
@@ -215,6 +251,7 @@ std::tuple<QDateTime, QString, QString, QString, QString> read_lock_File(const Q
 
 Application::Application(int& argc, char** argv) : QApplication(argc, argv)
 {
+    preventQmlLinkerOpt();
 #if defined Q_OS_WIN32
     // attach the parent console if stdout not already captured
     if (AttachWindowsConsole()) {
@@ -247,6 +284,7 @@ Application::Application(int& argc, char** argv) : QApplication(argc, argv)
           { "alive", "Write a small '" + liveCheckFile + "' file after the launcher starts" },
           { { "I", "import" }, "Import instance or resource from specified local path or URL", "url" },
           { "show", "Opens the window for the specified instance (by instance ID)", "show" } });
+
     // Has to be positional for some OS to handle that properly
     parser.addPositionalArgument("URL", "Import the resource(s) at the given URL(s) (same as -I / --import)", "[URL...]");
 
@@ -466,7 +504,7 @@ Application::Application(int& argc, char** argv) : QApplication(argc, argv)
         foundLoggingRules = QFile::exists(logRulesPath);
 
         // search the dataPath()
-        // seach app data standard path
+        // search app data standard path
         if (!foundLoggingRules && !isPortable() && dirParam.isEmpty() && dataDirEnv.isEmpty()) {
             logRulesPath = QStandardPaths::locate(QStandardPaths::AppDataLocation, FS::PathCombine("..", logRulesFile));
             if (!logRulesPath.isEmpty()) {
@@ -474,7 +512,7 @@ Application::Application(int& argc, char** argv) : QApplication(argc, argv)
                 foundLoggingRules = true;
             }
         }
-        // seach root path
+        // search root path
         if (!foundLoggingRules) {
 #if defined(Q_OS_LINUX) || defined(Q_OS_FREEBSD) || defined(Q_OS_OPENBSD)
             logRulesPath = FS::PathCombine(m_rootPath, "share", BuildConfig.LAUNCHER_NAME, logRulesFile);
@@ -1196,6 +1234,12 @@ void Application::setupWizardFinished(int status)
 void Application::performMainStartupAction()
 {
     m_status = Application::Initialized;
+
+    // Setup Qml Engine
+    {
+        m_appQmlEngine = new AppQmlEngine(this);
+    }
+
     if (!m_instanceIdToLaunch.isEmpty()) {
         auto inst = instances()->getInstanceById(m_instanceIdToLaunch);
         if (inst) {
@@ -1251,7 +1295,7 @@ void Application::performMainStartupAction()
         qDebug() << "<> Updater started.";
     }
 
-    {  // delete instances tmp dirctory
+    {  // delete instances tmp directory
         auto instDir = m_settings->get("InstanceDir").toString();
         const QString tempRoot = FS::PathCombine(instDir, ".tmp");
         FS::deletePath(tempRoot);
@@ -1580,6 +1624,13 @@ MainWindow* Application::showMainWindow(bool minimized)
     return m_mainWindow;
 }
 
+void Application::showWidgetGallery()
+{
+    auto widgetGallery = new WidgetGalleryWindow();
+    connect(widgetGallery, &WidgetGalleryWindow::isClosing, this, &Application::on_windowClose);
+    m_openWindows++;
+}
+
 InstanceWindow* Application::showInstanceWindow(InstancePtr instance, QString page)
 {
     if (!instance)
@@ -1739,7 +1790,7 @@ QString Application::getJarPath(QString jarFile)
         FS::PathCombine(m_rootPath, "share", BuildConfig.LAUNCHER_NAME),
 #endif
         FS::PathCombine(m_rootPath, "jars"), FS::PathCombine(applicationDirPath(), "jars"),
-        FS::PathCombine(applicationDirPath(), "..", "jars")  // from inside build dir, for debuging
+        FS::PathCombine(applicationDirPath(), "..", "jars")  // from inside build dir, for debugging
     };
     for (QString p : potentialPaths) {
         QString jarPath = FS::PathCombine(p, jarFile);
