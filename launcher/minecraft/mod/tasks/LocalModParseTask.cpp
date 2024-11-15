@@ -24,7 +24,7 @@ namespace ModUtils {
 // https://github.com/MinecraftForge/FML/wiki/FML-mod-information-file/5bf6a2d05145ec79387acc0d45c958642fb049fc
 ModDetails ReadMCModInfo(QByteArray contents)
 {
-    auto getInfoFromArray = [&](QJsonArray arr) -> ModDetails {
+    auto getInfoFromArray = [](QJsonArray arr) -> ModDetails {
         if (!arr.at(0).isObject()) {
             return {};
         }
@@ -730,7 +730,7 @@ bool loadIconFile(const Mod& mod, QPixmap* pixmap)
 }  // namespace ModUtils
 
 LocalModParseTask::LocalModParseTask(int token, ResourceType type, const QFileInfo& modFile)
-    : Task(nullptr, false), m_token(token), m_type(type), m_modFile(modFile), m_result(new Result())
+    : Task(false), m_token(token), m_type(type), m_modFile(modFile), m_result(new Result())
 {}
 
 bool LocalModParseTask::abort()

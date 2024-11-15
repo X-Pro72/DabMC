@@ -846,7 +846,7 @@ QStringList MinecraftInstance::verboseDescription(AuthSessionPtr session, Minecr
         out << "Libraries:";
         QStringList jars, nativeJars;
         profile->getLibraryFiles(runtimeContext(), jars, nativeJars, getLocalLibraryPath(), binRoot());
-        auto printLibFile = [&](const QString& path) {
+        auto printLibFile = [&out](const QString& path) {
             QFileInfo info(path);
             if (info.exists()) {
                 out << "  " + path;
@@ -866,7 +866,7 @@ QStringList MinecraftInstance::verboseDescription(AuthSessionPtr session, Minecr
     }
 
     // mods and core mods
-    auto printModList = [&](const QString& label, ModFolderModel& model) {
+    auto printModList = [&out](const QString& label, ModFolderModel& model) {
         if (model.size()) {
             out << QString("%1:").arg(label);
             auto modList = model.allMods();
@@ -1111,7 +1111,7 @@ shared_qobject_ptr<LaunchTask> MinecraftInstance::createLaunchTask(AuthSessionPt
     // load meta
     {
         auto mode = session->status != AuthSession::PlayableOffline ? Net::Mode::Online : Net::Mode::Offline;
-        process->appendStep(makeShared<TaskStepWrapper>(pptr, makeShared<MinecraftLoadAndCheck>(this, mode, pptr)));
+        process->appendStep(makeShared<TaskStepWrapper>(pptr, makeShared<MinecraftLoadAndCheck>(this, mode)));
     }
 
     // check java

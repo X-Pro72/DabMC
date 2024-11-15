@@ -48,6 +48,7 @@
 #include "net/PasteUpload.h"
 #include "pathmatcher/MultiMatcher.h"
 #include "pathmatcher/SimplePrefixMatcher.h"
+#include "tasks/Task.h"
 #include "tools/GenericProfiler.h"
 #include "ui/InstanceWindow.h"
 #include "ui/MainWindow.h"
@@ -845,7 +846,7 @@ Application::Application(int& argc, char** argv) : QApplication(argc, argv)
                                     ":/icons/multimc/128x128/instances/", ":/icons/multimc/scalable/instances/" };
         m_icons.reset(new IconList(instFolders, setting->get().toString()));
         connect(setting.get(), &Setting::SettingChanged,
-                [&](const Setting&, QVariant value) { m_icons->directoryChanged(value.toString()); });
+                [this](const Setting&, QVariant value) { m_icons->directoryChanged(value.toString()); });
         qDebug() << "<> Instance icons initialized.";
     }
 
@@ -1080,11 +1081,11 @@ Application::Application(int& argc, char** argv) : QApplication(argc, argv)
 
 bool Application::createSetupWizard()
 {
-    bool javaRequired = [&]() {
-        if (BuildConfig.JAVA_DOWNLOADER_ENABLED && m_settings->get("AutomaticJavaDownload").toBool()) {
+    bool javaRequired = [this]() {
+        if (BuildConfig.JAVA_DOWNLOADER_ENABLED && settings()->get("AutomaticJavaDownload").toBool()) {
             return false;
         }
-        bool ignoreJavaWizard = m_settings->get("IgnoreJavaWizard").toBool();
+        bool ignoreJavaWizard = settings()->get("IgnoreJavaWizard").toBool();
         if (ignoreJavaWizard) {
             return false;
         }
@@ -1098,8 +1099,8 @@ bool Application::createSetupWizard()
         QString actualPath = FS::ResolveExecutable(currentJavaPath);
         return actualPath.isNull();
     }();
-    bool askjava = BuildConfig.JAVA_DOWNLOADER_ENABLED && !javaRequired && !m_settings->get("AutomaticJavaDownload").toBool() &&
-                   !m_settings->get("AutomaticJavaSwitch").toBool() && !m_settings->get("UserAskedAboutAutomaticJavaDownload").toBool();
+    bool askjava = BuildConfig.JAVA_DOWNLOADER_ENABLED && !javaRequired && !settings()->get("AutomaticJavaDownload").toBool() &&
+                   !settings()->get("AutomaticJavaSwitch").toBool() && !settings()->get("UserAskedAboutAutomaticJavaDownload").toBool();
     bool languageRequired = settings()->get("Language").toString().isEmpty();
     bool pasteInterventionRequired = settings()->get("PastebinURL") != "";
     bool validWidgets = m_themeManager->isValidApplicationTheme(settings()->get("ApplicationTheme").toString());
@@ -1397,6 +1398,7 @@ bool Application::launch(InstancePtr instance,
     if (m_updateRunning) {
         qDebug() << "Cannot launch instances while an update is running. Please try again when updates are completed.";
     } else if (instance->canLaunch()) {
+        QMutexLocker locker(&m_instanceExtrasMutex);
         auto& extras = m_instanceExtras[instance->id()];
         auto window = extras.window;
         if (window) {
@@ -1422,7 +1424,7 @@ bool Application::launch(InstancePtr instance,
         connect(controller.get(), &LaunchController::failed, this, &Application::controllerFailed);
         connect(controller.get(), &LaunchController::aborted, this, [this] { controllerFailed(tr("Aborted")); });
         addRunningInstance();
-        controller->start();
+        QMetaObject::invokeMethod(controller.get(), &Task::start, Qt::QueuedConnection);
         return true;
     } else if (instance->isRunning()) {
         showInstanceWindow(instance, "console");
@@ -1440,9 +1442,11 @@ bool Application::kill(InstancePtr instance)
         qWarning() << "Attempted to kill instance" << instance->id() << ", which isn't running.";
         return false;
     }
+    QMutexLocker locker(&m_instanceExtrasMutex);
     auto& extras = m_instanceExtras[instance->id()];
     // NOTE: copy of the shared pointer keeps it alive
     auto controller = extras.controller;
+    locker.unlock();
     if (controller) {
         return controller->abort();
     }
@@ -1496,12 +1500,14 @@ void Application::controllerSucceeded()
     if (!controller)
         return;
     auto id = controller->id();
+
+    QMutexLocker locker(&m_instanceExtrasMutex);
     auto& extras = m_instanceExtras[id];
 
     // on success, do...
     if (controller->instance()->settings()->get("AutoCloseConsole").toBool()) {
         if (extras.window) {
-            extras.window->close();
+            QMetaObject::invokeMethod(extras.window, &QWidget::close, Qt::QueuedConnection);
         }
     }
     extras.controller.reset();
@@ -1521,6 +1527,7 @@ void Application::controllerFailed(const QString& error)
     if (!controller)
         return;
     auto id = controller->id();
+    QMutexLocker locker(&m_instanceExtrasMutex);
     auto& extras = m_instanceExtras[id];
 
     // on failure, do... nothing
@@ -1578,6 +1585,7 @@ InstanceWindow* Application::showInstanceWindow(InstancePtr instance, QString pa
     if (!instance)
         return nullptr;
     auto id = instance->id();
+    QMutexLocker locker(&m_instanceExtrasMutex);
     auto& extras = m_instanceExtras[id];
     auto& window = extras.window;
 
@@ -1615,6 +1623,7 @@ void Application::on_windowClose()
     m_openWindows--;
     auto instWindow = qobject_cast<InstanceWindow*>(QObject::sender());
     if (instWindow) {
+        QMutexLocker locker(&m_instanceExtrasMutex);
         auto& extras = m_instanceExtras[instWindow->instanceId()];
         extras.window = nullptr;
         if (extras.controller) {
@@ -1862,7 +1871,7 @@ bool Application::handleDataMigration(const QString& currentData,
         matcher->add(std::make_shared<SimplePrefixMatcher>("themes/"));
 
         ProgressDialog diag;
-        DataMigrationTask task(nullptr, oldData, currentData, matcher);
+        DataMigrationTask task(oldData, currentData, matcher);
         if (diag.execWithTask(&task)) {
             qDebug() << "<> Migration succeeded";
             setDoNotMigrate();
