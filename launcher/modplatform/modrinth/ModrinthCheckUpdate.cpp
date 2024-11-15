@@ -15,6 +15,26 @@
 
 static ModrinthAPI api;
 
+ModrinthCheckUpdate::ModrinthCheckUpdate(QList<Resource*>& resources,
+                                         std::list<Version>& mcVersions,
+                                         QList<ModPlatform::ModLoaderType> loadersList,
+                                         std::shared_ptr<ResourceFolderModel> resourceModel)
+    : CheckUpdateTask(resources, mcVersions, std::move(loadersList), std::move(resourceModel))
+    , m_hashType(ModPlatform::ProviderCapabilities::hashType(ModPlatform::ResourceProvider::MODRINTH).first())
+{
+    if (!m_loadersList.isEmpty()) {  // this is for mods so append all the other posible loaders to the initial list
+        m_initialSize = m_loadersList.length();
+        ModPlatform::ModLoaderTypes modLoaders;
+        for (auto m : resources) {
+            modLoaders |= m->metadata()->loaders;
+        }
+        for (auto l : m_loadersList) {
+            modLoaders &= ~l;
+        }
+        m_loadersList.append(ModPlatform::modLoaderTypesToList(modLoaders));
+    }
+}
+
 bool ModrinthCheckUpdate::abort()
 {
     if (m_job)
@@ -30,10 +50,11 @@ bool ModrinthCheckUpdate::abort()
 void ModrinthCheckUpdate::executeTask()
 {
     setStatus(tr("Preparing resources for Modrinth..."));
-    setProgress(0, (m_loaders_list.isEmpty() ? 1 : m_loaders_list.length()) * 2 + 1);
+    setProgress(0, (m_loadersList.isEmpty() ? 1 : m_loadersList.length()) * 2 + 1);
 
     auto hashing_task =
         makeShared<ConcurrentTask>("MakeModrinthHashesTask", APPLICATION->settings()->get("NumberOfConcurrentTasks").toInt());
+    bool startHasing = false;
     for (auto* resource : m_resources) {
         auto hash = resource->metadata()->hash;
 
@@ -45,30 +66,45 @@ void ModrinthCheckUpdate::executeTask()
             connect(hash_task.get(), &Hashing::Hasher::resultsReady, [this, resource](QString hash) { m_mappings.insert(hash, resource); });
             connect(hash_task.get(), &Task::failed, [this] { failed("Failed to generate hash"); });
             hashing_task->addTask(hash_task);
+            startHasing = true;
         } else {
             m_mappings.insert(hash, resource);
         }
     }
 
-    connect(hashing_task.get(), &Task::finished, this, &ModrinthCheckUpdate::checkNextLoader);
-    m_job = hashing_task;
-    hashing_task->start();
+    if (startHasing) {
+        connect(hashing_task.get(), &Task::finished, this, &ModrinthCheckUpdate::checkNextLoader);
+        m_job = hashing_task;
+        hashing_task->start();
+    } else {
+        checkNextLoader();
+    }
 }
 
-void ModrinthCheckUpdate::getUpdateModsForLoader(std::optional<ModPlatform::ModLoaderTypes> loader)
+void ModrinthCheckUpdate::getUpdateModsForLoader(std::optional<ModPlatform::ModLoaderTypes> loader, bool forceModLoaderCheck)
 {
     setStatus(tr("Waiting for the API response from Modrinth..."));
     setProgress(m_progress + 1, m_progressTotal);
 
     auto response = std::make_shared<QByteArray>();
-    QStringList hashes = m_mappings.keys();
-    auto job = api.latestVersions(hashes, m_hash_type, m_game_versions, loader, response);
+    QStringList hashes;
+    if (forceModLoaderCheck && loader.has_value()) {
+        for (auto hash : m_mappings.keys()) {
+            if (m_mappings[hash]->metadata()->loaders & loader.value()) {
+                hashes.append(hash);
+            }
+        }
+    } else {
+        hashes = m_mappings.keys();
+    }
+    auto job = api.latestVersions(hashes, m_hashType, m_gameVersions, loader, response);
 
     connect(job.get(), &Task::succeeded, this, [this, response, loader] { checkVersionsResponse(response, loader); });
 
     connect(job.get(), &Task::failed, this, &ModrinthCheckUpdate::checkNextLoader);
 
     m_job = job;
+    m_loaderIdx++;
     job->start();
 }
 
@@ -165,16 +201,11 @@ void ModrinthCheckUpdate::checkNextLoader()
         emitSucceeded();
         return;
     }
-
-    if (m_loaders_list.isEmpty() && m_loader_idx == 0) {
-        getUpdateModsForLoader({});
-        m_loader_idx++;
+    if (m_loaderIdx < m_loadersList.size()) {  // this are mods so check with loades
+        getUpdateModsForLoader(m_loadersList.at(m_loaderIdx), m_loaderIdx > m_initialSize);
         return;
-    }
-
-    if (m_loader_idx < m_loaders_list.size()) {
-        getUpdateModsForLoader(m_loaders_list.at(m_loader_idx));
-        m_loader_idx++;
+    } else if (m_loadersList.isEmpty() && m_loaderIdx == 0) {  // this are other resources no need to check more than once with empty loader
+        getUpdateModsForLoader();
         return;
     }
 
