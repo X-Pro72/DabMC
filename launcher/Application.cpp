@@ -245,6 +245,12 @@ Application::Application(int& argc, char** argv) : QApplication(argc, argv)
           { { "a", "profile" }, "Use the account specified by its profile name (only valid in combination with --launch)", "profile" },
           { { "o", "offline" }, "Launch offline, with given player name (only valid in combination with --launch)", "offline" },
           { "alive", "Write a small '" + liveCheckFile + "' file after the launcher starts" },
+          { { "X", "xmas" }, "Force xmas cat" },
+          { "no-xmas", "" },
+          { { "H", "halloween" }, "Force halloween cat" },
+          { "no-halloween", "" },
+          { { "B", "birthday" }, "Force birthday cat" },
+          { "no-birthday", "" },
           { { "I", "import" }, "Import instance or resource from specified local path or URL", "url" },
           { "show", "Opens the window for the specified instance (by instance ID)", "show" } });
     // Has to be positional for some OS to handle that properly
@@ -264,6 +270,23 @@ Application::Application(int& argc, char** argv) : QApplication(argc, argv)
         m_offlineName = parser.value("offline");
     }
     m_liveCheck = parser.isSet("alive");
+
+    // Checking cat overrides
+    if (parser.isSet("xmas")) {
+        forceXmas = ForceOn;
+    } else if (parser.isSet("no-xmas")) {
+        forceXmas = ForceOff;
+    }
+    if (parser.isSet("halloween")) {
+        forceHalloween = ForceOn;
+    } else if (parser.isSet("no-halloween")) {
+        forceHalloween = ForceOff;
+    }
+    if (parser.isSet("birthday")) {
+        forceBirthday = ForceOn;
+    } else if (parser.isSet("no-birthday")) {
+        forceBirthday = ForceOff;
+    }
 
     m_instanceIdToShowWindowOf = parser.value("show");
 

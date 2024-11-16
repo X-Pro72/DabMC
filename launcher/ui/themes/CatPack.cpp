@@ -40,6 +40,7 @@
 #include <QFileInfo>
 #include <QImageReader>
 #include <QRandomGenerator>
+#include "Application.h"
 #include "FileSystem.h"
 #include "Json.h"
 
@@ -51,11 +52,25 @@ QString BasicCatPack::path()
     const auto halloween = QDate(now.year(), 10, 31);
 
     QString cat = QString(":/backgrounds/%1").arg(m_id);
-    if (std::abs(now.daysTo(xmas)) <= 4) {
+
+    const auto forceXmas = APPLICATION->forceXmas;
+    const auto forceHalloween = APPLICATION->forceHalloween;
+    const auto forceBirthday = APPLICATION->forceBirthday;
+
+    bool shouldCheck = true;
+    // Don't check if anything is forced on
+    if (forceXmas == APPLICATION->ForceOn || forceHalloween == APPLICATION->ForceOn || forceBirthday == APPLICATION->ForceOn) {
+        shouldCheck = false;
+    }
+
+    // Check if needed, apply if force, don't do anything otherwise
+    if ((shouldCheck && forceXmas == APPLICATION->Detect && std::abs(now.daysTo(xmas)) <= 4) || forceXmas == APPLICATION->ForceOn) {
         cat += "-xmas";
-    } else if (std::abs(now.daysTo(halloween)) <= 4) {
+    } else if ((shouldCheck && forceHalloween == APPLICATION->Detect && std::abs(now.daysTo(halloween)) <= 4) ||
+               forceHalloween == APPLICATION->ForceOn) {
         cat += "-spooky";
-    } else if (std::abs(now.daysTo(birthday)) <= 12) {
+    } else if ((shouldCheck && forceBirthday == APPLICATION->Detect && std::abs(now.daysTo(birthday)) <= 12) ||
+               forceBirthday == APPLICATION->ForceOn) {
         cat += "-bday";
     }
     return cat;

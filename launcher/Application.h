@@ -305,6 +305,10 @@ class Application : public QApplication {
     bool m_offline = false;
     QString m_offlineName;
     bool m_liveCheck = false;
+    enum Flag { ForceOff, ForceOn, Detect };
+    Flag forceXmas = Detect;
+    Flag forceHalloween = Detect;
+    Flag forceBirthday = Detect;
     QList<QUrl> m_urlsToImport;
     QString m_instanceIdToShowWindowOf;
     std::unique_ptr<QFile> logFile;
