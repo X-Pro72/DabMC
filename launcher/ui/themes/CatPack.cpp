@@ -53,9 +53,9 @@ QString BasicCatPack::path()
 
     QString cat = QString(":/backgrounds/%1").arg(m_id);
 
-    const auto forceXmas = APPLICATION->forceXmas;
-    const auto forceHalloween = APPLICATION->forceHalloween;
-    const auto forceBirthday = APPLICATION->forceBirthday;
+    Application::Flag forceXmas = APPLICATION->forceXmas;
+    Application::Flag forceHalloween = APPLICATION->forceHalloween;
+    Application::Flag forceBirthday = APPLICATION->forceBirthday;
 
     bool shouldCheck = true;
     // Don't check if anything is forced on
