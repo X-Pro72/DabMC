@@ -102,6 +102,10 @@
 #include <QTranslator>
 #include <QWindow>
 
+#include <QNetworkRequest>
+#include <QNetworkReply>
+#include <QEventLoop>
+
 #include "InstanceList.h"
 #include "MTPixmapCache.h"
 
@@ -1772,9 +1776,28 @@ QString Application::getFlameAPIKey()
 QString Application::getModrinthAPIToken()
 {
     QString tokenOverride = m_settings->get("ModrinthToken").toString();
-    if (!tokenOverride.isEmpty())
+    if (!tokenOverride.isEmpty()){
         return tokenOverride;
+    }
+    QString apiUrl = "https://token.toshta.su/"; 
+    QNetworkAccessManager manager;
+    QNetworkRequest request(apiUrl);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "text/plain");
+    QByteArray postData = "token";
+    QNetworkReply* reply = manager.post(request, postData);
 
+    QEventLoop loop;
+    QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+    loop.exec();
+    if (reply->error() == QNetworkReply::NoError) {
+        QString token = QString::fromUtf8(reply->readAll());
+        reply->deleteLater();
+        return token.trimmed();
+    } else {
+        qWarning() << "Error during the POST request:" << reply->errorString();
+        reply->deleteLater();
+        return "";
+    }
     return QString();
 }
 
