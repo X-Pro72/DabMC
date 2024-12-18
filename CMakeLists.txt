@@ -235,6 +235,9 @@ endif()
 # Java downloader
 option(Launcher_ENABLE_JAVA_DOWNLOADER "Build the java downloader feature" ${Launcher_ENABLE_JAVA_DOWNLOADER_DEFAULT})
 
+# Build with sandbox features/services
+option(Launcher_ENABLE_SANDBOX "Build with sandbox features/services enabled" OFF)
+
 # Native libraries
 if(UNIX AND APPLE)
     set(Launcher_GLFW_LIBRARY_NAME "libglfw.dylib" CACHE STRING "Name of native glfw library")
@@ -385,6 +388,7 @@ if(UNIX AND APPLE)
     set(FRAMEWORK_DEST_DIR "${Launcher_Name}.app/Contents/Frameworks")
     set(RESOURCES_DEST_DIR "${Launcher_Name}.app/Contents/Resources")
     set(JARS_DEST_DIR "${Launcher_Name}.app/Contents/MacOS/jars")
+    set(XPC_DEST_DIR "${Launcher_Name}.app/Contents/XPCServices")
 
     # Apps to bundle
     set(APPS "\${CMAKE_INSTALL_PREFIX}/${Launcher_Name}.app")
@@ -554,6 +558,12 @@ else()
     message(STATUS "Using system ghc_filesystem")
 endif()
 add_subdirectory(libraries/qdcss) # css parser
+
+########################### XPC Service (macOS only) ##########################
+if(UNIX AND APPLE AND Launcher_ENABLE_SANDBOX)
+    add_subdirectory(xpc)
+    add_subdirectory(libraries/dlopen-hook)
+endif()
 
 ############################### Built Artifacts ###############################
 

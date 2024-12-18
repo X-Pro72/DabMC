@@ -77,6 +77,18 @@ class LauncherPage : public QWidget, public BasePage {
     void on_skinsDirBrowseBtn_clicked();
     void on_metadataDisableBtn_clicked();
 
+    void on_instDirResetBtn_clicked();
+    void on_modsDirResetBtn_clicked();
+    void on_iconsDirResetBtn_clicked();
+    void on_downloadsDirResetBtn_clicked();
+    void on_javaDirResetBtn_clicked();
+    void on_skinsDirResetBtn_clicked();
+
+    void on_readWriteAddBtn_clicked();
+    void on_readWriteRemoveBtn_clicked();
+    void on_readOnlyAddBtn_clicked();
+    void on_readOnlyRemoveBtn_clicked();
+
     /*!
      * Updates the font preview
      */

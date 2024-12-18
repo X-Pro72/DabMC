@@ -1087,6 +1087,8 @@ SET(LAUNCHER_SOURCES
     ui/widgets/EnvironmentVariables.h
     ui/widgets/DropLabel.cpp
     ui/widgets/DropLabel.h
+    ui/widgets/DropList.cpp
+    ui/widgets/DropList.h
     ui/widgets/FocusLineEdit.cpp
     ui/widgets/FocusLineEdit.h
     ui/widgets/IconLabel.cpp
@@ -1150,6 +1152,28 @@ set(LAUNCHER_SOURCES
     ui/dialogs/UpdateAvailableDialog.h
     ui/dialogs/UpdateAvailableDialog.cpp
 )
+endif()
+
+if (APPLE)
+    set(LAUNCHER_SOURCES
+        ${LAUNCHER_SOURCES}
+
+        macsandbox/SecurityBookmarkFileAccess.h
+        macsandbox/SecurityBookmarkFileAccess.mm
+    )
+    if (Launcher_ENABLE_SANDBOX)
+        set(LAUNCHER_SOURCES
+            ${LAUNCHER_SOURCES}
+
+            xpcbridge/XPCBridge.h
+            xpcbridge/XPCBridge.cpp
+            xpcbridge/XPCManager.h
+            xpcbridge/XPCManager.mm
+
+            macsandbox/DynamicSandboxException.cpp
+            macsandbox/DynamicSandboxException.h
+        )
+    endif()
 endif()
 
 if(WIN32)
@@ -1328,9 +1352,23 @@ if(APPLE)
         "-framework Foundation"
         "-framework ApplicationServices"
     )
+    target_compile_options(Launcher_logic PRIVATE -fobjc-arc)
+
     if(Launcher_ENABLE_UPDATER)
       target_link_libraries(Launcher_logic ${SPARKLE_FRAMEWORK})
+      # temporary (surely) since this file came before ARC was enabled
+      set_source_files_properties(updater/MacSparkleUpdater.mm PROPERTIES COMPILE_OPTIONS -fno-objc-arc)
     endif()
+
+    if(Launcher_ENABLE_SANDBOX)
+        set(ENABLE_SPARKLE_INSTALLER_LAUNCHER_SERVICE "true")
+    else()
+        set(ENABLE_SPARKLE_INSTALLER_LAUNCHER_SERVICE "false")
+    endif()
+endif()
+
+if(Launcher_ENABLE_SANDBOX)
+    add_compile_definitions(SANDBOX_ENABLED)
 endif()
 
 target_link_libraries(Launcher_logic)
@@ -1356,6 +1394,18 @@ install(TARGETS ${Launcher_Name}
     RUNTIME DESTINATION ${BINARY_DEST_DIR} COMPONENT Runtime
     FRAMEWORK DESTINATION ${FRAMEWORK_DEST_DIR} COMPONENT Runtime
 )
+
+if(UNIX AND APPLE AND Launcher_ENABLE_SANDBOX)
+    install(TARGETS dlopen_hook
+        LIBRARY DESTINATION "${FRAMEWORK_DEST_DIR}" COMPONENT Runtime
+    )
+    install(TARGETS SandboxService
+        BUNDLE DESTINATION "${XPC_DEST_DIR}" COMPONENT Runtime
+    )
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/../program_info/container-migration.plist
+        DESTINATION "${RESOURCES_DEST_DIR}" COMPONENT Runtime
+    )
+endif()
 
 if(Launcher_BUILD_UPDATER)
     # Updater

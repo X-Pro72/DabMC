@@ -41,6 +41,8 @@
 
 #include <QDir>
 #include <QFileDialog>
+#include <QFileIconProvider>
+#include <QKeyEvent>
 #include <QMenuBar>
 #include <QMessageBox>
 #include <QTextCharFormat>
@@ -49,13 +51,17 @@
 #include "Application.h"
 #include "BuildConfig.h"
 #include "DesktopServices.h"
+#include "settings/Setting.h"
 #include "settings/SettingsObject.h"
 #include "ui/themes/ITheme.h"
 #include "ui/themes/ThemeManager.h"
 #include "updater/ExternalUpdater.h"
 
 #include <QApplication>
-#include <QProcess>
+
+#if defined(Q_OS_MACOS) && defined(SANDBOX_ENABLED)
+#include "macsandbox/DynamicSandboxException.h"
+#endif
 
 // FIXME: possibly move elsewhere
 enum InstSortMode {
@@ -79,11 +85,32 @@ LauncherPage::LauncherPage(QWidget* parent) : QWidget(parent), ui(new Ui::Launch
 
     ui->updateSettingsBox->setHidden(!APPLICATION->updater());
 
+#if defined(Q_OS_MACOS) && defined(SANDBOX_ENABLED)
+    ui->instDirTextBox->setReadOnly(true);
+    ui->modsDirTextBox->setReadOnly(true);
+    ui->iconsDirTextBox->setReadOnly(true);
+    ui->downloadsDirTextBox->setReadOnly(true);
+    ui->javaDirTextBox->setReadOnly(true);
+    ui->skinsDirTextBox->setReadOnly(true);
+#else
+    ui->tabWidget->removeTab(ui->tabWidget->indexOf(ui->macSandboxTab));
+#endif
+
     connect(ui->fontSizeBox, QOverload<int>::of(&QSpinBox::valueChanged), this, &LauncherPage::refreshFontPreview);
     connect(ui->consoleFont, &QFontComboBox::currentFontChanged, this, &LauncherPage::refreshFontPreview);
     connect(ui->themeCustomizationWidget, &ThemeCustomizationWidget::currentWidgetThemeChanged, this, &LauncherPage::refreshFontPreview);
 
     connect(ui->themeCustomizationWidget, &ThemeCustomizationWidget::currentCatChanged, APPLICATION, &Application::currentCatChanged);
+
+#if defined(Q_OS_MACOS) && defined(SANDBOX_ENABLED)
+    connect(ui->readWriteList, &DropList::droppedURLs, APPLICATION->m_dynamicSandboxExceptions.get(), &DynamicSandboxException::addReadWriteExceptions);
+    connect(ui->readOnlyList, &DropList::droppedURLs, APPLICATION->m_dynamicSandboxExceptions.get(), &DynamicSandboxException::addReadOnlyExceptions);
+    connect(ui->readWriteList, &DropList::droppedURLs, this, &LauncherPage::loadSettings);
+    connect(ui->readOnlyList, &DropList::droppedURLs, this, &LauncherPage::loadSettings);
+
+    connect(ui->readWriteList, &DropList::deleteKeyPressed, this, &LauncherPage::on_readWriteRemoveBtn_clicked);
+    connect(ui->readOnlyList, &DropList::deleteKeyPressed, this, &LauncherPage::on_readOnlyRemoveBtn_clicked);
+#endif
 }
 
 LauncherPage::~LauncherPage()
@@ -141,6 +168,12 @@ void LauncherPage::on_instDirBrowseBtn_clicked()
     }
 }
 
+void LauncherPage::on_instDirResetBtn_clicked()
+{
+    auto defValue = APPLICATION->settings()->getSetting("InstanceDir")->defValue().toString();
+    ui->instDirTextBox->setText(defValue);
+}
+
 void LauncherPage::on_iconsDirBrowseBtn_clicked()
 {
     QString raw_dir = QFileDialog::getExistingDirectory(this, tr("Icons Folder"), ui->iconsDirTextBox->text());
@@ -150,6 +183,12 @@ void LauncherPage::on_iconsDirBrowseBtn_clicked()
         QString cooked_dir = FS::NormalizePath(raw_dir);
         ui->iconsDirTextBox->setText(cooked_dir);
     }
+}
+
+void LauncherPage::on_iconsDirResetBtn_clicked()
+{
+    auto defValue = APPLICATION->settings()->getSetting("IconsDir")->defValue().toString();
+    ui->iconsDirTextBox->setText(defValue);
 }
 
 void LauncherPage::on_modsDirBrowseBtn_clicked()
@@ -163,6 +202,12 @@ void LauncherPage::on_modsDirBrowseBtn_clicked()
     }
 }
 
+void LauncherPage::on_modsDirResetBtn_clicked()
+{
+    auto defValue = APPLICATION->settings()->getSetting("CentralModsDir")->defValue().toString();
+    ui->modsDirTextBox->setText(defValue);
+}
+
 void LauncherPage::on_downloadsDirBrowseBtn_clicked()
 {
     QString raw_dir = QFileDialog::getExistingDirectory(this, tr("Downloads Folder"), ui->downloadsDirTextBox->text());
@@ -173,6 +218,12 @@ void LauncherPage::on_downloadsDirBrowseBtn_clicked()
     }
 }
 
+void LauncherPage::on_downloadsDirResetBtn_clicked()
+{
+    auto defValue = APPLICATION->settings()->getSetting("DownloadsDir")->defValue().toString();
+    ui->downloadsDirTextBox->setText(defValue);
+}
+
 void LauncherPage::on_javaDirBrowseBtn_clicked()
 {
     QString raw_dir = QFileDialog::getExistingDirectory(this, tr("Java Folder"), ui->javaDirTextBox->text());
@@ -181,6 +232,12 @@ void LauncherPage::on_javaDirBrowseBtn_clicked()
         QString cooked_dir = FS::NormalizePath(raw_dir);
         ui->javaDirTextBox->setText(cooked_dir);
     }
+}
+
+void LauncherPage::on_javaDirResetBtn_clicked()
+{
+    auto defValue = APPLICATION->settings()->getSetting("JavaDir")->defValue().toString();
+    ui->javaDirTextBox->setText(defValue);
 }
 
 void LauncherPage::on_skinsDirBrowseBtn_clicked()
@@ -194,9 +251,55 @@ void LauncherPage::on_skinsDirBrowseBtn_clicked()
     }
 }
 
+void LauncherPage::on_skinsDirResetBtn_clicked()
+{
+    auto defValue = APPLICATION->settings()->getSetting("SkinsDir")->defValue().toString();
+    ui->skinsDirTextBox->setText(defValue);
+}
+
 void LauncherPage::on_metadataDisableBtn_clicked()
 {
     ui->metadataWarningLabel->setHidden(!ui->metadataDisableBtn->isChecked());
+}
+
+void LauncherPage::on_readWriteAddBtn_clicked() {
+#if defined(Q_OS_MACOS) && defined(SANDBOX_ENABLED)
+    QString dir = QFileDialog::getExistingDirectory(this, tr("Add Read/Write Exception"), QDir::homePath());
+    if (!dir.isEmpty()) {
+        APPLICATION->m_dynamicSandboxExceptions->addReadWriteException(dir);
+        loadSettings();
+    }
+#endif
+}
+
+void LauncherPage::on_readWriteRemoveBtn_clicked() {
+#if defined(Q_OS_MACOS) && defined(SANDBOX_ENABLED)
+    int row = ui->readWriteList->currentRow();
+    if (row >= 0) {
+        APPLICATION->m_dynamicSandboxExceptions->removeReadWriteException(row);
+        loadSettings();
+    }
+#endif
+}
+
+void LauncherPage::on_readOnlyAddBtn_clicked() {
+#if defined(Q_OS_MACOS) && defined(SANDBOX_ENABLED)
+    QString dir = QFileDialog::getExistingDirectory(this, tr("Add Read Only Exception"), QDir::homePath());
+    if (!dir.isEmpty()) {
+        APPLICATION->m_dynamicSandboxExceptions->addReadOnlyException(dir);
+        loadSettings();
+    }
+#endif
+}
+
+void LauncherPage::on_readOnlyRemoveBtn_clicked() {
+#if defined(Q_OS_MACOS) && defined(SANDBOX_ENABLED)
+    int row = ui->readOnlyList->currentRow();
+    if (row >= 0) {
+        APPLICATION->m_dynamicSandboxExceptions->removeReadOnlyException(row);
+        loadSettings();
+    }
+#endif
 }
 
 void LauncherPage::applySettings()
@@ -319,6 +422,34 @@ void LauncherPage::loadSettings()
     ui->metadataWarningLabel->setHidden(!ui->metadataDisableBtn->isChecked());
     ui->dependenciesDisableBtn->setChecked(s->get("ModDependenciesDisabled").toBool());
     ui->skipModpackUpdatePromptBtn->setChecked(s->get("SkipModpackUpdatePrompt").toBool());
+
+#if defined(Q_OS_MACOS) && defined(SANDBOX_ENABLED)
+    // macOS sandbox user-selected dynamic exceptions
+    QList<QUrl> readWriteURLs = APPLICATION->m_dynamicSandboxExceptions->readWriteExceptionURLs();
+    QList<QUrl> readOnlyURLs = APPLICATION->m_dynamicSandboxExceptions->readOnlyExceptionURLs();
+
+    QFileIconProvider iconProvider;
+    ui->readWriteList->clear();
+    for (const QUrl& url : readWriteURLs) {
+        if (url.isEmpty())
+            continue;
+        if (url.scheme() == "file") {
+            QIcon fileIcon = iconProvider.icon(QFileInfo(url.toLocalFile()));
+            auto item = new QListWidgetItem(fileIcon, url.toLocalFile());
+            ui->readWriteList->addItem(item);
+        }
+    }
+    ui->readOnlyList->clear();
+    for (const QUrl& url : readOnlyURLs) {
+        if (url.isEmpty())
+            continue;
+        if (url.scheme() == "file") {
+            QIcon fileIcon = iconProvider.icon(QFileInfo(url.toLocalFile()));
+            auto item = new QListWidgetItem(fileIcon, url.toLocalFile());
+            ui->readOnlyList->addItem(item);
+        }
+    }
+#endif
 }
 
 void LauncherPage::refreshFontPreview()

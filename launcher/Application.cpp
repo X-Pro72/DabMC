@@ -147,6 +147,11 @@
 #endif
 
 #if defined(Q_OS_MAC)
+#if defined(SANDBOX_ENABLED)
+#include "macsandbox/DynamicSandboxException.h"
+#include "xpcbridge/XPCBridge.h"
+#include "xpcbridge/XPCManager.h"
+#endif
 #if defined(SPARKLE_ENABLED)
 #include "updater/MacSparkleUpdater.h"
 #endif
@@ -614,10 +619,27 @@ Application::Application(int& argc, char** argv) : QApplication(argc, argv)
         m_settings->registerSetting("InstanceDir", "instances");
         m_settings->registerSetting({ "CentralModsDir", "ModsDir" }, "mods");
         m_settings->registerSetting("IconsDir", "icons");
-        m_settings->registerSetting("DownloadsDir", QStandardPaths::writableLocation(QStandardPaths::DownloadLocation));
+        m_settings->registerSetting("DownloadsDir",
+                                    QFileInfo(QStandardPaths::writableLocation(QStandardPaths::DownloadLocation)).canonicalFilePath());
         m_settings->registerSetting("DownloadsDirWatchRecursive", false);
         m_settings->registerSetting("SkinsDir", "skins");
         m_settings->registerSetting("JavaDir", "java");
+
+#ifdef Q_OS_MACOS
+        // Folder security-scoped bookmarks
+        m_settings->registerSetting("InstanceDirBookmark", "");
+        m_settings->registerSetting("CentralModsDirBookmark", "");
+        m_settings->registerSetting("IconsDirBookmark", "");
+        m_settings->registerSetting("DownloadsDirBookmark", "");
+        m_settings->registerSetting("SkinsDirBookmark", "");
+        m_settings->registerSetting("JavaDirBookmark", "");
+
+#ifdef SANDBOX_ENABLED
+        // Sandbox dynamic exception bookmarks
+        m_settings->registerSetting("ReadWriteDynamicSandboxExceptions", "");
+        m_settings->registerSetting("ReadOnlyDynamicSandboxExceptions", "");
+#endif
+#endif
 
         // Editors
         m_settings->registerSetting("JsonEditor", QString());
@@ -858,7 +880,7 @@ Application::Application(int& argc, char** argv) : QApplication(argc, argv)
         auto InstDirSetting = m_settings->getSetting("InstanceDir");
         // instance path: check for problems with '!' in instance path and warn the user in the log
         // and remember that we have to show him a dialog when the gui starts (if it does so)
-        QString instDir = InstDirSetting->get().toString();
+        QString instDir = m_settings->get("InstanceDir").toString();
         qDebug() << "Instance path              : " << instDir;
         if (FS::checkProblemticPathJava(QDir(instDir))) {
             qWarning() << "Your instance path contains \'!\' and this is known to cause java problems!";
@@ -1070,6 +1092,27 @@ Application::Application(int& argc, char** argv) : QApplication(argc, argv)
             msgBox->open();
         }
     }
+
+#if defined(Q_OS_MACOS) && defined(SANDBOX_ENABLED)
+    m_xpcManager.reset(new XPCManager());
+    m_dynamicSandboxExceptions.reset(new DynamicSandboxException());
+
+    // symlink discord IPC socket into the sandbox so the game can access it
+    QDir tempDir(qEnvironmentVariable("TMPDIR"));
+    QString unsandboxedTempDir = APPLICATION->m_xpcManager->getUnsandboxedTemporaryDirectory();
+    if (tempDir.exists()) {
+        for (int i = 0; i <= 9; i++) {
+            QString ipcName = QString("discord-ipc-%1").arg(i);
+            QString ipcPathFull = tempDir.filePath(ipcName);
+            QFileInfo currentIPCInfo(ipcPathFull);
+            if (currentIPCInfo.isSymbolicLink()) {
+                QFile::remove(ipcPathFull);
+            }
+
+            QFile::link(unsandboxedTempDir + ipcName, ipcPathFull);
+        }
+    }
+#endif
 
     if (createSetupWizard()) {
         return;
@@ -1799,11 +1842,12 @@ QString Application::getUserAgentUncached()
     return BuildConfig.USER_AGENT_UNCACHED;
 }
 
-bool Application::handleDataMigration(const QString& currentData,
-                                      const QString& oldData,
-                                      const QString& name,
-                                      const QString& configFile) const
+bool Application::handleDataMigration(const QString& currentData, QString oldData, const QString& name, const QString& configFile) const
 {
+#if defined(Q_OS_MACOS) && defined(SANDBOX_ENABLED)
+    // other programs' data are not in the sandbox container
+    oldData.remove("/Containers/org.prismlauncher.PrismLauncher/Data/Library");
+#endif
     QString nomigratePath = FS::PathCombine(currentData, name + "_nomigrate.txt");
     QStringList configPaths = { FS::PathCombine(oldData, configFile), FS::PathCombine(oldData, BuildConfig.LAUNCHER_CONFIGFILE) };
 
