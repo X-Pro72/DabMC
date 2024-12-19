@@ -40,7 +40,7 @@ void ModrinthCheckUpdate::executeTask()
         // Sadly the API can only handle one hash type per call, se we
         // need to generate a new hash if the current one is innadequate
         // (though it will rarely happen, if at all)
-        if (resource->metadata()->hash_format != m_hash_type) {
+        if (resource->metadata()->hash_format != m_hashType) {
             auto hash_task = Hashing::createHasher(resource->fileinfo().absoluteFilePath(), ModPlatform::ResourceProvider::MODRINTH);
             connect(hash_task.get(), &Hashing::Hasher::resultsReady, [this, resource](QString hash) { m_mappings.insert(hash, resource); });
             connect(hash_task.get(), &Task::failed, [this] { failed("Failed to generate hash"); });
@@ -121,7 +121,7 @@ void ModrinthCheckUpdate::checkVersionsResponse(std::shared_ptr<QByteArray> resp
             // - The version reported by the JAR is different from the version reported by the indexed version (it's usually the case)
             // Such is the pain of having arbitrary files for a given version .-.
 
-            auto project_ver = Modrinth::loadIndexedPackVersion(project_obj, m_hash_type, loader_filter);
+            auto project_ver = Modrinth::loadIndexedPackVersion(project_obj, m_hashType, loader_filter);
             if (project_ver.downloadUrl.isEmpty()) {
                 qCritical() << "Modrinth mod without download url!" << project_ver.fileName;
                 ++iter;
@@ -135,7 +135,7 @@ void ModrinthCheckUpdate::checkVersionsResponse(std::shared_ptr<QByteArray> resp
             pack->addonId = resource->metadata()->project_id;
             pack->provider = ModPlatform::ResourceProvider::MODRINTH;
             if ((project_ver.hash != hash && project_ver.is_preferred) || (resource->status() == ResourceStatus::NOT_INSTALLED)) {
-                auto download_task = makeShared<ResourceDownloadTask>(pack, project_ver, m_resource_model);
+                auto download_task = makeShared<ResourceDownloadTask>(pack, project_ver, m_resourceModel);
 
                 QString old_version = resource->metadata()->version_number;
                 if (old_version.isEmpty()) {
