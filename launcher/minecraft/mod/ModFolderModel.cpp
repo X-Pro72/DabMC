@@ -63,18 +63,18 @@ ModFolderModel::ModFolderModel(const QDir& dir, BaseInstance* instance, bool is_
     : ResourceFolderModel(QDir(dir), instance, is_indexed, create_dir, parent)
 {
     m_column_names = QStringList({ "Enable", "Image", "Name", "Version", "Last Modified", "Provider", "Size", "Side", "Loaders",
-                                   "Minecraft Versions", "Release Type", "Requires", "Required By" });
+                                   "Minecraft Versions", "Release Type", "Requires", "Required By", "Update" });
     m_column_names_translated =
         QStringList({ tr("Enable"), tr("Image"), tr("Name"), tr("Version"), tr("Last Modified"), tr("Provider"), tr("Size"), tr("Side"),
-                      tr("Loaders"), tr("Minecraft Versions"), tr("Release Type"), tr("Requires"), tr("Required By") });
-    m_column_sort_keys = { SortType::ENABLED,      SortType::NAME,     SortType::NAME,       SortType::VERSION, SortType::DATE,
-                           SortType::PROVIDER,     SortType::SIZE,     SortType::SIDE,       SortType::LOADERS, SortType::MC_VERSIONS,
-                           SortType::RELEASE_TYPE, SortType::REQUIRES, SortType::REQUIRED_BY };
+                      tr("Loaders"), tr("Minecraft Versions"), tr("Release Type"), tr("Requires"), tr("Required By"), tr("Update") });
+    m_column_sort_keys = { SortType::ENABLED,      SortType::NAME,     SortType::NAME,        SortType::VERSION,    SortType::DATE,
+                           SortType::PROVIDER,     SortType::SIZE,     SortType::SIDE,        SortType::LOADERS,    SortType::MC_VERSIONS,
+                           SortType::RELEASE_TYPE, SortType::REQUIRES, SortType::REQUIRED_BY, SortType::LOCK_UPDATE };
     m_column_resize_modes = { QHeaderView::Interactive, QHeaderView::Interactive, QHeaderView::Stretch,     QHeaderView::Interactive,
                               QHeaderView::Interactive, QHeaderView::Interactive, QHeaderView::Interactive, QHeaderView::Interactive,
                               QHeaderView::Interactive, QHeaderView::Interactive, QHeaderView::Interactive, QHeaderView::Interactive,
-                              QHeaderView::Interactive };
-    m_columnsHideable = { false, true, false, true, true, true, true, true, true, true, true, true, true };
+                              QHeaderView::Interactive, QHeaderView::Interactive };
+    m_columnsHideable = { false, true, false, true, true, true, true, true, true, true, true, true, true, true };
 
     connect(this, &ModFolderModel::parseFinished, this, &ModFolderModel::onParseFinished);
 }
@@ -133,6 +133,12 @@ QVariant ModFolderModel::data(const QModelIndex& index, int role) const
                 return QSize(32, 32);
             }
             break;
+        case Qt::CheckStateRole:
+            if (column == ActiveColumn)
+                return at(row).enabled() ? Qt::Checked : Qt::Unchecked;
+            else if (column == LockUpdateCoumn)
+                return !at(row).lockUpdate() ? Qt::Checked : Qt::Unchecked;
+            return QVariant();
         default:
             break;
     }
@@ -182,6 +188,7 @@ QVariant ModFolderModel::headerData(int section, [[maybe_unused]] Qt::Orientatio
                 case SizeColumn:
                 case RequiredByColumn:
                 case RequiresColumn:
+                case LockUpdateCoumn:
                     return columnNames().at(section);
                 default:
                     return QVariant();
@@ -213,6 +220,8 @@ QVariant ModFolderModel::headerData(int section, [[maybe_unused]] Qt::Orientatio
                     return tr("For each mod, the number of other mods which depend on it.");
                 case RequiresColumn:
                     return tr("For each mod, the number of other mods it depends on.");
+                case LockUpdateCoumn:
+                    return tr("Should this mod be updated?");
                 default:
                     return QVariant();
             }
@@ -255,7 +264,6 @@ void ModFolderModel::onParseSucceeded(int ticket, QString mod_id)
     if (result && resource) {
         auto* mod = static_cast<Mod*>(resource.get());
         mod->finishResolvingWithDetails(std::move(result->details));
-
     }
     emit dataChanged(index(row, RequiresColumn), index(row, RequiredByColumn));
 }

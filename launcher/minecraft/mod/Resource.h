@@ -74,6 +74,7 @@ enum class SortType {
     RELEASE_TYPE,
     REQUIRES,
     REQUIRED_BY,
+    LOCK_UPDATE,
 };
 
 enum class EnableAction { ENABLE, DISABLE, TOGGLE };
