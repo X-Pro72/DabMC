@@ -61,6 +61,7 @@ MinecraftSettingsWidget::MinecraftSettingsWidget(MinecraftInstance* instance, QW
         m_ui->serverJoinGroupBox->hide();
         m_ui->globalDataPacksGroupBox->hide();
         m_ui->loaderGroup->hide();
+        m_ui->latestMCVersionCheckBox->hide();
     } else {
         m_javaSettings = new JavaSettingsWidget(m_instance, this);
         m_ui->javaScrollArea->setWidget(m_javaSettings);
@@ -293,6 +294,7 @@ void MinecraftSettingsWidget::loadSettings()
         for (auto c : blockSignalsCheckBoxes) {
             c->blockSignals(false);
         }
+        m_ui->latestMCVersionCheckBox->setChecked(settings->get("UseLatestMinecraftVersion").toBool());
     }
 
     m_ui->legacySettingsGroupBox->setChecked(settings->get("OverrideLegacySettings").toBool());
@@ -469,6 +471,8 @@ void MinecraftSettingsWidget::saveSettings()
             } else {
                 settings->reset("InstanceAccountId");
             }
+
+            settings->set("UseLatestMinecraftVersion", m_ui->latestMCVersionCheckBox->isChecked());
         }
 
         bool overrideLegacySettings = m_instance == nullptr || m_ui->legacySettingsGroupBox->isChecked();
