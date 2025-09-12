@@ -1059,6 +1059,8 @@ SET(LAUNCHER_SOURCES
     ui/dialogs/ExportPackDialog.h
     ui/dialogs/ExportToModListDialog.cpp
     ui/dialogs/ExportToModListDialog.h
+    ui/dialogs/FileConflictDialog.cpp
+    ui/dialogs/FileConflictDialog.h
     ui/dialogs/IconPickerDialog.cpp
     ui/dialogs/IconPickerDialog.h
     ui/dialogs/ImportResourceDialog.cpp
@@ -1113,6 +1115,8 @@ SET(LAUNCHER_SOURCES
     ui/widgets/CustomCommands.h
     ui/widgets/EnvironmentVariables.cpp
     ui/widgets/EnvironmentVariables.h
+    ui/widgets/SharedFolderWidget.cpp
+    ui/widgets/SharedFolderWidget.h
     ui/widgets/IconLabel.cpp
     ui/widgets/IconLabel.h
     ui/widgets/JavaWizardWidget.cpp
@@ -1227,6 +1231,7 @@ qt_wrap_ui(LAUNCHER_UI
     ui/pages/modplatform/technic/TechnicPage.ui
     ui/widgets/CustomCommands.ui
     ui/widgets/EnvironmentVariables.ui
+    ui/widgets/SharedFolderWidget.ui
     ui/widgets/InfoFrame.ui
     ui/widgets/ModFilterWidget.ui
     ui/widgets/SubTaskProgressBar.ui
@@ -1244,6 +1249,7 @@ qt_wrap_ui(LAUNCHER_UI
     ui/dialogs/ExportInstanceDialog.ui
     ui/dialogs/ExportPackDialog.ui
     ui/dialogs/ExportToModListDialog.ui
+    ui/dialogs/FileConflictDialog.ui
     ui/dialogs/IconPickerDialog.ui
     ui/dialogs/ImportResourceDialog.ui
     ui/dialogs/MSALoginDialog.ui
