@@ -5,9 +5,9 @@
 
 /* Helpers */
 enum class InstanceNameChange { ShouldChange, ShouldKeep };
-[[nodiscard]] InstanceNameChange askForChangingInstanceName(QWidget* parent, const QString& old_name, const QString& new_name);
+[[nodiscard]] InstanceNameChange askForChangingInstanceName(QWidget* parent, const QString& oldName, const QString& newName);
 enum class ShouldUpdate { Update, SkipUpdating, Cancel };
-[[nodiscard]] ShouldUpdate askIfShouldUpdate(QWidget* parent, QString original_version_name);
+[[nodiscard]] ShouldUpdate askIfShouldUpdate(QWidget* parent, QString originalVersionName);
 enum class ShouldDeleteSaves { NotAsked, Yes, No };
 [[nodiscard]] ShouldDeleteSaves askIfShouldDeleteSaves(QWidget* parent);
 
@@ -25,43 +25,44 @@ class InstanceCreationTask : public Task {
     void setGroup(const QString& group) { m_instGroup = group; }
     QString group() const { return m_instGroup; }
 
-    bool shouldConfirmUpdate() const { return m_confirm_update; }
-    void setConfirmUpdate(bool confirm) { m_confirm_update = confirm; }
+    bool shouldConfirmUpdate() const { return m_confirmUpdate; }
+    void setConfirmUpdate(bool confirm) { m_confirmUpdate = confirm; }
 
-    bool shouldOverride() const { return m_override_existing; }
+    bool shouldOverride() const { return m_overrideExisting; }
 
-    QString originalInstanceID() const { return m_original_instance_id; };
+    QString originalInstanceID() const { return m_originalInstanceId; };
 
     QString modifiedName() const;
     QString originalName() const;
     QString name() const;
     QString version() const;
 
-    void setName(QString name) { m_modified_name = name; }
+    void setName(QString name) { m_modifiedName = name; }
     void setOriginalName(QString name, QString version);
 
    protected:
-    void setOverride(bool override, QString instance_id_to_override = {})
+    void setOverride(bool override, QString instanceIdToOverride = {})
     {
-        m_override_existing = override;
-        if (!instance_id_to_override.isEmpty())
-            m_original_instance_id = instance_id_to_override;
+        m_overrideExisting = override;
+        if (!instanceIdToOverride.isEmpty())
+            m_originalInstanceId = instanceIdToOverride;
     }
     void scheduleToDelete(QWidget* parent, QDir dir, QString path, bool checkDisabled = false);
 
    protected: /* data */
-    QString m_original_version;
+    QString m_originalName;
+    QString m_originalVersion;
 
-    QString m_modified_name;
+    QString m_modifiedName;
 
     SettingsObject* m_globalSettings;
     QString m_instGroup;
     QString m_stagingPath;
 
-    bool m_override_existing = false;
-    bool m_confirm_update = true;
+    bool m_overrideExisting = false;
+    bool m_confirmUpdate = true;
 
-    QString m_original_instance_id;
+    QString m_originalInstanceId;
 
     QStringList m_filesToRemove;
     ShouldDeleteSaves m_shouldDeleteSaves;

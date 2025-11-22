@@ -74,7 +74,7 @@ bool shouldStopOnConsoleOverflow(SettingsObject* settings)
 BaseInstance::BaseInstance(SettingsObject* globalSettings, std::unique_ptr<SettingsObject> settings, const QString& rootDir) : QObject()
 {
     m_settings = std::move(settings);
-    m_global_settings = globalSettings;
+    m_globalSettings = globalSettings;
     m_rootDir = rootDir;
 
     m_settings->registerSetting("name", "Unnamed Instance");

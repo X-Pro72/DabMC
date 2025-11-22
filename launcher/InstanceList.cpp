@@ -51,8 +51,8 @@
 #include "BaseInstance.h"
 #include "ExponentialSeries.h"
 #include "FileSystem.h"
-
-#include "InstanceTask.h"
+#include "InstanceCreationTask.h"
+#include "InstanceList.h"
 #include "NullInstance.h"
 #include "WatchLock.h"
 #include "minecraft/MinecraftInstance.h"
