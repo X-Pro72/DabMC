@@ -42,7 +42,7 @@
 #include <QUrl>
 
 namespace Technic {
-class SolderPackInstallTask : public InstanceTask {
+class SolderPackInstallTask : public InstanceCreationTask {
     Q_OBJECT
    public:
     explicit SolderPackInstallTask(QNetworkAccessManager* network,

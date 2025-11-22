@@ -11,31 +11,10 @@ enum class ShouldUpdate { Update, SkipUpdating, Cancel };
 enum class ShouldDeleteSaves { NotAsked, Yes, No };
 [[nodiscard]] ShouldDeleteSaves askIfShouldDeleteSaves(QWidget* parent);
 
-struct InstanceName {
+class InstanceCreationTask : public Task {
    public:
-    InstanceName() = default;
-    InstanceName(QString name, QString version) : m_original_name(std::move(name)), m_original_version(std::move(version)) {}
-
-    QString modifiedName() const;
-    QString originalName() const;
-    QString name() const;
-    QString version() const;
-
-    void setName(QString name) { m_modified_name = name; }
-    void setName(InstanceName& other);
-
-   protected:
-    QString m_original_name;
-    QString m_original_version;
-
-    QString m_modified_name;
-};
-
-class InstanceTask : public Task, public InstanceName {
-    Q_OBJECT
-   public:
-    InstanceTask();
-    ~InstanceTask() override = default;
+    InstanceCreationTask() {}
+    virtual ~InstanceCreationTask() = default;
 
     void setParentSettings(SettingsObject* settings) { m_globalSettings = settings; }
 
@@ -53,6 +32,14 @@ class InstanceTask : public Task, public InstanceName {
 
     QString originalInstanceID() const { return m_original_instance_id; };
 
+    QString modifiedName() const;
+    QString originalName() const;
+    QString name() const;
+    QString version() const;
+
+    void setName(QString name) { m_modified_name = name; }
+    void setOriginalName(QString name, QString version);
+
    protected:
     void setOverride(bool override, QString instance_id_to_override = {})
     {
@@ -60,10 +47,14 @@ class InstanceTask : public Task, public InstanceName {
         if (!instance_id_to_override.isEmpty())
             m_original_instance_id = instance_id_to_override;
     }
+    void scheduleToDelete(QWidget* parent, QDir dir, QString path, bool checkDisabled = false);
 
    protected: /* data */
+    QString m_original_version;
+
+    QString m_modified_name;
+
     SettingsObject* m_globalSettings;
-    QString m_instIcon;
     QString m_instGroup;
     QString m_stagingPath;
 
@@ -71,4 +62,7 @@ class InstanceTask : public Task, public InstanceName {
     bool m_confirm_update = true;
 
     QString m_original_instance_id;
+
+    QStringList m_filesToRemove;
+    ShouldDeleteSaves m_shouldDeleteSaves;
 };
