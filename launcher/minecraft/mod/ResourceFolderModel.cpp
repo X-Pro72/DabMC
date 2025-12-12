@@ -572,8 +572,10 @@ QVariant ResourceFolderModel::data(const QModelIndex& index, int role) const
         case Qt::CheckStateRole:
             if (column == ActiveColumn)
                 return m_resources[row]->enabled() ? Qt::Checked : Qt::Unchecked;
-            else if (column == LockUpdateCoumn)
-                return !at(row).lockUpdate() ? Qt::Checked : Qt::Unchecked;
+            return {};
+        case Qt::UserRole:
+            if (column == LockUpdateCoumn)
+                return at(row).lockUpdate();
             return {};
         default:
             return {};
@@ -586,10 +588,10 @@ bool ResourceFolderModel::setData(const QModelIndex& index, [[maybe_unused]] con
     if (row < 0 || row >= rowCount(index.parent()) || !index.isValid())
         return false;
 
+    if (role == Qt::UserRole && columnNames(false).at(index.column()) == "Update") {
+        return setModUpdate({ index }, EnableAction::TOGGLE);
+    }
     if (role == Qt::CheckStateRole) {
-        if (columnNames(false).at(index.column()) == "Update") {
-            return setModUpdate({ index }, EnableAction::TOGGLE);
-        }
         return setResourceEnabled({ index }, EnableAction::TOGGLE);
     }
 
@@ -600,40 +602,41 @@ QVariant ResourceFolderModel::headerData(int section, [[maybe_unused]] Qt::Orien
 {
     switch (role) {
         case Qt::DisplayRole:
-        case ActiveColumn:
-        case NameColumn:
-        case DateColumn:
-        case ProviderColumn:
-        case SizeColumn:
-        case LockUpdateCoumn:
-            return columnNames().at(section);
-        default:
-            return {};
-    }
-    case Qt::ToolTipRole: {
-        //: Here, resource is a generic term for external resources, like Mods, Resource Packs, Shader Packs, etc.
-        switch (section) {
-            case ActiveColumn:
-                return tr("Is the resource enabled?");
-            case NameColumn:
-                return tr("The name of the resource.");
-            case DateColumn:
-                return tr("The date and time this resource was last changed (or added).");
-            case ProviderColumn:
-                return tr("The source provider of the resource.");
-            case SizeColumn:
-                return tr("The size of the resource.");
-            case LockUpdateCoumn:
-                return tr("Should this mod be updated?");
-            default:
-                return {};
+            switch (section) {
+                case ActiveColumn:
+                case NameColumn:
+                case DateColumn:
+                case ProviderColumn:
+                case SizeColumn:
+                case LockUpdateCoumn:
+                    return columnNames().at(section);
+                default:
+                    return {};
+            }
+        case Qt::ToolTipRole: {
+            //: Here, resource is a generic term for external resources, like Mods, Resource Packs, Shader Packs, etc.
+            switch (section) {
+                case ActiveColumn:
+                    return tr("Is the resource enabled?");
+                case NameColumn:
+                    return tr("The name of the resource.");
+                case DateColumn:
+                    return tr("The date and time this resource was last changed (or added).");
+                case ProviderColumn:
+                    return tr("The source provider of the resource.");
+                case SizeColumn:
+                    return tr("The size of the resource.");
+                case LockUpdateCoumn:
+                    return tr("Should this mod be updated?");
+                default:
+                    return {};
+            }
         }
+        default:
+            break;
     }
-    default:
-        break;
-}
 
-return {};
+    return {};
 }
 
 void ResourceFolderModel::setupHeaderAction(QAction* act, int column)
