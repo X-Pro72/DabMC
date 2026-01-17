@@ -56,6 +56,7 @@ class InstanceCreationTask : public Task {
     QString m_modifiedName;
 
     SettingsObject* m_globalSettings;
+    QString m_instIcon;
     QString m_instGroup;
     QString m_stagingPath;
 

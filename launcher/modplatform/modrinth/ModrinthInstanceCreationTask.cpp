@@ -216,12 +216,12 @@ void ModrinthCreationTask::createInstance()
         components->setComponentVersion("net.neoforged", m_neoForgeVersion);
 
     if (m_instIcon != "default") {
-        instance.setIconKey(m_instIcon);
+        instance->setIconKey(m_instIcon);
     } else if (!m_managedId.isEmpty()) {
-        instance.setIconKey("modrinth");
+        instance->setIconKey("modrinth");
     }
 
-    setManagedPack(&instance);
+    setManagedPack(instance.get());
 
     instance->setName(name());
     instance->saveNow();
@@ -454,7 +454,7 @@ void ModrinthCreationTask::finishInstall()
                 inst->setName(name());
         }
 
-        setManagedPack(m_instance->get());
+        setManagedPack(m_instance.value());
     }
 
     if (shouldOverride()) {

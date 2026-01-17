@@ -69,7 +69,7 @@ bool PackInstallTask::abort()
     if (m_modIdResolverTask)
         aborted &= m_modIdResolverTask->abort();
 
-    return aborted ? InstanceTask::abort() : false;
+    return aborted ? InstanceCreationTask::abort() : false;
 }
 
 void PackInstallTask::executeTask()

@@ -39,7 +39,7 @@
 
 #include "FTBPackManifest.h"
 
-#include "InstanceTask.h"
+#include "InstanceCreationTask.h"
 #include "QObjectPtr.h"
 #include "modplatform/flame/FileResolvingTask.h"
 #include "net/NetJob.h"
@@ -49,7 +49,7 @@
 
 namespace FTB {
 
-class PackInstallTask final : public InstanceTask {
+class PackInstallTask final : public InstanceCreationTask {
     Q_OBJECT
 
    public:

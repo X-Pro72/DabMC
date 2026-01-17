@@ -467,7 +467,7 @@ void FlameCreationTask::createInstance()
         FS::deletePath(jarmodsPath);
     }
 
-    setManagedPack(&instance);
+    setManagedPack(instance.get());
 
     instance->setName(name());
 
@@ -729,9 +729,7 @@ void FlameCreationTask::finishInstall()
     // Update information of the already installed instance, if any.
     if (m_instance) {
         setAbortable(false);
-        auto inst = m_instance.value();
-
-        setManagedPack(m_instance->get());
+        setManagedPack(m_instance.value());
     }
 
     if (shouldOverride()) {

@@ -510,7 +510,6 @@ void ManagedPackPage::updatePack(const QUrl& url, QString versionID, QString ver
     } else {
         extracted->setOriginalName(m_inst->getManagedPackName(), versionName);
         extracted->setName(m_inst->name().replace(m_inst->getManagedPackVersionName(), versionName));
-        extracted->setName(inst_name);
     }
     extracted->setGroup(APPLICATION->instances()->getInstanceGroup(m_inst->id()));
     extracted->setIcon(m_inst->iconKey());
