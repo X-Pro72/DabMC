@@ -74,6 +74,10 @@ ShaderPackPage::ShaderPackPage(MinecraftInstance* instance, ShaderPackFolderMode
     ui->actionChangeVersion->setToolTip(tr("Change a shader pack's version."));
     connect(ui->actionChangeVersion, &QAction::triggered, this, &ShaderPackPage::changeShaderPackVersion);
     ui->actionsToolbar->insertActionAfter(ui->actionUpdateItem, ui->actionChangeVersion);
+
+    // Set default sort to Last Modified (Date) column, descending (newest first)
+    // Column 3 is DateColumn in ShaderPackFolderModel
+    ui->treeView->sortByColumn(3, Qt::DescendingOrder);
 }
 
 void ShaderPackPage::downloadShaderPack()

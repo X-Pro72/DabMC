@@ -56,6 +56,12 @@ class ShaderPack : public Resource {
     /** Thread-safe. */
     void setPackFormat(ShaderPackFormat new_format);
 
+    /** Get the version of the shader pack from metadata */
+    auto version() const -> QString;
+
+    /** Override compare to support version sorting */
+    [[nodiscard]] int compare(const Resource& other, SortType type) const override;
+
     bool valid() const override;
 
    protected:

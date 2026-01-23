@@ -22,6 +22,8 @@
 
 #include "ShaderPack.h"
 #include "FileSystem.h"
+#include "Version.h"
+#include <QRegularExpression>
 
 ShaderPack::ShaderPack(QObject* parent) : Resource(parent) {}
 
@@ -47,6 +49,58 @@ void ShaderPack::setPackFormat(ShaderPackFormat new_format)
     QMutexLocker locker(&m_data_lock);
 
     m_pack_format = new_format;
+}
+
+auto ShaderPack::version() const -> QString
+{
+    if (metadata() && !metadata()->version_number.isEmpty()) {
+        return metadata()->version_number;
+    }
+    
+    // Try to extract version from filename as fallback
+    // Common patterns: "shader-v1.2.3.zip", "shader-1.2.3.zip", "shader_v1.2.3.zip"
+    QString filename = m_file_info.completeBaseName(); // filename without extension
+    if (filename.isEmpty()) {
+        return {};
+    }
+    
+    // Look for version patterns in filename
+    // Pattern: v followed by numbers and dots (e.g., v1.2.3, v2.0)
+    QRegularExpression versionPattern(R"(v?(\d+\.\d+(?:\.\d+)?(?:\.\d+)?))", QRegularExpression::CaseInsensitiveOption);
+    auto match = versionPattern.match(filename);
+    if (match.hasMatch()) {
+        return match.captured(1); // Return the version number without 'v' prefix
+    }
+    
+    // If no version found and no metadata, return empty (will show as blank in UI)
+    return {};
+}
+
+int ShaderPack::compare(const Resource& other, SortType type) const
+{
+    auto cast_other = dynamic_cast<ShaderPack const*>(&other);
+    if (!cast_other)
+        return Resource::compare(other, type);
+
+    switch (type) {
+        default:
+        case SortType::ENABLED:
+        case SortType::NAME:
+        case SortType::DATE:
+        case SortType::SIZE:
+        case SortType::PROVIDER:
+            return Resource::compare(other, type);
+        case SortType::VERSION: {
+            auto this_ver = Version(version());
+            auto other_ver = Version(cast_other->version());
+            if (this_ver > other_ver)
+                return 1;
+            if (this_ver < other_ver)
+                return -1;
+            break;
+        }
+    }
+    return 0;
 }
 
 bool ShaderPack::valid() const
