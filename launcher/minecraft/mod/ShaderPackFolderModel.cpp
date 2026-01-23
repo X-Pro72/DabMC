@@ -62,7 +62,7 @@ ShaderPackFolderModel::ShaderPackFolderModel(const QDir& dir, BaseInstance* inst
     m_column_names = QStringList({ "Enable", "Name", "Version", "Last Modified", "Provider", "Size" });
     m_column_names_translated = QStringList({ tr("Enable"), tr("Name"), tr("Version"), tr("Last Modified"), tr("Provider"), tr("Size") });
     m_column_sort_keys = { SortType::ENABLED, SortType::NAME, SortType::VERSION, SortType::DATE, SortType::PROVIDER, SortType::SIZE };
-    m_column_resize_modes = { QHeaderView::Interactive, QHeaderView::Stretch, QHeaderView::Interactive,
+    m_column_resize_modes = { QHeaderView::Interactive, QHeaderView::Stretch,     QHeaderView::Interactive,
                               QHeaderView::Interactive, QHeaderView::Interactive, QHeaderView::Interactive };
     m_columnsHideable = { false, false, true, true, true, true };
 }

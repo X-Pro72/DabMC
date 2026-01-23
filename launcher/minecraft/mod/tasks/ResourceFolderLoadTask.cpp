@@ -111,7 +111,7 @@ void ResourceFolderLoadTask::executeTask()
             if (is_shader) {
                 // Check if there's metadata for the enabled version (without .disabled)
                 QString enabled_id = resource->internal_id();
-                enabled_id.chop(9); // Remove ".disabled"
+                enabled_id.chop(9);  // Remove ".disabled"
                 if (m_result->resources.contains(enabled_id)) {
                     auto existing = m_result->resources[enabled_id];
                     if (existing->metadata()) {

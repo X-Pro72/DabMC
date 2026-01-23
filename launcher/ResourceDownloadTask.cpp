@@ -87,7 +87,7 @@ void ResourceDownloadTask::downloadSucceeded()
 
     // For shaders, allow multiple versions to coexist - don't delete the old version
     bool is_shader = dynamic_cast<ShaderPackFolderModel*>(m_pack_model) != nullptr;
-    
+
     if (!is_shader) {
         m_pack_model->uninstallResource(oldFilename, true);
     }
