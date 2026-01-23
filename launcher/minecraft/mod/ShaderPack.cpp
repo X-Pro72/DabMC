@@ -54,7 +54,44 @@ void ShaderPack::setPackFormat(ShaderPackFormat new_format)
 auto ShaderPack::version() const -> QString
 {
     if (metadata() && !metadata()->version_number.isEmpty()) {
-        return metadata()->version_number;
+        QString version_str = metadata()->version_number;
+        
+        // Remove common file extensions that might be included
+        version_str = version_str.remove(QRegularExpression(R"(\.(zip|jar|rar|7z|tar\.gz)$)", QRegularExpression::CaseInsensitiveOption));
+        version_str = version_str.trimmed();
+        
+        // For CurseForge, version_number often contains the shader name (e.g., "ShaderName v1.2.3" or "Mellow Shader x.x.x.zip")
+        // Try to extract just the version number
+        // Use a global match to find all version patterns, then take the last one (most likely to be the actual version)
+        // Pattern matches: v1.2.3, 1.2.3, v2.0, etc. with optional 'v' prefix
+        // Look for version numbers that appear after text (common in CurseForge displayName format)
+        QRegularExpression versionPattern(R"((v?(\d+\.\d+(?:\.\d+)?(?:\.\d+)?)))", QRegularExpression::CaseInsensitiveOption);
+        QRegularExpressionMatch lastMatch;
+        int lastPos = -1;
+        QRegularExpressionMatchIterator i = versionPattern.globalMatch(version_str);
+        while (i.hasNext()) {
+            auto match = i.next();
+            int pos = match.capturedStart();
+            if (pos > lastPos) {
+                lastMatch = match;
+                lastPos = pos;
+            }
+        }
+        
+        if (lastMatch.hasMatch()) {
+            // Found a version number pattern - return just the version number without 'v' prefix
+            return lastMatch.captured(2);
+        }
+        
+        // If no version pattern found, check if the whole string is just a version number
+        QRegularExpression simpleVersionPattern(R"(^v?(\d+\.\d+(?:\.\d+)?(?:\.\d+)?)$)", QRegularExpression::CaseInsensitiveOption);
+        auto simpleMatch = simpleVersionPattern.match(version_str);
+        if (simpleMatch.hasMatch()) {
+            return simpleMatch.captured(1);
+        }
+        
+        // If it doesn't look like a version number, return empty (don't show the full string)
+        return {};
     }
     
     // Try to extract version from filename as fallback
