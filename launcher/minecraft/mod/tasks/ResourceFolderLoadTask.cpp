@@ -39,6 +39,7 @@
 #include "Application.h"
 #include "FileSystem.h"
 #include "minecraft/mod/MetadataHandler.h"
+#include "minecraft/mod/ShaderPack.h"
 
 #include <QThread>
 
@@ -82,8 +83,12 @@ void ResourceFolderLoadTask::executeTask()
 
         Resource* resource = m_create_func(entry);
 
+        // Check if this is a shader pack - shaders allow multiple versions with same name
+        bool is_shader = dynamic_cast<ShaderPack*>(resource) != nullptr;
+
         if (resource->enabled()) {
-            if (m_result->resources.contains(resource->internal_id())) {
+            // Skip duplicate detection for shaders to allow multiple versions
+            if (!is_shader && m_result->resources.contains(resource->internal_id())) {
                 m_result->resources[resource->internal_id()]->setStatus(ResourceStatus::INSTALLED);
                 // Delete the object we just created, since a valid one is already in the mods list.
                 delete resource;
@@ -93,7 +98,8 @@ void ResourceFolderLoadTask::executeTask()
             }
         } else {
             QString chopped_id = resource->internal_id().chopped(9);
-            if (m_result->resources.contains(chopped_id)) {
+            // Skip duplicate detection for shaders to allow multiple versions
+            if (!is_shader && m_result->resources.contains(chopped_id)) {
                 m_result->resources[resource->internal_id()].reset(resource);
 
                 auto metadata = m_result->resources[chopped_id]->metadata();

@@ -85,10 +85,15 @@ void ResourceDownloadTask::downloadSucceeded()
     if (oldName.isEmpty() || oldFilename == m_pack_version.fileName)
         return;
 
-    m_pack_model->uninstallResource(oldFilename, true);
+    // For shaders, allow multiple versions to coexist - don't delete the old version
+    bool is_shader = dynamic_cast<ShaderPackFolderModel*>(m_pack_model) != nullptr;
+    
+    if (!is_shader) {
+        m_pack_model->uninstallResource(oldFilename, true);
+    }
 
     // also rename the shader config file
-    if (dynamic_cast<ShaderPackFolderModel*>(m_pack_model) != nullptr) {
+    if (is_shader) {
         QFileInfo oldConfig(m_pack_model->dir(), oldFilename + ".txt");
         QFileInfo newConfig(m_pack_model->dir(), getFilename() + ".txt");
 

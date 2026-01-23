@@ -21,6 +21,26 @@
  */
 
 #include "ShaderPack.h"
+#include "FileSystem.h"
+
+ShaderPack::ShaderPack(QObject* parent) : Resource(parent) {}
+
+ShaderPack::ShaderPack(QFileInfo file_info) : Resource(file_info)
+{
+    // For shaders, make internal_id unique based on full absolute path
+    // This allows multiple versions of the same shader (with same filename) to coexist
+    m_internal_id = FS::NormalizePath(file_info.absoluteFilePath());
+}
+
+void ShaderPack::setFile(QFileInfo file_info)
+{
+    // Call parent's setFile first to do the normal parsing
+    Resource::setFile(file_info);
+    
+    // For shaders, make internal_id unique based on full absolute path
+    // This allows multiple versions of the same shader (with same filename) to coexist
+    m_internal_id = FS::NormalizePath(file_info.absoluteFilePath());
+}
 
 void ShaderPack::setPackFormat(ShaderPackFormat new_format)
 {
