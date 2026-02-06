@@ -293,9 +293,9 @@ QList<BasePage*> ModDownloadDialog::getPages()
     auto loaders = static_cast<MinecraftInstance*>(m_instance)->getPackProfile()->getSupportedModLoaders().value();
 
     if (ModrinthAPI::validateModLoaders(loaders))
-        pages.append(ModrinthModPage::create(this, *m_instance));
+        pages.append(Modrinth::createModPage(this, *m_instance));
     if (APPLICATION->capabilities() & Application::SupportsFlame && FlameAPI::validateModLoaders(loaders))
-        pages.append(FlameModPage::create(this, *m_instance));
+        pages.append(Flame::createModPage(this, *m_instance));
 
     return pages;
 }
@@ -331,9 +331,9 @@ QList<BasePage*> ResourcePackDownloadDialog::getPages()
 {
     QList<BasePage*> pages;
 
-    pages.append(ModrinthResourcePackPage::create(this, *m_instance));
+    pages.append(Modrinth::createResourcePackResourcePage(this, *m_instance));
     if (APPLICATION->capabilities() & Application::SupportsFlame)
-        pages.append(FlameResourcePackPage::create(this, *m_instance));
+        pages.append(Flame::createResourcePackResourcePage(this, *m_instance));
 
     return pages;
 }
@@ -354,9 +354,9 @@ QList<BasePage*> TexturePackDownloadDialog::getPages()
 {
     QList<BasePage*> pages;
 
-    pages.append(ModrinthTexturePackPage::create(this, *m_instance));
+    pages.append(Modrinth::createTexturePackResourcePage(this, *m_instance));
     if (APPLICATION->capabilities() & Application::SupportsFlame)
-        pages.append(FlameTexturePackPage::create(this, *m_instance));
+        pages.append(Flame::createTexturePackResourcePage(this, *m_instance));
 
     return pages;
 }
@@ -376,9 +376,9 @@ ShaderPackDownloadDialog::ShaderPackDownloadDialog(QWidget* parent, ShaderPackFo
 QList<BasePage*> ShaderPackDownloadDialog::getPages()
 {
     QList<BasePage*> pages;
-    pages.append(ModrinthShaderPackPage::create(this, *m_instance));
+    pages.append(Modrinth::createShaderPackResourcePage(this, *m_instance));
     if (APPLICATION->capabilities() & Application::SupportsFlame)
-        pages.append(FlameShaderPackPage::create(this, *m_instance));
+        pages.append(Flame::createShaderPackResourcePage(this, *m_instance));
     return pages;
 }
 
@@ -414,9 +414,9 @@ DataPackDownloadDialog::DataPackDownloadDialog(QWidget* parent, DataPackFolderMo
 QList<BasePage*> DataPackDownloadDialog::getPages()
 {
     QList<BasePage*> pages;
-    pages.append(ModrinthDataPackPage::create(this, *m_instance));
+    pages.append(Modrinth::createDataPackResourcePage(this, *m_instance));
     if (APPLICATION->capabilities() & Application::SupportsFlame)
-        pages.append(FlameDataPackPage::create(this, *m_instance));
+        pages.append(Flame::createDataPackResourcePage(this, *m_instance));
     return pages;
 }
 
