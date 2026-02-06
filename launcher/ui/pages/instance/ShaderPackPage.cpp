@@ -81,7 +81,7 @@ void ShaderPackPage::downloadShaderPack()
     if (m_instance->typeName() != "Minecraft")
         return;  // this is a null instance or a legacy instance
 
-    m_downloadDialog = new ResourceDownload::ShaderPackDownloadDialog(this, m_model, m_instance);
+    m_downloadDialog = ResourceDownload::ResourceDownloadDialog::createShaderPack(this, m_model, m_instance);
     connect(this, &QObject::destroyed, m_downloadDialog, &QDialog::close);
     connect(m_downloadDialog, &QDialog::finished, this, &ShaderPackPage::downloadDialogFinished);
 
@@ -245,7 +245,7 @@ void ShaderPackPage::changeShaderPackVersion()
     if (resource.metadata() == nullptr)
         return;
 
-    m_downloadDialog = new ResourceDownload::ShaderPackDownloadDialog(this, m_model, m_instance);
+    m_downloadDialog = ResourceDownload::ResourceDownloadDialog::createShaderPack(this, m_model, m_instance);
     connect(this, &QObject::destroyed, m_downloadDialog, &QDialog::close);
     connect(m_downloadDialog, &QDialog::finished, this, &ShaderPackPage::downloadDialogFinished);
 
