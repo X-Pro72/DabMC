@@ -856,9 +856,7 @@ void ResourceFolderModel::applyUpdates(QSet<QString>& current_set, QSet<QString>
                 }
             }
 
-            m_resources[row].reset(new_resource);
             new_resource->updateIssues(m_instance);
-
             resolveResource(m_resources.at(row));
             emit dataChanged(index(row, 0), index(row, columnCount(QModelIndex()) - 1));
         }

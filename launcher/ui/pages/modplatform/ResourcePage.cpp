@@ -44,6 +44,7 @@
 #include <StringUtils.h>
 #include <QDesktopServices>
 #include <QKeyEvent>
+#include <QMessageBox>
 
 #include "Markdown.h"
 
