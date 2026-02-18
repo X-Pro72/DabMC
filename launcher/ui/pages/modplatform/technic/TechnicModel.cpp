@@ -35,6 +35,7 @@
 
 #include "TechnicModel.h"
 #include "Application.h"
+#include "settings/SettingsObject.h"
 #include "BuildConfig.h"
 #include "Json.h"
 
@@ -170,8 +171,8 @@ void Technic::ListModel::searchRequestFinished()
     QJsonParseError parse_error;
     QJsonDocument doc = QJsonDocument::fromJson(*response, &parse_error);
     if (parse_error.error != QJsonParseError::NoError) {
-        qWarning() << "Error while parsing JSON response from Technic at " << parse_error.offset
-                   << " reason: " << parse_error.errorString();
+        qWarning() << "Error while parsing JSON response from Technic at" << parse_error.offset
+                   << "reason:" << parse_error.errorString();
         qWarning() << *response;
         return;
     }

@@ -23,8 +23,7 @@ QString EntitlementsStep::describe()
 
 void EntitlementsStep::perform()
 {
-    auto uuid = QUuid::createUuid();
-    m_entitlements_request_id = uuid.toString().remove('{').remove('}');
+    m_entitlements_request_id = QUuid::createUuid().toString(QUuid::WithoutBraces);
 
     QUrl url("https://api.minecraftservices.com/entitlements/license?requestId=" + m_entitlements_request_id);
     auto headers = QList<Net::HeaderPair>{ { "Content-Type", "application/json" },
@@ -34,6 +33,7 @@ void EntitlementsStep::perform()
     m_response.reset(new QByteArray());
     m_request = Net::Download::makeByteArray(url, m_response.get());
     m_request->addHeaderProxy(std::make_unique<Net::RawHeaderProxy>(headers));
+    m_request->enableAutoRetry(true);
 
     m_task.reset(new NetJob("EntitlementsStep", APPLICATION->network()));
     m_task->setAskRetry(false);

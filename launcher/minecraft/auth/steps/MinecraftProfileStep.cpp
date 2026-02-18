@@ -24,6 +24,7 @@ void MinecraftProfileStep::perform()
     m_response.reset(new QByteArray());
     m_request = Net::Download::makeByteArray(url, m_response.get());
     m_request->addHeaderProxy(std::make_unique<Net::RawHeaderProxy>(headers));
+    m_request->enableAutoRetry(true);
 
     m_task.reset(new NetJob("MinecraftProfileStep", APPLICATION->network()));
     m_task->setAskRetry(false);
@@ -44,9 +45,9 @@ void MinecraftProfileStep::onRequestDone()
     }
     if (m_request->error() != QNetworkReply::NoError) {
         qWarning() << "Error getting profile:";
-        qWarning() << " HTTP Status:        " << m_request->replyStatusCode();
-        qWarning() << " Internal error no.: " << m_request->error();
-        qWarning() << " Error string:       " << m_request->errorString();
+        qWarning() << " HTTP Status       :" << m_request->replyStatusCode();
+        qWarning() << " Internal error no.:" << m_request->error();
+        qWarning() << " Error string      :" << m_request->errorString();
 
         qWarning() << " Response:";
         qWarning() << QString::fromUtf8(*m_response);

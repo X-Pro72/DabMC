@@ -37,6 +37,8 @@
 
 #pragma once
 
+#include <memory>
+
 #include <QApplication>
 #include <QDateTime>
 #include <QDebug>
@@ -44,12 +46,10 @@
 #include <QIcon>
 #include <QMutex>
 #include <QUrl>
-#include <memory>
 
-#include <BaseInstance.h>
+#include "QObjectPtr.h"
 
-#include "launch/LogModel.h"
-#include "minecraft/launch/MinecraftTarget.h"
+#include "minecraft/auth/MinecraftAccount.h"
 
 class LaunchController;
 class LocalPeer;
@@ -74,6 +74,12 @@ class ITheme;
 class MCEditTool;
 class ThemeManager;
 class IconTheme;
+class BaseInstance;
+
+class LogModel;
+
+struct MinecraftTarget;
+class MinecraftAccount;
 
 namespace Meta {
 class Index;
@@ -210,10 +216,9 @@ class Application : public QApplication {
 
    public slots:
     bool launch(BaseInstance* instance,
-                bool online = true,
-                bool demo = false,
-                MinecraftTarget::Ptr targetToJoin = nullptr,
-                MinecraftAccountPtr accountToUse = nullptr,
+                LaunchMode mode = LaunchMode::Normal,
+                std::shared_ptr<MinecraftTarget> targetToJoin = nullptr,
+                shared_qobject_ptr<MinecraftAccount> accountToUse = nullptr,
                 const QString& offlineName = QString());
     bool kill(BaseInstance* instance);
     void closeCurrentWindow();
@@ -274,11 +279,6 @@ class Application : public QApplication {
     Qt::ApplicationState m_prevAppState = Qt::ApplicationInactive;
 #endif
 
-#if defined Q_OS_WIN32
-    // used on Windows to attach the standard IO streams
-    bool consoleAttached = false;
-#endif
-
     // FIXME: attach to instances instead.
     struct InstanceXtras {
         InstanceWindow* window = nullptr;
@@ -310,7 +310,7 @@ class Application : public QApplication {
     QString m_serverToJoin;
     QString m_worldToJoin;
     QString m_profileToUse;
-    bool m_offline = false;
+    bool m_launchOffline = false;
     QString m_offlineName;
     bool m_liveCheck = false;
     QList<QUrl> m_urlsToImport;
