@@ -184,7 +184,7 @@ QVariant ModFolderModel::headerData(int section, [[maybe_unused]] Qt::Orientatio
                 case RequiresColumn:
                     return columnNames().at(section);
                 default:
-                    return QVariant();
+                    return {};
             }
 
         case Qt::ToolTipRole:
@@ -214,12 +214,12 @@ QVariant ModFolderModel::headerData(int section, [[maybe_unused]] Qt::Orientatio
                 case RequiresColumn:
                     return tr("For each mod, the number of other mods it depends on.");
                 default:
-                    return QVariant();
+                    return {};
             }
         default:
-            return QVariant();
+            return {};
     }
-    return QVariant();
+    return {};
 }
 
 int ModFolderModel::columnCount(const QModelIndex& parent) const
