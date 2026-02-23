@@ -38,6 +38,8 @@
 
 #include "FTBPackInstallTask.h"
 
+#include <memory>
+
 #include "FileSystem.h"
 #include "Json.h"
 #include "minecraft/MinecraftInstance.h"
@@ -91,7 +93,7 @@ void PackInstallTask::executeTask()
     auto netJob = makeShared<NetJob>("FTB::VersionFetch", APPLICATION->network());
 
     auto searchUrl = QString(BuildConfig.FTB_API_BASE_URL + "/modpack/%1/%2").arg(m_pack.id).arg(version.id);
-    m_response.reset(new QByteArray());
+    m_response = std::make_unique<QByteArray>();
     netJob->addNetAction(Net::Download::makeByteArray(QUrl(searchUrl), m_response.get()));
 
     QObject::connect(netJob.get(), &NetJob::succeeded, this, &PackInstallTask::onManifestDownloadSucceeded);

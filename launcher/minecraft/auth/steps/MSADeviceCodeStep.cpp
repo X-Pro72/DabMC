@@ -37,6 +37,7 @@
 
 #include <QDateTime>
 #include <QUrlQuery>
+#include <memory>
 
 #include "Application.h"
 #include "Json.h"
@@ -66,7 +67,7 @@ void MSADeviceCodeStep::perform()
         { "Content-Type", "application/x-www-form-urlencoded" },
         { "Accept", "application/json" },
     };
-    m_response.reset(new QByteArray());
+    m_response = std::make_unique<QByteArray>();
     m_request = Net::Upload::makeByteArray(url, m_response.get(), payload);
     m_request->addHeaderProxy(std::make_unique<Net::RawHeaderProxy>(headers));
     m_request->enableAutoRetry(true);
@@ -182,7 +183,7 @@ void MSADeviceCodeStep::authenticateUser()
         { "Content-Type", "application/x-www-form-urlencoded" },
         { "Accept", "application/json" },
     };
-    m_response.reset(new QByteArray());
+    m_response = std::make_unique<QByteArray>();
     m_request = Net::Upload::makeByteArray(url, m_response.get(), payload);
     m_request->addHeaderProxy(std::make_unique<Net::RawHeaderProxy>(headers));
 

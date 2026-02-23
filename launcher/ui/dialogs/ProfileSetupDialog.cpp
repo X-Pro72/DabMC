@@ -42,6 +42,7 @@
 #include <QJsonDocument>
 #include <QPushButton>
 #include <QRegularExpressionValidator>
+#include <memory>
 
 #include "ui/dialogs/ProgressDialog.h"
 
@@ -159,7 +160,7 @@ void ProfileSetupDialog::checkName(const QString& name)
                                            { "Accept", "application/json" },
                                            { "Authorization", QString("Bearer %1").arg(m_accountToSetup->accessToken()).toUtf8() } };
 
-    m_check_response.reset(new QByteArray());
+    m_check_response = std::make_unique<QByteArray>();
     if (m_check_task)
         disconnect(m_check_task.get(), nullptr, this, nullptr);
     m_check_task = Net::Download::makeByteArray(url, m_check_response.get());
@@ -205,7 +206,7 @@ void ProfileSetupDialog::setupProfile(const QString& profileName)
                                            { "Accept", "application/json" },
                                            { "Authorization", QString("Bearer %1").arg(m_accountToSetup->accessToken()).toUtf8() } };
 
-    m_profile_response.reset(new QByteArray());
+    m_profile_response = std::make_unique<QByteArray>();
     m_profile_task = Net::Upload::makeByteArray(url, m_profile_response.get(), payloadTemplate.arg(profileName).toUtf8());
     m_profile_task->addHeaderProxy(std::make_unique<Net::RawHeaderProxy>(headers));
 

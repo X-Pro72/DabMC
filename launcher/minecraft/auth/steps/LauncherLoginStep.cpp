@@ -2,6 +2,7 @@
 
 #include <QNetworkRequest>
 #include <QUrl>
+#include <memory>
 
 #include "Application.h"
 #include "Logging.h"
@@ -36,7 +37,7 @@ void LauncherLoginStep::perform()
         { "Accept", "application/json" },
     };
 
-    m_response.reset(new QByteArray());
+    m_response = std::make_unique<QByteArray>();
     m_request = Net::Upload::makeByteArray(url, m_response.get(), requestBody.toUtf8());
     m_request->addHeaderProxy(std::make_unique<Net::RawHeaderProxy>(headers));
     m_request->enableAutoRetry(true);

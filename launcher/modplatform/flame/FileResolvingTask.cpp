@@ -18,6 +18,7 @@
 
 #include "FileResolvingTask.h"
 #include <algorithm>
+#include <memory>
 
 #include "Json.h"
 #include "modplatform/ModIndex.h"
@@ -51,7 +52,7 @@ void Flame::FileResolvingTask::executeTask()
     }
     setStatus(tr("Resolving mod IDs..."));
     setProgress(0, 3);
-    m_result.reset(new QByteArray());
+    m_result = std::make_unique<QByteArray>();
 
     QStringList fileIds;
     for (auto file : m_manifest.files) {
@@ -153,7 +154,7 @@ void Flame::FileResolvingTask::netJobFinished()
         getFlameProjects();
         return;
     }
-    m_result.reset(new QByteArray());
+    m_result = std::make_unique<QByteArray>();
     m_task = modrinthAPI.currentVersions(hashes, "sha1", m_result.get());
     (dynamic_cast<NetJob*>(m_task.get()))->setAskRetry(false);
     auto step_progress = std::make_shared<TaskStepProgress>();
@@ -222,7 +223,7 @@ void Flame::FileResolvingTask::netJobFinished()
 void Flame::FileResolvingTask::getFlameProjects()
 {
     setProgress(2, 3);
-    m_result.reset(new QByteArray());
+    m_result = std::make_unique<QByteArray>();
     QStringList addonIds;
     for (auto file : m_manifest.files) {
         addonIds.push_back(QString::number(file.projectId));

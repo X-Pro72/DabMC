@@ -55,7 +55,7 @@ Upload::Ptr Upload::makeByteArray(QUrl url, QByteArray* output, QByteArray m_pos
 {
     auto up = makeShared<Upload>();
     up->m_url = std::move(url);
-    up->m_sink.reset(new ByteArraySink(output));
+    up->m_sink = std::make_unique<ByteArraySink>(output);
     up->m_post_data = std::move(m_post_data);
     return up;
 }
