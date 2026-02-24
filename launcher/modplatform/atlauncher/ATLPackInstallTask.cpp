@@ -687,8 +687,8 @@ void PackInstallTask::extractConfigs()
     setStatus(tr("Extracting configs..."));
 
     QDir extractDir(m_stagingPath);
-    m_extractFuture = QtConcurrent::run(QThreadPool::globalInstance(), QOverload<QString, QString>::of(MMCZip::extractDir), archivePath,
-                                        extractDir.absolutePath() + "/minecraft");
+    m_extractFuture = QtConcurrent::run(QThreadPool::globalInstance(), QOverload<const QString&, const QString&>::of(MMCZip::extractDir),
+                                        archivePath, extractDir.absolutePath() + "/minecraft");
     connect(&m_extractFutureWatcher, &QFutureWatcher<QStringList>::finished, this, [this]() { downloadMods(); });
     connect(&m_extractFutureWatcher, &QFutureWatcher<QStringList>::canceled, this, [this]() { emitAborted(); });
     m_extractFutureWatcher.setFuture(m_extractFuture);

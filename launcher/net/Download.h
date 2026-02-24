@@ -48,7 +48,7 @@ class Download : public NetRequest {
     Q_OBJECT
    public:
     using Ptr = shared_qobject_ptr<class Download>;
-    explicit Download()  { logCat = taskDownloadLogC; }
+    explicit Download() { logCat = taskDownloadLogC; }
 
 #if defined(LAUNCHER_APPLICATION)
     static auto makeCached(const QUrl& url, MetaEntryPtr entry, Options options = Option::NoOptions) -> Download::Ptr;

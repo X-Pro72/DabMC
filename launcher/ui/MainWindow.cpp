@@ -958,9 +958,7 @@ void MainWindow::processURLs(QList<QUrl> urls)
         QUrl local_url;
         if (!url.isLocalFile()) {  // download the remote resource and identify
 
-            const bool isExternalURLImport =
-                (url.host().toLower() == "import") ||
-                (url.path().startsWith("/import", Qt::CaseInsensitive));
+            const bool isExternalURLImport = (url.host().toLower() == "import") || (url.path().startsWith("/import", Qt::CaseInsensitive));
 
             QUrl dl_url;
             if (url.scheme() == "curseforge") {
@@ -1025,13 +1023,12 @@ void MainWindow::processURLs(QList<QUrl> urls)
                 }
                 emit APPLICATION->oauthReplyRecieved(receivedData);
                 continue;
-            } else if ((url.scheme() == "prismlauncher" || url.scheme() == BuildConfig.LAUNCHER_APP_BINARY_NAME) 
-                        && isExternalURLImport) {
+            } else if ((url.scheme() == "prismlauncher" || url.scheme() == BuildConfig.LAUNCHER_APP_BINARY_NAME) && isExternalURLImport) {
                 // PrismLauncher URL protocol modpack import
                 // works for any prism fork
                 // preferred import format: prismlauncher://import?url=ENCODED
                 const auto host = url.host().toLower();
-                const auto path = url.path(); 
+                const auto path = url.path();
 
                 QString encodedTarget;
 
@@ -1045,7 +1042,6 @@ void MainWindow::processURLs(QList<QUrl> urls)
 
                 // alternative import format: prismlauncher://import/ENCODED
                 if (encodedTarget.isEmpty()) {
-
                     QString p = path;
 
                     if (p.startsWith("/import/", Qt::CaseInsensitive)) {
@@ -1060,12 +1056,9 @@ void MainWindow::processURLs(QList<QUrl> urls)
                 }
 
                 if (encodedTarget.isEmpty()) {
-                    CustomMessageBox::selectable(
-                        this,
-                        tr("Error"),
-                        tr("Invalid import link: missing 'url' parameter."),
-                        QMessageBox::Critical
-                    )->show();
+                    CustomMessageBox::selectable(this, tr("Error"), tr("Invalid import link: missing 'url' parameter."),
+                                                 QMessageBox::Critical)
+                        ->show();
                     continue;
                 }
 
@@ -1075,27 +1068,19 @@ void MainWindow::processURLs(QList<QUrl> urls)
 
                 // Validate: only allow http(s)
                 if (!target.isValid() || (target.scheme() != "https" && target.scheme() != "http")) {
-                    CustomMessageBox::selectable(
-                        this,
-                        tr("Error"),
-                        tr("Invalid import link: URL must be http(s)."),
-                        QMessageBox::Critical
-                    )->show();
+                    CustomMessageBox::selectable(this, tr("Error"), tr("Invalid import link: URL must be http(s)."), QMessageBox::Critical)
+                        ->show();
                     continue;
                 }
 
                 const auto res = QMessageBox::question(
-                    this,
-                    tr("Install modpack"),
-                    tr("Do you want to download and import a modpack from:\n%1\n\nURL:\n%2")
-                        .arg(target.host(), target.toString()),
-                    QMessageBox::Yes | QMessageBox::No,
-                    QMessageBox::Yes
-                );
+                    this, tr("Install modpack"),
+                    tr("Do you want to download and import a modpack from:\n%1\n\nURL:\n%2").arg(target.host(), target.toString()),
+                    QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes);
                 if (res != QMessageBox::Yes) {
                     continue;
                 }
-            
+
                 dl_url = target;
             } else {
                 dl_url = url;

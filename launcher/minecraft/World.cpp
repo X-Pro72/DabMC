@@ -246,7 +246,7 @@ bool World::resetIcon()
     return false;
 }
 
-int64_t loadSeed(QByteArray data);
+int64_t loadSeed(const QByteArray& data);
 
 void World::readFromFS(const QFileInfo& file)
 {
