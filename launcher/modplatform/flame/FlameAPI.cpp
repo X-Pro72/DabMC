@@ -125,7 +125,7 @@ Task::Ptr FlameAPI::getProjects(QStringList addonIds, QByteArray* response) cons
     return netJob;
 }
 
-Task::Ptr FlameAPI::getFiles(const QStringList& fileIds, QByteArray* response) const
+Task::Ptr FlameAPI::getFiles(const QStringList& fileIds, QByteArray* response) 
 {
     auto netJob = makeShared<NetJob>(QString("Flame::GetFiles"), APPLICATION->network());
 
@@ -147,7 +147,7 @@ Task::Ptr FlameAPI::getFiles(const QStringList& fileIds, QByteArray* response) c
     return netJob;
 }
 
-Task::Ptr FlameAPI::getFile(const QString& addonId, const QString& fileId, QByteArray* response) const
+Task::Ptr FlameAPI::getFile(const QString& addonId, const QString& fileId, QByteArray* response) 
 {
     auto netJob = makeShared<NetJob>(QString("Flame::GetFile"), APPLICATION->network());
     netJob->addNetAction(

@@ -26,7 +26,7 @@ class PackFetchTask : public QObject {
     std::unique_ptr<QByteArray> publicModpacksXmlFileData = std::make_unique<QByteArray>();
     std::unique_ptr<QByteArray> thirdPartyModpacksXmlFileData = std::make_unique<QByteArray>();
 
-    bool parseAndAddPacks(QByteArray& data, PackType packType, ModpackList& list);
+    static bool parseAndAddPacks(QByteArray& data, PackType packType, ModpackList& list);
     ModpackList publicPacks;
     ModpackList thirdPartyPacks;
 
