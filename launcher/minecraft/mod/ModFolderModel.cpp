@@ -286,7 +286,7 @@ void ModFolderModel::onParseFinished()
     };
     for (auto mod : mods) {
         auto id = mod->mod_id();
-        for (auto dep : mod->dependencies()) {
+        for (const auto& dep : mod->dependencies()) {
             auto d = findById(mods, dep);
             if (d) {
                 m_requires[id] << d;
@@ -294,7 +294,7 @@ void ModFolderModel::onParseFinished()
             }
         }
         if (mod->metadata()) {
-            for (auto dep : mod->metadata()->dependencies) {
+            for (const auto& dep : mod->metadata()->dependencies) {
                 if (dep.type == ModPlatform::DependencyType::REQUIRED) {
                     auto d = findByProjectID(dep.addonId, mod->metadata()->provider);
                     if (d) {

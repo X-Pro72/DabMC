@@ -55,7 +55,7 @@ void Flame::FileResolvingTask::executeTask()
     m_result = std::make_unique<QByteArray>();
 
     QStringList fileIds;
-    for (auto file : m_manifest.files) {
+    for (const auto& file : m_manifest.files) {
         fileIds.push_back(QString::number(file.fileId));
     }
     m_task = flameAPI.getFiles(fileIds, m_result.get());
@@ -225,7 +225,7 @@ void Flame::FileResolvingTask::getFlameProjects()
     setProgress(2, 3);
     m_result = std::make_unique<QByteArray>();
     QStringList addonIds;
-    for (auto file : m_manifest.files) {
+    for (const auto& file : m_manifest.files) {
         addonIds.push_back(QString::number(file.projectId));
     }
 

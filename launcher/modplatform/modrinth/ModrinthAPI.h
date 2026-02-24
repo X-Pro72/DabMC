@@ -57,7 +57,7 @@ class ModrinthAPI : public ResourceAPI {
     static auto getModLoaderFilters(ModPlatform::ModLoaderTypes types) -> const QString
     {
         QStringList l;
-        for (auto loader : getModLoaderStrings(types)) {
+        for (const auto& loader : getModLoaderStrings(types)) {
             l << QString("\"categories:%1\"").arg(loader);
         }
         return l.join(',');
@@ -66,7 +66,7 @@ class ModrinthAPI : public ResourceAPI {
     static auto getCategoriesFilters(QStringList categories) -> const QString
     {
         QStringList l;
-        for (auto cat : categories) {
+        for (const auto& cat : categories) {
             l << QString("\"categories:%1\"").arg(cat);
         }
         return l.join(',');
