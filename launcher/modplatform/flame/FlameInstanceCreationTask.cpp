@@ -192,7 +192,7 @@ bool FlameCreationTask::updateInstance()
         }
 
         auto raw_response = std::make_shared<QByteArray>();
-        auto job = api.getFiles(fileIds, raw_response.get());
+        auto job = FlameAPI::getFiles(fileIds, raw_response.get());
 
         QEventLoop loop;
 

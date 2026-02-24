@@ -176,7 +176,7 @@ void FlamePackExportTask::makeApiRequest()
         fingerprints.push_back(murmur.toUInt());
     }
 
-    task.reset(api.matchFingerprints(fingerprints, response.get()));
+    task.reset(FlameAPI::matchFingerprints(fingerprints, response.get()));
 
     connect(task.get(), &Task::succeeded, this, [this, response] {
         QJsonParseError parseError{};

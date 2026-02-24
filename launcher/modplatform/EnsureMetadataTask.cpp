@@ -229,7 +229,7 @@ Task::Ptr EnsureMetadataTask::modrinthVersionsTask()
     auto hash_type = ModPlatform::ProviderCapabilities::hashType(ModPlatform::ResourceProvider::MODRINTH).first();
 
     auto response = std::make_shared<QByteArray>();
-    auto ver_task = modrinth_api.currentVersions(m_resources.keys(), hash_type, response.get());
+    auto ver_task = ModrinthAPI::currentVersions(m_resources.keys(), hash_type, response.get());
 
     // Prevents unfortunate timings when aborting the task
     if (!ver_task) {
@@ -365,7 +365,7 @@ Task::Ptr EnsureMetadataTask::flameVersionsTask()
         fingerprints.push_back(murmur.toUInt());
     }
 
-    auto ver_task = flame_api.matchFingerprints(fingerprints, response.get());
+    auto ver_task = FlameAPI::matchFingerprints(fingerprints, response.get());
 
     connect(ver_task.get(), &Task::succeeded, this, [this, response] {
         QJsonParseError parse_error{};

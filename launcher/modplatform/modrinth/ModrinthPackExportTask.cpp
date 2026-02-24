@@ -160,7 +160,7 @@ void ModrinthPackExportTask::makeApiRequest()
     } else {
         setStatus(tr("Finding versions for hashes..."));
         auto response = std::make_shared<QByteArray>();
-        task = api.currentVersions(pendingHashes.values(), "sha512", response.get());
+        task = ModrinthAPI::currentVersions(pendingHashes.values(), "sha512", response.get());
         connect(task.get(), &Task::succeeded, [this, response]() { parseApiResponse(response.get()); });
         connect(task.get(), &Task::failed, this, &ModrinthPackExportTask::emitFailed);
         connect(task.get(), &Task::aborted, this, &ModrinthPackExportTask::emitAborted);

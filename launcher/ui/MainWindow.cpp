@@ -982,7 +982,7 @@ void MainWindow::processURLs(QList<QUrl> urls)
                 auto array = std::make_shared<QByteArray>();
 
                 auto api = FlameAPI();
-                auto job = api.getFile(addonId, fileId, array.get());
+                auto job = FlameAPI::getFile(addonId, fileId, array.get());
 
                 connect(job.get(), &Task::failed, this, [this](const QString& reason) {
                     CustomMessageBox::selectable(this, tr("Error"), reason, QMessageBox::Critical)->show();
