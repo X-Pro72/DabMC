@@ -148,7 +148,8 @@ void FlameCheckUpdate::collectBlockedMods()
     if (addonIds.isEmpty()) {
         emitSucceeded();
         return;
-    } else if (addonIds.size() == 1) {
+    }
+    if (addonIds.size() == 1) {
         projTask = api.getProject(*addonIds.begin(), response.get());
     } else {
         projTask = api.getProjects(addonIds, response.get());
