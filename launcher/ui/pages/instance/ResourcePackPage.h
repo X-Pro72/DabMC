@@ -48,14 +48,14 @@
 class ResourcePackPage : public ExternalResourcesPage {
     Q_OBJECT
    public:
-    explicit ResourcePackPage(MinecraftInstance* instance, ResourcePackFolderModel* model, QWidget* parent = 0);
+    explicit ResourcePackPage(MinecraftInstance* instance, ResourcePackFolderModel* model, QWidget* parent = nullptr);
 
     QString displayName() const override { return tr("Resource Packs"); }
     QIcon icon() const override { return QIcon::fromTheme("resourcepacks"); }
     QString id() const override { return "resourcepacks"; }
     QString helpPage() const override { return "Resource-packs"; }
 
-    virtual bool shouldDisplay() const override
+    bool shouldDisplay() const override
     {
         return !m_instance->traits().contains("no-texturepacks") && !m_instance->traits().contains("texturepacks");
     }

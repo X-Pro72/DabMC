@@ -9,7 +9,7 @@ class LegacyFMLLibrariesTask : public Task {
     Q_OBJECT
    public:
     LegacyFMLLibrariesTask(MinecraftInstance* inst);
-    virtual ~LegacyFMLLibrariesTask() = default;
+    ~LegacyFMLLibrariesTask() override = default;
 
     void executeTask() override;
 
@@ -17,7 +17,7 @@ class LegacyFMLLibrariesTask : public Task {
 
    private slots:
     void fmllibsFinished();
-    void fmllibsFailed(QString reason);
+    void fmllibsFailed(const QString& reason);
 
    public slots:
     bool abort() override;

@@ -39,13 +39,14 @@
 #include <QFile>
 #include <QMap>
 #include <QProcess>
+#include <utility>
 
 #include "Commandline.h"
 #include "FileSystem.h"
 #include "java/JavaUtils.h"
 
 JavaChecker::JavaChecker(QString path, QString args, int minMem, int maxMem, int permGen, int id)
-    : Task(), m_path(path), m_args(args), m_minMem(minMem), m_maxMem(maxMem), m_permGen(permGen), m_id(id)
+    : m_path(std::move(path)), m_args(std::move(args)), m_minMem(minMem), m_maxMem(maxMem), m_permGen(permGen), m_id(id)
 {}
 
 void JavaChecker::executeTask()
@@ -148,9 +149,8 @@ void JavaChecker::finished(int exitcode, QProcess::ExitStatus status)
         auto parts = line.split('=', Qt::SkipEmptyParts);
         if (parts.size() != 2 || parts[0].isEmpty() || parts[1].isEmpty()) {
             continue;
-        } else {
-            results.insert(parts[0], parts[1]);
         }
+        results.insert(parts[0], parts[1]);
     }
 
     if (!results.contains("os.arch") || !results.contains("java.version") || !results.contains("java.vendor") || !success) {

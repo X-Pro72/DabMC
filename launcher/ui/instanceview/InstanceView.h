@@ -40,6 +40,7 @@
 #include <QListView>
 #include <QScrollBar>
 #include <functional>
+#include <utility>
 #include "VisualGroup.h"
 #include "ui/themes/CatPainter.h"
 
@@ -51,49 +52,49 @@ class InstanceView : public QAbstractItemView {
     Q_OBJECT
 
    public:
-    InstanceView(QWidget* parent = 0);
-    ~InstanceView();
+    InstanceView(QWidget* parent = nullptr);
+    ~InstanceView() override;
 
     void setModel(QAbstractItemModel* model) override;
 
     using visibilityFunction = std::function<bool(const QString&)>;
-    void setSourceOfGroupCollapseStatus(visibilityFunction f) { m_fVisibility = f; }
+    void setSourceOfGroupCollapseStatus(visibilityFunction f) { m_fVisibility = std::move(f); }
 
     /// return geometry rectangle occupied by the specified model item
     QRect geometryRect(const QModelIndex& index) const;
     /// return visual rectangle occupied by the specified model item
-    virtual QRect visualRect(const QModelIndex& index) const override;
+    QRect visualRect(const QModelIndex& index) const override;
     /// get the model index at the specified visual point
-    virtual QModelIndex indexAt(const QPoint& point) const override;
+    QModelIndex indexAt(const QPoint& point) const override;
     QString groupNameAt(const QPoint& point);
     void setSelection(const QRect& rect, QItemSelectionModel::SelectionFlags commands) override;
 
-    virtual int horizontalOffset() const override;
-    virtual int verticalOffset() const override;
-    virtual void scrollContentsBy(int dx, int dy) override;
-    virtual void scrollTo(const QModelIndex& index, ScrollHint hint = EnsureVisible) override;
+    int horizontalOffset() const override;
+    int verticalOffset() const override;
+    void scrollContentsBy(int dx, int dy) override;
+    void scrollTo(const QModelIndex& index, ScrollHint hint = EnsureVisible) override;
 
-    virtual QModelIndex moveCursor(CursorAction cursorAction, Qt::KeyboardModifiers modifiers) override;
+    QModelIndex moveCursor(CursorAction cursorAction, Qt::KeyboardModifiers modifiers) override;
 
-    virtual QRegion visualRegionForSelection(const QItemSelection& selection) const override;
+    QRegion visualRegionForSelection(const QItemSelection& selection) const override;
 
     int spacing() const { return m_spacing; };
     void setPaintCat(bool visible);
 
    public slots:
-    virtual void updateGeometries() override;
+    void updateGeometries() override;
 
    protected slots:
-    virtual void dataChanged(const QModelIndex& topLeft, const QModelIndex& bottomRight, const QList<int>& roles) override;
-    virtual void rowsInserted(const QModelIndex& parent, int start, int end) override;
-    virtual void rowsAboutToBeRemoved(const QModelIndex& parent, int start, int end) override;
+    void dataChanged(const QModelIndex& topLeft, const QModelIndex& bottomRight, const QList<int>& roles) override;
+    void rowsInserted(const QModelIndex& parent, int start, int end) override;
+    void rowsAboutToBeRemoved(const QModelIndex& parent, int start, int end) override;
     void modelReset();
     void rowsRemoved();
     void currentChanged(const QModelIndex& current, const QModelIndex& previous) override;
 
    signals:
-    void droppedURLs(QList<QUrl> urls);
-    void groupStateChanged(QString group, bool collapsed);
+    void droppedURLs(const QList<QUrl>& urls);
+    void groupStateChanged(const QString& group, bool collapsed);
 
    protected:
     bool isIndexHidden(const QModelIndex& index) const override;
@@ -153,7 +154,7 @@ class InstanceView : public QAbstractItemView {
     QPixmap renderToPixmap(const QModelIndexList& indices, QRect* r) const;
     QList<std::pair<QRect, QModelIndex>> draggablePaintPairs(const QModelIndexList& indices, QRect* r) const;
 
-    bool isDragEventAccepted(QDropEvent* event);
+    static bool isDragEventAccepted(QDropEvent* event);
 
     std::pair<VisualGroup*, VisualGroup::HitResults> rowDropPos(const QPoint& pos);
 

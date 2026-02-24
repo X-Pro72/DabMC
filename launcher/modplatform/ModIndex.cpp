@@ -87,7 +87,7 @@ QStringList ProviderCapabilities::hashType(ResourceProvider p)
     return {};
 }
 
-QString getMetaURL(ResourceProvider provider, QVariant projectID)
+QString getMetaURL(ResourceProvider provider, const QVariant& projectID)
 {
     return ((provider == ModPlatform::ResourceProvider::FLAME) ? "https://www.curseforge.com/projects/" : "https://modrinth.com/mod/") +
            projectID.toString();
@@ -126,30 +126,41 @@ auto getModLoaderAsString(ModLoaderType type) -> const QString
     return "";
 }
 
-auto getModLoaderFromString(QString type) -> ModLoaderType
+auto getModLoaderFromString(const QString& type) -> ModLoaderType
 {
-    if (type == "neoforge")
+    if (type == "neoforge") {
         return NeoForge;
-    if (type == "forge")
+    }
+    if (type == "forge") {
         return Forge;
-    if (type == "cauldron")
+    }
+    if (type == "cauldron") {
         return Cauldron;
-    if (type == "liteloader")
+    }
+    if (type == "liteloader") {
         return LiteLoader;
-    if (type == "fabric")
+    }
+    if (type == "fabric") {
         return Fabric;
-    if (type == "quilt")
+    }
+    if (type == "quilt") {
         return Quilt;
-    if (type == "babric")
+    }
+    if (type == "babric") {
         return Babric;
-    if (type == "bta-babric")
+    }
+    if (type == "bta-babric") {
         return BTA;
-    if (type == "legacy-fabric")
+    }
+    if (type == "legacy-fabric") {
         return LegacyFabric;
-    if (type == "ornithe")
+    }
+    if (type == "ornithe") {
         return Ornithe;
-    if (type == "rift")
+    }
+    if (type == "rift") {
         return Rift;
+    }
     return {};
 }
 
@@ -168,14 +179,17 @@ QString SideUtils::toString(Side side)
     return {};
 }
 
-Side SideUtils::fromString(QString side)
+Side SideUtils::fromString(const QString& side)
 {
-    if (side == "client")
+    if (side == "client") {
         return Side::ClientSide;
-    if (side == "server")
+    }
+    if (side == "server") {
         return Side::ServerSide;
-    if (side == "both")
+    }
+    if (side == "both") {
         return Side::UniversalSide;
+    }
     return Side::UniversalSide;
 }
 

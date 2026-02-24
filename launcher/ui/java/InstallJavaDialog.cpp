@@ -24,6 +24,7 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QWidget>
+#include <utility>
 
 #include "Application.h"
 #include "BaseVersionList.h"
@@ -47,8 +48,8 @@ class InstallJavaPage : public QWidget, public BasePage {
    public:
     Q_OBJECT
    public:
-    explicit InstallJavaPage(const QString& id, const QString& iconName, const QString& name, QWidget* parent = nullptr)
-        : QWidget(parent), uid(id), iconName(iconName), name(name)
+    explicit InstallJavaPage(QString id, QString iconName, QString name, QWidget* parent = nullptr)
+        : QWidget(parent), uid(std::move(id)), iconName(std::move(iconName)), name(std::move(name))
     {
         setObjectName(QStringLiteral("VersionSelectWidget"));
         horizontalLayout = new QHBoxLayout(this);
@@ -70,7 +71,7 @@ class InstallJavaPage : public QWidget, public BasePage {
 
         QMetaObject::connectSlotsByName(this);
     }
-    ~InstallJavaPage()
+    ~InstallJavaPage() override
     {
         delete horizontalLayout;
         delete majorVersionSelect;
@@ -78,13 +79,13 @@ class InstallJavaPage : public QWidget, public BasePage {
     }
 
     //! loads the list if needed.
-    void initialize(Meta::VersionList::Ptr vlist)
+    void initialize(const Meta::VersionList::Ptr& vlist)
     {
         vlist->setProvidedRoles({ BaseVersionList::JavaMajorRole, BaseVersionList::RecommendedRole, BaseVersionList::VersionPointerRole });
         majorVersionSelect->initialize(vlist.get());
     }
 
-    void setSelectedVersion(BaseVersion::Ptr version)
+    void setSelectedVersion(const BaseVersion::Ptr& version)
     {
         auto dcast = std::dynamic_pointer_cast<Meta::Version>(version);
         if (!dcast) {
@@ -100,12 +101,14 @@ class InstallJavaPage : public QWidget, public BasePage {
 
     void openedImpl() override
     {
-        if (loaded)
+        if (loaded) {
             return;
+        }
 
         const auto versions = APPLICATION->metadataIndex()->get(uid);
-        if (!versions)
+        if (!versions) {
             return;
+        }
 
         initialize(versions);
         loaded = true;
@@ -169,10 +172,10 @@ static InstallJavaPage* pageCast(BasePage* page)
     return result;
 }
 namespace Java {
-QStringList getRecommendedJavaVersionsFromVersionList(Meta::VersionList::Ptr list)
+QStringList getRecommendedJavaVersionsFromVersionList(const Meta::VersionList::Ptr& list)
 {
     QStringList recommendedJavas;
-    for (auto ver : list->versions()) {
+    for (const auto& ver : list->versions()) {
         auto major = ver->version();
         if (major.startsWith("java")) {
             major = "Java " + major.mid(4);
@@ -186,18 +189,18 @@ InstallDialog::InstallDialog(const QString& uid, BaseInstance* instance, QWidget
     : QDialog(parent), container(new PageContainer(this, QString(), this)), buttons(new QDialogButtonBox(this))
 {
     auto layout = new QVBoxLayout(this);
-    // small margins look ugly on macOS on modal windows
-    #ifndef Q_OS_MACOS
+// small margins look ugly on macOS on modal windows
+#ifndef Q_OS_MACOS
     layout->setContentsMargins(0, 0, 0, 0);
-    #endif
+#endif
     container->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
     layout->addWidget(container);
 
     auto buttonLayout = new QHBoxLayout(this);
-    // small margins look ugly on macOS on modal windows
-    #ifndef Q_OS_MACOS
+// small margins look ugly on macOS on modal windows
+#ifndef Q_OS_MACOS
     buttonLayout->setContentsMargins(0, 0, 6, 6);
-    #endif
+#endif
 
     auto refreshLayout = new QHBoxLayout(this);
 
@@ -255,8 +258,9 @@ InstallDialog::InstallDialog(const QString& uid, BaseInstance* instance, QWidget
                             pageCast(page)->setRecommendedMajors(recommendedJavas);
                         }
                     });
-                    if (!newTask->isRunning())
+                    if (!newTask->isRunning()) {
                         newTask->start();
+                    }
                 } else {
                     recommendedJavas = getRecommendedJavaVersionsFromVersionList(versions);
                 }
@@ -264,8 +268,9 @@ InstallDialog::InstallDialog(const QString& uid, BaseInstance* instance, QWidget
         }
     }
     for (BasePage* page : container->getPages()) {
-        if (page->id() == uid)
+        if (page->id() == uid) {
             container->selectPage(page->id());
+        }
 
         auto cast = pageCast(page);
         cast->setRecommend(true);
@@ -330,7 +335,7 @@ void InstallDialog::done(int result)
                 seq->addTask(makeShared<Java::SymlinkTask>(final_path));
                 task = seq;
 #endif
-                connect(task.get(), &Task::failed, this, [this, &deletePath](QString reason) {
+                connect(task.get(), &Task::failed, this, [this, &deletePath](const QString& reason) {
                     QString error = QString("Java download failed: %1").arg(reason);
                     CustomMessageBox::selectable(this, tr("Error"), error, QMessageBox::Warning)->show();
                     deletePath();

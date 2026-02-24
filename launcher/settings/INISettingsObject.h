@@ -28,9 +28,9 @@ class INISettingsObject : public SettingsObject {
     Q_OBJECT
    public:
     /** 'paths' is a list of INI files to try, in order, for fallback support. */
-    explicit INISettingsObject(QStringList paths, QObject* parent = nullptr);
+    explicit INISettingsObject(const QStringList& paths, QObject* parent = nullptr);
 
-    explicit INISettingsObject(QString path, QObject* parent = nullptr);
+    explicit INISettingsObject(const QString& path, QObject* parent = nullptr);
 
     /*!
      * \brief Gets the path to the INI file.
@@ -50,11 +50,11 @@ class INISettingsObject : public SettingsObject {
     void resumeSave() override;
 
    protected slots:
-    virtual void changeSetting(const Setting& setting, QVariant value) override;
-    virtual void resetSetting(const Setting& setting) override;
+    void changeSetting(const Setting& setting, QVariant value) override;
+    void resetSetting(const Setting& setting) override;
 
    protected:
-    virtual QVariant retrieveValue(const Setting& setting) override;
+    QVariant retrieveValue(const Setting& setting) override;
     void doSave();
 
    protected:

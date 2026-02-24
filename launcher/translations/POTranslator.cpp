@@ -91,7 +91,7 @@ class ParserArray : public QByteArray {
                                 return false;
                             }
                         }
-                        msg += mid(octal_start, i - octal_start).toUInt(0, 8);
+                        msg += mid(octal_start, i - octal_start).toUInt(nullptr, 8);
                         break;
                     }
                     case 'x': {
@@ -105,7 +105,7 @@ class ParserArray : public QByteArray {
                                 return false;
                             }
                         }
-                        msg += mid(hex_start, i - hex_start).toUInt(0, 16);
+                        msg += mid(hex_start, i - hex_start).toUInt(nullptr, 16);
                         break;
                     }
                     default: {
@@ -303,7 +303,7 @@ QString POTranslator::translate(const char* context, const char* sourceText, con
         }
         return entry.text;
     }
-    return QString();
+    return {};
 }
 
 bool POTranslator::isEmpty() const

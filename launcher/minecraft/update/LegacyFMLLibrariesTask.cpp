@@ -17,7 +17,7 @@ LegacyFMLLibrariesTask::LegacyFMLLibrariesTask(MinecraftInstance* inst)
 void LegacyFMLLibrariesTask::executeTask()
 {
     // Get the mod list
-    MinecraftInstance* inst = (MinecraftInstance*)m_inst;
+    auto* inst = (MinecraftInstance*)m_inst;
     auto components = inst->getPackProfile();
     auto profile = components->getProfile();
 
@@ -45,8 +45,9 @@ void LegacyFMLLibrariesTask::executeTask()
     // now check the lib folder inside the instance for files.
     for (auto& lib : libList) {
         QFileInfo libInfo(FS::PathCombine(inst->libDir(), lib.filename));
-        if (libInfo.exists())
+        if (libInfo.exists()) {
             continue;
+        }
         fmlLibsToProcess.append(lib);
     }
 
@@ -87,7 +88,7 @@ void LegacyFMLLibrariesTask::fmllibsFinished()
     downloadJob.reset();
     if (!fmlLibsToProcess.isEmpty()) {
         setStatus(tr("Copying FML libraries into the instance..."));
-        MinecraftInstance* inst = (MinecraftInstance*)m_inst;
+        auto* inst = (MinecraftInstance*)m_inst;
         auto metacache = APPLICATION->metacache();
         int index = 0;
         for (auto& lib : fmlLibsToProcess) {
@@ -108,7 +109,7 @@ void LegacyFMLLibrariesTask::fmllibsFinished()
     }
     emitSucceeded();
 }
-void LegacyFMLLibrariesTask::fmllibsFailed(QString reason)
+void LegacyFMLLibrariesTask::fmllibsFailed(const QString& reason)
 {
     QStringList failed = downloadJob->getFailedFiles();
     QString failed_all = failed.join("\n");
@@ -119,9 +120,9 @@ bool LegacyFMLLibrariesTask::abort()
 {
     if (downloadJob) {
         return downloadJob->abort();
-    } else {
-        qWarning() << "Prematurely aborted LegacyFMLLibrariesTask";
     }
+    qWarning() << "Prematurely aborted LegacyFMLLibrariesTask";
+
     return true;
 }
 

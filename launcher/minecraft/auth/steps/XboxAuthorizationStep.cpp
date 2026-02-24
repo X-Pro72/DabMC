@@ -3,6 +3,8 @@
 #include <QJsonDocument>
 #include <QJsonParseError>
 #include <QNetworkRequest>
+#include <memory>
+#include <utility>
 
 #include "Application.h"
 #include "Logging.h"
@@ -12,7 +14,7 @@
 #include "net/Upload.h"
 
 XboxAuthorizationStep::XboxAuthorizationStep(AccountData* data, Token* token, QString relyingParty, QString authorizationKind)
-    : AuthStep(data), m_token(token), m_relyingParty(relyingParty), m_authorizationKind(authorizationKind)
+    : AuthStep(data), m_token(token), m_relyingParty(std::move(relyingParty)), m_authorizationKind(std::move(authorizationKind))
 {}
 
 QString XboxAuthorizationStep::describe()
@@ -37,12 +39,10 @@ void XboxAuthorizationStep::perform()
     auto xbox_auth_data = xbox_auth_template.arg(m_data->userToken.token, m_relyingParty);
     // http://xboxlive.com
     QUrl url("https://xsts.auth.xboxlive.com/xsts/authorize");
-    auto headers = QList<Net::HeaderPair>{
-        { "Content-Type", "application/json" },
-        { "Accept", "application/json" },
-        { "x-xbl-contract-version", "1" }
-    };
-    m_response.reset(new QByteArray());
+    auto headers = QList<Net::HeaderPair>{ { "Content-Type", "application/json" },
+                                           { "Accept", "application/json" },
+                                           { "x-xbl-contract-version", "1" } };
+    m_response = std::make_unique<QByteArray>();
     m_request = Net::Upload::makeByteArray(url, m_response.get(), xbox_auth_data.toUtf8());
     m_request->addHeaderProxy(std::make_unique<Net::RawHeaderProxy>(headers));
     m_request->enableAutoRetry(true);

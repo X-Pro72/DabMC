@@ -70,7 +70,7 @@ ProgressDialog::ProgressDialog(QWidget* parent) : QDialog(parent), ui(new Ui::Pr
     setSkipButton(false);
 }
 
-void ProgressDialog::setSkipButton(bool present, QString label)
+void ProgressDialog::setSkipButton(bool present, const QString& label)
 {
     ui->skipButton->setAutoDefault(false);
     ui->skipButton->setDefault(false);
@@ -84,13 +84,14 @@ void ProgressDialog::setSkipButton(bool present, QString label)
 void ProgressDialog::on_skipButton_clicked(bool checked)
 {
     Q_UNUSED(checked);
-    if (ui->skipButton->isEnabled())  // prevent other triggers from aborting
+    if (ui->skipButton->isEnabled()) {  // prevent other triggers from aborting
         m_task->abort();
+    }
 }
 
 ProgressDialog::~ProgressDialog()
 {
-    for (auto conn : this->m_taskConnections) {
+    for (const auto& conn : this->m_taskConnections) {
         disconnect(conn);
     }
     delete ui;
@@ -102,10 +103,12 @@ void ProgressDialog::updateSize(bool recenterParent)
     QPoint lastPos = this->pos();
     int minHeight = ui->globalStatusDetailsLabel->minimumSize().height() + (ui->verticalLayout->spacing() * 2);
     minHeight += ui->globalProgressBar->minimumSize().height() + ui->verticalLayout->spacing();
-    if (!ui->taskProgressScrollArea->isHidden())
+    if (!ui->taskProgressScrollArea->isHidden()) {
         minHeight += ui->taskProgressScrollArea->minimumSizeHint().height() + ui->verticalLayout->spacing();
-    if (ui->skipButton->isVisible())
+    }
+    if (ui->skipButton->isVisible()) {
         minHeight += ui->skipButton->height() + ui->verticalLayout->spacing();
+    }
     minHeight = std::max(minHeight, 60);
     QSize minSize = QSize(480, minHeight);
 
@@ -201,7 +204,7 @@ Task* ProgressDialog::getTask()
 
 void ProgressDialog::onTaskStarted() {}
 
-void ProgressDialog::onTaskFailed([[maybe_unused]] QString failure)
+void ProgressDialog::onTaskFailed([[maybe_unused]] const QString& failure)
 {
     reject();
     hide();
@@ -225,7 +228,7 @@ void ProgressDialog::changeStatus([[maybe_unused]] const QString& status)
 
 void ProgressDialog::addTaskProgress(TaskStepProgress const& progress)
 {
-    SubTaskProgressBar* task_bar = new SubTaskProgressBar(this);
+    auto* task_bar = new SubTaskProgressBar(this);
     taskProgress.insert(progress.uid, task_bar);
     ui->taskProgressLayout->addWidget(task_bar);
 }
@@ -238,8 +241,9 @@ void ProgressDialog::changeStepProgress(TaskStepProgress const& task_progress)
         updateSize();
     }
 
-    if (!taskProgress.contains(task_progress.uid))
+    if (!taskProgress.contains(task_progress.uid)) {
         addTaskProgress(task_progress);
+    }
     auto task_bar = taskProgress.value(task_progress.uid);
 
     auto const [mapped_current, mapped_total] = map_int_zero_max<qint64>(task_progress.current, task_progress.total, 0);
@@ -270,7 +274,8 @@ void ProgressDialog::keyPressEvent(QKeyEvent* e)
         if (e->key() == Qt::Key_Escape) {
             on_skipButton_clicked(true);
             return;
-        } else if (e->key() == Qt::Key_Tab) {
+        }
+        if (e->key() == Qt::Key_Tab) {
             ui->skipButton->setFocusPolicy(Qt::StrongFocus);
             ui->skipButton->setFocus();
             ui->skipButton->setAutoDefault(true);

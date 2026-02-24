@@ -49,16 +49,16 @@ class ModFolderPage : public ExternalResourcesPage {
 
    public:
     explicit ModFolderPage(BaseInstance* inst, ModFolderModel* model, QWidget* parent = nullptr);
-    virtual ~ModFolderPage() = default;
+    ~ModFolderPage() override = default;
 
     void setFilter(const QString& filter) { m_fileSelectionFilter = filter; }
 
-    virtual QString displayName() const override { return tr("Mods"); }
-    virtual QIcon icon() const override { return QIcon::fromTheme("loadermods"); }
-    virtual QString id() const override { return "mods"; }
-    virtual QString helpPage() const override { return "Loader-mods"; }
+    QString displayName() const override { return tr("Mods"); }
+    QIcon icon() const override { return QIcon::fromTheme("loadermods"); }
+    QString id() const override { return "mods"; }
+    QString helpPage() const override { return "Loader-mods"; }
 
-    virtual bool shouldDisplay() const override;
+    bool shouldDisplay() const override;
 
    public slots:
     void updateFrame(const QModelIndex& current, const QModelIndex& previous) override;
@@ -81,27 +81,27 @@ class ModFolderPage : public ExternalResourcesPage {
 class CoreModFolderPage : public ModFolderPage {
     Q_OBJECT
    public:
-    explicit CoreModFolderPage(BaseInstance* inst, ModFolderModel* mods, QWidget* parent = 0);
-    virtual ~CoreModFolderPage() = default;
+    explicit CoreModFolderPage(BaseInstance* inst, ModFolderModel* mods, QWidget* parent = nullptr);
+    ~CoreModFolderPage() override = default;
 
-    virtual QString displayName() const override { return tr("Core Mods"); }
-    virtual QIcon icon() const override { return QIcon::fromTheme("coremods"); }
-    virtual QString id() const override { return "coremods"; }
-    virtual QString helpPage() const override { return "Core-mods"; }
+    QString displayName() const override { return tr("Core Mods"); }
+    QIcon icon() const override { return QIcon::fromTheme("coremods"); }
+    QString id() const override { return "coremods"; }
+    QString helpPage() const override { return "Core-mods"; }
 
-    virtual bool shouldDisplay() const override;
+    bool shouldDisplay() const override;
 };
 
 class NilModFolderPage : public ModFolderPage {
     Q_OBJECT
    public:
-    explicit NilModFolderPage(BaseInstance* inst, ModFolderModel* mods, QWidget* parent = 0);
-    virtual ~NilModFolderPage() = default;
+    explicit NilModFolderPage(BaseInstance* inst, ModFolderModel* mods, QWidget* parent = nullptr);
+    ~NilModFolderPage() override = default;
 
-    virtual QString displayName() const override { return tr("Nilmods"); }
-    virtual QIcon icon() const override { return QIcon::fromTheme("coremods"); }
-    virtual QString id() const override { return "nilmods"; }
-    virtual QString helpPage() const override { return "Nilmods"; }
+    QString displayName() const override { return tr("Nilmods"); }
+    QIcon icon() const override { return QIcon::fromTheme("coremods"); }
+    QString id() const override { return "nilmods"; }
+    QString helpPage() const override { return "Nilmods"; }
 
-    virtual bool shouldDisplay() const override;
+    bool shouldDisplay() const override;
 };

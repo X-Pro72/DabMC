@@ -40,6 +40,8 @@
 #include "ui_Page.h"
 
 #include <QInputDialog>
+#include <memory>
+#include <utility>
 
 #include "Application.h"
 
@@ -56,7 +58,7 @@ namespace LegacyFTB {
 Page::Page(NewInstanceDialog* dialog, QWidget* parent) : QWidget(parent), dialog(dialog), ui(new Ui::Page)
 {
     ftbFetchTask.reset(new PackFetchTask(APPLICATION->network()));
-    ftbPrivatePacks.reset(new PrivatePackManager());
+    ftbPrivatePacks = std::make_unique<PrivatePackManager>();
 
     ui->setupUi(this);
 
@@ -188,23 +190,23 @@ void Page::suggestCurrent()
 
     if (selected.type == PackType::Public) {
         publicListModel->getLogo(selected.logo,
-                                 [this, editedLogoName](QString logo) { dialog->setSuggestedIconFromFile(logo, editedLogoName); });
+                                 [this, editedLogoName](const QString& logo) { dialog->setSuggestedIconFromFile(logo, editedLogoName); });
     } else if (selected.type == PackType::ThirdParty) {
         thirdPartyModel->getLogo(selected.logo,
-                                 [this, editedLogoName](QString logo) { dialog->setSuggestedIconFromFile(logo, editedLogoName); });
+                                 [this, editedLogoName](const QString& logo) { dialog->setSuggestedIconFromFile(logo, editedLogoName); });
     } else if (selected.type == PackType::Private) {
         privateListModel->getLogo(selected.logo,
-                                  [this, editedLogoName](QString logo) { dialog->setSuggestedIconFromFile(logo, editedLogoName); });
+                                  [this, editedLogoName](const QString& logo) { dialog->setSuggestedIconFromFile(logo, editedLogoName); });
     }
 }
 
 void Page::ftbPackDataDownloadSuccessfully(ModpackList publicPacks, ModpackList thirdPartyPacks)
 {
-    publicListModel->fill(publicPacks);
-    thirdPartyModel->fill(thirdPartyPacks);
+    publicListModel->fill(std::move(publicPacks));
+    thirdPartyModel->fill(std::move(thirdPartyPacks));
 }
 
-void Page::ftbPackDataDownloadFailed(QString reason)
+void Page::ftbPackDataDownloadFailed(const QString& reason)
 {
     CustomMessageBox::selectable(this, tr("Error"), reason, QMessageBox::Critical)->show();
 }
@@ -219,7 +221,7 @@ void Page::ftbPrivatePackDataDownloadSuccessfully(const Modpack& pack)
     privateListModel->addPack(pack);
 }
 
-void Page::ftbPrivatePackDataDownloadFailed([[maybe_unused]] QString reason, QString packCode)
+void Page::ftbPrivatePackDataDownloadFailed([[maybe_unused]] const QString& reason, const QString& packCode)
 {
     auto reply = QMessageBox::question(this, tr("FTB private packs"),
                                        tr("Failed to download pack information for code %1.\nShould it be removed now?").arg(packCode));
@@ -295,7 +297,7 @@ void Page::onPackSelectionChanged(Modpack* pack)
     suggestCurrent();
 }
 
-void Page::onVersionSelectionItemChanged(QString version)
+void Page::onVersionSelectionItemChanged(const QString& version)
 {
     if (version.isNull() || version.isEmpty()) {
         selectedVersion = "";
@@ -306,7 +308,7 @@ void Page::onVersionSelectionItemChanged(QString version)
     suggestCurrent();
 }
 
-void Page::onSortingSelectionChanged(QString sort)
+void Page::onSortingSelectionChanged(const QString& sort)
 {
     FilterModel::Sorting toSet = publicFilterModel->getAvailableSortings().value(sort);
     publicFilterModel->setSorting(toSet);

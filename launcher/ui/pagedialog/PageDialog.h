@@ -22,8 +22,8 @@ class PageContainer;
 class PageDialog : public QDialog {
     Q_OBJECT
    public:
-    explicit PageDialog(BasePageProvider* pageProvider, QString defaultId = QString(), QWidget* parent = 0);
-    virtual ~PageDialog() {}
+    explicit PageDialog(BasePageProvider* pageProvider, QString defaultId = QString(), QWidget* parent = nullptr);
+    ~PageDialog() override = default;
 
    signals:
     void applied();

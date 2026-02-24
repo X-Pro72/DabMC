@@ -93,12 +93,13 @@ IconPickerDialog::IconPickerDialog(QWidget* parent) : QDialog(parent), ui(new Ui
 
 bool IconPickerDialog::eventFilter(QObject* obj, QEvent* evt)
 {
-    if (obj != ui->iconView)
+    if (obj != ui->iconView) {
         return QDialog::eventFilter(obj, evt);
+    }
     if (evt->type() != QEvent::KeyPress) {
         return QDialog::eventFilter(obj, evt);
     }
-    QKeyEvent* keyEvent = static_cast<QKeyEvent*>(evt);
+    auto* keyEvent = static_cast<QKeyEvent*>(evt);
     switch (keyEvent->key()) {
         case Qt::Key_Delete:
             removeSelectedIcon();
@@ -122,10 +123,11 @@ void IconPickerDialog::addNewIcon()
     APPLICATION->icons()->installIcons(fileNames);
 }
 
-void IconPickerDialog::removeSelectedIcon()
+void IconPickerDialog::removeSelectedIcon() const
 {
-    if (APPLICATION->icons()->trashIcon(selectedIconKey))
+    if (APPLICATION->icons()->trashIcon(selectedIconKey)) {
         return;
+    }
 
     APPLICATION->icons()->deleteIcon(selectedIconKey);
 }
@@ -136,10 +138,11 @@ void IconPickerDialog::activated(QModelIndex index)
     accept();
 }
 
-void IconPickerDialog::selectionChanged(QItemSelection selected, QItemSelection deselected)
+void IconPickerDialog::selectionChanged(QItemSelection selected, const QItemSelection& deselected)
 {
-    if (selected.empty())
+    if (selected.empty()) {
         return;
+    }
 
     QString key = selected.first().indexes().first().data(Qt::UserRole).toString();
     if (!key.isEmpty()) {
@@ -148,7 +151,7 @@ void IconPickerDialog::selectionChanged(QItemSelection selected, QItemSelection 
     buttonRemove->setEnabled(APPLICATION->icons()->iconFileExists(selectedIconKey));
 }
 
-int IconPickerDialog::execWithSelection(QString selection)
+int IconPickerDialog::execWithSelection(const QString& selection)
 {
     auto list = APPLICATION->icons();
     auto contentsWidget = ui->iconView;
@@ -173,7 +176,7 @@ IconPickerDialog::~IconPickerDialog()
     delete ui;
 }
 
-void IconPickerDialog::openFolder()
+void IconPickerDialog::openFolder() const
 {
     DesktopServices::openPath(APPLICATION->icons()->iconDirectory(selectedIconKey), true);
 }

@@ -38,6 +38,7 @@
 #include <QByteArray>
 #include <QDebug>
 #include <QFile>
+#include <utility>
 
 bool GZip::unzip(const QByteArray& compressedBytes, QByteArray& uncompressedBytes)
 {
@@ -75,9 +76,9 @@ bool GZip::unzip(const QByteArray& compressedBytes, QByteArray& uncompressedByte
 
         // Inflate another chunk.
         err = inflate(&strm, Z_SYNC_FLUSH);
-        if (err == Z_STREAM_END)
+        if (err == Z_STREAM_END) {
             done = true;
-        else if (err != Z_OK) {
+        } else if (err != Z_OK) {
             break;
         }
     }
@@ -139,7 +140,7 @@ bool GZip::zip(const QByteArray& uncompressedBytes, QByteArray& compressedBytes)
     return true;
 }
 
-int inf(QFile* source, std::function<bool(const QByteArray&)> handleBlock)
+int inf(QFile* source, const std::function<bool(const QByteArray&)>& handleBlock)
 {
     constexpr auto CHUNK = 16384;
     int ret;
@@ -150,8 +151,9 @@ int inf(QFile* source, std::function<bool(const QByteArray&)> handleBlock)
     unsigned char out[CHUNK];
 
     ret = inflateInit2(&strm, (16 + MAX_WBITS));
-    if (ret != Z_OK)
+    if (ret != Z_OK) {
         return ret;
+    }
 
     /* decompress until deflate stream ends or end of file */
     do {
@@ -160,8 +162,9 @@ int inf(QFile* source, std::function<bool(const QByteArray&)> handleBlock)
             (void)inflateEnd(&strm);
             return Z_ERRNO;
         }
-        if (strm.avail_in == 0)
+        if (strm.avail_in == 0) {
             break;
+        }
         strm.next_in = reinterpret_cast<Bytef*>(in);
 
         /* run inflate() on input until output buffer not full */
@@ -213,6 +216,6 @@ QString zerr(int ret)
 
 QString GZip::readGzFileByBlocks(QFile* source, std::function<bool(const QByteArray&)> handleBlock)
 {
-    auto ret = inf(source, handleBlock);
+    auto ret = inf(source, std::move(handleBlock));
     return zerr(ret);
 }

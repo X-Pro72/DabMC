@@ -31,14 +31,15 @@
 #include "modplatform/ResourceType.h"
 
 namespace ResourceUtils {
-ModPlatform::ResourceType identify(QFileInfo file)
+ModPlatform::ResourceType identify(const QFileInfo& file)
 {
     if (file.exists() && file.isFile()) {
         if (ModUtils::validate(file)) {
             // mods can contain resource and data packs so they must be tested first
             qDebug() << file.fileName() << "is a mod";
             return ModPlatform::ResourceType::Mod;
-        } else if (DataPackUtils::validateResourcePack(file)) {
+        }
+        if (DataPackUtils::validateResourcePack(file)) {
             qDebug() << file.fileName() << "is a resource pack";
             return ModPlatform::ResourceType::ResourcePack;
         } else if (TexturePackUtils::validate(file)) {

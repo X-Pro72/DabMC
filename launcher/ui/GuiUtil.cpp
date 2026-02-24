@@ -42,6 +42,7 @@
 #include <QClipboard>
 #include <QFileDialog>
 #include <QStandardPaths>
+#include <utility>
 
 #include "FileSystem.h"
 #include "logs/AnonymizeLog.h"
@@ -91,8 +92,9 @@ std::optional<QString> GuiUtil::uploadPaste(const QString& name, const QString& 
     auto baseURL = APPLICATION->settings()->get("PastebinCustomAPIBase").toString();
     bool shouldTruncate = false;
 
-    if (baseURL.isEmpty())
+    if (baseURL.isEmpty()) {
         baseURL = PasteUpload::PasteTypes[pasteType].defaultBase;
+    }
 
     if (auto url = QUrl(baseURL); url.isValid()) {
         auto response = CustomMessageBox::selectable(parentWidget, QObject::tr("Confirm Upload"),
@@ -103,8 +105,9 @@ std::optional<QString> GuiUtil::uploadPaste(const QString& name, const QString& 
                                                      QMessageBox::Warning, QMessageBox::Yes | QMessageBox::No, QMessageBox::No)
                             ->exec();
 
-        if (response != QMessageBox::Yes)
+        if (response != QMessageBox::Yes) {
             return {};
+        }
 
         if (baseURL == "https://api.mclo.gs" && text.count("\n") > MaxMclogsLines) {
             auto truncateResponse = CustomMessageBox::selectable(
@@ -137,7 +140,7 @@ std::optional<QString> GuiUtil::uploadPaste(const QString& name, const QString& 
 
     auto pasteJob = new PasteUpload(textToUpload, baseURL, pasteType);
     job->addNetAction(Net::NetRequest::Ptr(pasteJob));
-    QObject::connect(job.get(), &Task::failed, [parentWidget](QString reason) {
+    QObject::connect(job.get(), &Task::failed, [parentWidget](const QString& reason) {
         CustomMessageBox::selectable(parentWidget, QObject::tr("Failed to upload logs!"), reason, QMessageBox::Critical)->show();
     });
     QObject::connect(job.get(), &Task::aborted, [parentWidget] {
@@ -170,10 +173,10 @@ void GuiUtil::setClipboardText(QString text)
     QApplication::clipboard()->setText(text);
 }
 
-static QStringList BrowseForFileInternal(QString context,
-                                         QString caption,
-                                         QString filter,
-                                         QString defaultPath,
+static QStringList BrowseForFileInternal(const QString& context,
+                                         const QString& caption,
+                                         const QString& filter,
+                                         const QString& defaultPath,
                                          QWidget* parentWidget,
                                          bool single)
 {
@@ -194,7 +197,7 @@ static QStringList BrowseForFileInternal(QString context,
     f(QStandardPaths::DownloadLocation);
     f(QStandardPaths::HomeLocation);
     QList<QUrl> urls;
-    for (auto location : locations) {
+    for (const auto& location : locations) {
         urls.append(QUrl::fromLocalFile(location));
     }
     urls.append(QUrl::fromLocalFile(defaultPath));
@@ -228,14 +231,15 @@ static QStringList BrowseForFileInternal(QString context,
 
 QString GuiUtil::BrowseForFile(QString context, QString caption, QString filter, QString defaultPath, QWidget* parentWidget)
 {
-    auto resultList = BrowseForFileInternal(context, caption, filter, defaultPath, parentWidget, true);
+    auto resultList =
+        BrowseForFileInternal(std::move(context), std::move(caption), std::move(filter), std::move(defaultPath), parentWidget, true);
     if (resultList.size()) {
         return resultList[0];
     }
-    return QString();
+    return {};
 }
 
 QStringList GuiUtil::BrowseForFiles(QString context, QString caption, QString filter, QString defaultPath, QWidget* parentWidget)
 {
-    return BrowseForFileInternal(context, caption, filter, defaultPath, parentWidget, false);
+    return BrowseForFileInternal(std::move(context), std::move(caption), std::move(filter), std::move(defaultPath), parentWidget, false);
 }

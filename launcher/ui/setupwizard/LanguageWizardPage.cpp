@@ -1,7 +1,7 @@
 #include "LanguageWizardPage.h"
 #include <Application.h>
-#include "settings/SettingsObject.h"
 #include <translations/TranslationsModel.h>
+#include "settings/SettingsObject.h"
 
 #include <BuildConfig.h>
 #include <QVBoxLayout>
@@ -18,7 +18,7 @@ LanguageWizardPage::LanguageWizardPage(QWidget* parent) : BaseWizardPage(parent)
     retranslate();
 }
 
-LanguageWizardPage::~LanguageWizardPage() {}
+LanguageWizardPage::~LanguageWizardPage() = default;
 
 bool LanguageWizardPage::wantsRefreshButton()
 {

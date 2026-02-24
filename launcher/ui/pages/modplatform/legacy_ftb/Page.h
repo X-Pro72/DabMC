@@ -60,8 +60,8 @@ class Page : public QWidget, public ModpackProviderBasePage {
     Q_OBJECT
 
    public:
-    explicit Page(NewInstanceDialog* dialog, QWidget* parent = 0);
-    virtual ~Page();
+    explicit Page(NewInstanceDialog* dialog, QWidget* parent = nullptr);
+    ~Page() override;
     QString displayName() const override { return "FTB Legacy"; }
     QIcon icon() const override { return QIcon::fromTheme("ftb_logo"); }
     QString id() const override { return "legacy_ftb"; }
@@ -71,9 +71,9 @@ class Page : public QWidget, public ModpackProviderBasePage {
     void retranslate() override;
 
     /** Programatically set the term in the search bar. */
-    virtual void setSearchTerm(QString) override;
+    void setSearchTerm(QString) override;
     /** Get the current term in the search bar. */
-    virtual QString getSerachTerm() const override;
+    QString getSerachTerm() const override;
 
    private:
     void suggestCurrent();
@@ -81,14 +81,14 @@ class Page : public QWidget, public ModpackProviderBasePage {
 
    private slots:
     void ftbPackDataDownloadSuccessfully(ModpackList publicPacks, ModpackList thirdPartyPacks);
-    void ftbPackDataDownloadFailed(QString reason);
+    void ftbPackDataDownloadFailed(const QString& reason);
     void ftbPackDataDownloadAborted();
 
     void ftbPrivatePackDataDownloadSuccessfully(const Modpack& pack);
-    void ftbPrivatePackDataDownloadFailed(QString reason, QString packCode);
+    void ftbPrivatePackDataDownloadFailed(const QString& reason, const QString& packCode);
 
-    void onSortingSelectionChanged(QString data);
-    void onVersionSelectionItemChanged(QString data);
+    void onSortingSelectionChanged(const QString& data);
+    void onVersionSelectionItemChanged(const QString& data);
 
     void onPublicPackSelectionChanged(QModelIndex first, QModelIndex second);
     void onThirdPartyPackSelectionChanged(QModelIndex first, QModelIndex second);

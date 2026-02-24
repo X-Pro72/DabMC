@@ -29,12 +29,12 @@
 class OverrideSetting : public Setting {
     Q_OBJECT
    public:
-    explicit OverrideSetting(std::shared_ptr<Setting> overridden, std::shared_ptr<Setting> gate);
+    explicit OverrideSetting(const std::shared_ptr<Setting>& overridden, const std::shared_ptr<Setting>& gate);
 
-    virtual QVariant defValue() const;
-    virtual QVariant get() const;
-    virtual void set(QVariant value);
-    virtual void reset();
+    QVariant defValue() const override;
+    QVariant get() const override;
+    void set(QVariant value) override;
+    void reset() override;
 
    private:
     bool isOverriding() const;

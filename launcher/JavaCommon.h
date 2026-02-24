@@ -1,13 +1,15 @@
 #pragma once
 #include <java/JavaChecker.h>
 
+#include <utility>
+
 class QWidget;
 
 /**
  * Common UI bits for the java pages to use.
  */
 namespace JavaCommon {
-bool checkJVMArgs(QString args, QWidget* parent);
+bool checkJVMArgs(const QString& args, QWidget* parent);
 
 // Show a dialog saying that the Java binary was usable
 void javaWasOk(QWidget* parent, const JavaChecker::Result& result);
@@ -22,9 +24,9 @@ class TestCheck : public QObject {
     Q_OBJECT
    public:
     TestCheck(QWidget* parent, QString path, QString args, int minMem, int maxMem, int permGen)
-        : m_parent(parent), m_path(path), m_args(args), m_minMem(minMem), m_maxMem(maxMem), m_permGen(permGen)
+        : m_parent(parent), m_path(std::move(path)), m_args(std::move(args)), m_minMem(minMem), m_maxMem(maxMem), m_permGen(permGen)
     {}
-    virtual ~TestCheck() = default;
+    ~TestCheck() override = default;
 
     void run();
 

@@ -39,10 +39,11 @@
 #include <QFileInfo>
 #include <QList>
 #include <QString>
+#include <utility>
 
 class CatPack {
    public:
-    virtual ~CatPack() {}
+    virtual ~CatPack() = default;
     virtual QString id() const = 0;
     virtual QString name() const = 0;
     virtual QString path() const = 0;
@@ -50,11 +51,11 @@ class CatPack {
 
 class BasicCatPack : public CatPack {
    public:
-    BasicCatPack(QString id, QString name) : m_id(id), m_name(name) {}
-    BasicCatPack(QString id) : BasicCatPack(id, id) {}
-    virtual QString id() const override { return m_id; }
-    virtual QString name() const override { return m_name; }
-    virtual QString path() const override;
+    BasicCatPack(QString id, QString name) : m_id(std::move(id)), m_name(std::move(name)) {}
+    BasicCatPack(const QString& id) : BasicCatPack(id, id) {}
+    QString id() const override { return m_id; }
+    QString name() const override { return m_name; }
+    QString path() const override;
 
    protected:
     QString m_id;
@@ -63,9 +64,9 @@ class BasicCatPack : public CatPack {
 
 class FileCatPack : public BasicCatPack {
    public:
-    FileCatPack(QString id, QFileInfo& fileInfo) : BasicCatPack(id), m_path(fileInfo.absoluteFilePath()) {}
+    FileCatPack(QString id, QFileInfo& fileInfo) : BasicCatPack(std::move(id)), m_path(fileInfo.absoluteFilePath()) {}
     FileCatPack(QFileInfo& fileInfo) : FileCatPack(fileInfo.baseName(), fileInfo) {}
-    virtual QString path() const { return m_path; }
+    QString path() const override { return m_path; }
 
    private:
     QString m_path;
@@ -83,7 +84,7 @@ class JsonCatPack : public BasicCatPack {
         PartialDate endTime;
     };
     JsonCatPack(QFileInfo& manifestInfo);
-    virtual QString path() const override;
+    QString path() const override;
     QString path(QDate now) const;
 
    private:

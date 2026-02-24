@@ -39,6 +39,7 @@
 #include <QLoggingCategory>
 #include <QRunnable>
 #include <QUuid>
+#include <utility>
 
 #include "QObjectPtr.h"
 
@@ -94,7 +95,7 @@ class Task : public QObject, public QRunnable {
 
    public:
     explicit Task(bool show_debug_log = true);
-    virtual ~Task() = default;
+    ~Task() override = default;
 
     bool isRunning() const;
     bool isFinished() const;
@@ -121,8 +122,8 @@ class Task : public QObject, public QRunnable {
     QString getStatus() { return m_status; }
     QString getDetails() { return m_details; }
 
-    qint64 getProgress() { return m_progress; }
-    qint64 getTotalProgress() { return m_progressTotal; }
+    qint64 getProgress() const { return m_progress; }
+    qint64 getTotalProgress() const { return m_progressTotal; }
     virtual auto getStepProgress() const -> TaskStepProgressList { return {}; }
 
     QUuid getUid() { return m_uid; }
@@ -145,16 +146,16 @@ class Task : public QObject, public QRunnable {
     void succeeded();
     //! called when a task has been aborted by calling abort()
     void aborted();
-    void failed(QString reason);
-    void status(QString status);
-    void details(QString details);
+    void failed(const QString& reason);
+    void status(const QString& status);
+    void details(const QString& details);
     void warningLogged(const QString& warning);
     void stepProgress(TaskStepProgress const& task_progress);
 
     //! Emitted when the canAbort() status has changed. */
     void abortStatusChanged(bool can_abort);
 
-    void abortButtonTextChanged(QString text);
+    void abortButtonTextChanged(const QString& text);
 
    public slots:
     // QRunnable's interface
@@ -165,8 +166,9 @@ class Task : public QObject, public QRunnable {
     //! used by external code to ask the task to abort
     virtual bool abort()
     {
-        if (canAbort())
+        if (canAbort()) {
             emitAborted();
+        }
         return canAbort();
     }
 
@@ -176,10 +178,7 @@ class Task : public QObject, public QRunnable {
         emit abortStatusChanged(can_abort);
     }
 
-    void setAbortButtonText(QString text)
-    {
-        emit abortButtonTextChanged(text);
-    }
+    void setAbortButtonText(QString text) { emit abortButtonTextChanged(std::move(text)); }
 
    protected:
     //! The task subclass must implement this method. This method is called to start to run the task.

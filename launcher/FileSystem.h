@@ -48,6 +48,7 @@
 #include <QObject>
 #include <QPair>
 #include <QThread>
+#include <utility>
 
 namespace FS {
 
@@ -133,7 +134,7 @@ class copy : public QObject {
 
     bool operator()(bool dryRun = false) { return operator()(QString(), dryRun); }
 
-    qsizetype totalCopied() { return m_copied; }
+    qsizetype totalCopied() const { return m_copied; }
     qsizetype totalFailed() { return m_failedPaths.length(); }
     QStringList failed() { return m_failedPaths; }
 
@@ -172,7 +173,7 @@ class ExternalLinkFileProcess : public QThread {
     Q_OBJECT
    public:
     ExternalLinkFileProcess(QString server, bool useHardLinks, QObject* parent = nullptr)
-        : QThread(parent), m_useHardLinks(useHardLinks), m_server(server)
+        : QThread(parent), m_useHardLinks(useHardLinks), m_server(std::move(server))
     {}
 
     void run() override
@@ -198,7 +199,7 @@ class ExternalLinkFileProcess : public QThread {
 class create_link : public QObject {
     Q_OBJECT
    public:
-    create_link(const QList<LinkPair> path_pairs, QObject* parent = nullptr) : QObject(parent) { m_path_pairs.append(path_pairs); }
+    create_link(const QList<LinkPair>& path_pairs, QObject* parent = nullptr) : QObject(parent) { m_path_pairs.append(path_pairs); }
     create_link(const QString& src, const QString& dst, QObject* parent = nullptr) : QObject(parent)
     {
         LinkPair pair = { src, dst };
@@ -239,7 +240,7 @@ class create_link : public QObject {
 
     bool operator()(bool dryRun = false) { return operator()(QString(), dryRun); }
 
-    int totalLinked() { return m_linked; }
+    int totalLinked() const { return m_linked; }
     int totalToLink() { return static_cast<int>(m_links_to_make.size()); }
 
     void runPrivileged() { runPrivileged(QString()); }
@@ -507,7 +508,7 @@ class clone : public QObject {
 
     bool operator()(bool dryRun = false) { return operator()(QString(), dryRun); }
 
-    qsizetype totalCloned() { return m_cloned; }
+    qsizetype totalCloned() const { return m_cloned; }
     qsizetype totalFailed() { return m_failedClones.length(); }
 
     QList<QPair<QString, QString>> failed() { return m_failedClones; }

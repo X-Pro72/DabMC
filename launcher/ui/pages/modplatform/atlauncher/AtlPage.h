@@ -53,21 +53,21 @@ class AtlPage : public QWidget, public ModpackProviderBasePage {
     Q_OBJECT
 
    public:
-    explicit AtlPage(NewInstanceDialog* dialog, QWidget* parent = 0);
-    virtual ~AtlPage();
-    virtual QString displayName() const override { return "ATLauncher"; }
-    virtual QIcon icon() const override { return QIcon::fromTheme("atlauncher"); }
-    virtual QString id() const override { return "atl"; }
-    virtual QString helpPage() const override { return "ATL-platform"; }
-    virtual bool shouldDisplay() const override;
+    explicit AtlPage(NewInstanceDialog* dialog, QWidget* parent = nullptr);
+    ~AtlPage() override;
+    QString displayName() const override { return "ATLauncher"; }
+    QIcon icon() const override { return QIcon::fromTheme("atlauncher"); }
+    QString id() const override { return "atl"; }
+    QString helpPage() const override { return "ATL-platform"; }
+    bool shouldDisplay() const override;
     void retranslate() override;
 
     void openedImpl() override;
 
     /** Programatically set the term in the search bar. */
-    virtual void setSearchTerm(QString) override;
+    void setSearchTerm(QString) override;
     /** Get the current term in the search bar. */
-    virtual QString getSerachTerm() const override;
+    QString getSerachTerm() const override;
 
    private:
     void suggestCurrent();
@@ -75,10 +75,10 @@ class AtlPage : public QWidget, public ModpackProviderBasePage {
    private slots:
     void triggerSearch();
 
-    void onSortingSelectionChanged(QString data);
+    void onSortingSelectionChanged(const QString& data);
 
     void onSelectionChanged(QModelIndex first, QModelIndex second);
-    void onVersionSelectionChanged(QString data);
+    void onVersionSelectionChanged(const QString& data);
 
    private:
     Ui::AtlPage* ui = nullptr;

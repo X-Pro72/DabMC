@@ -52,6 +52,7 @@
 #include <QSortFilterProxyModel>
 #include <QTreeView>
 #include <Qt>
+#include <memory>
 
 #include "FileSystem.h"
 #include "tools/MCEditTool.h"
@@ -68,12 +69,12 @@ class WorldListProxyModel : public QSortFilterProxyModel {
    public:
     WorldListProxyModel(QObject* parent) : QSortFilterProxyModel(parent) {}
 
-    virtual QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const
+    QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override
     {
         QModelIndex sourceIndex = mapToSource(index);
 
         if (index.column() == 0 && role == Qt::DecorationRole) {
-            WorldList* worlds = qobject_cast<WorldList*>(sourceModel());
+            auto* worlds = qobject_cast<WorldList*>(sourceModel());
             auto iconFile = worlds->data(sourceIndex, WorldList::IconFileRole).toString();
             if (iconFile.isNull()) {
                 // NOTE: Minecraft uses the same placeholder for servers AND worlds
@@ -93,7 +94,7 @@ WorldListPage::WorldListPage(MinecraftInstance* inst, WorldList* worlds, QWidget
 
     ui->toolBar->insertSpacer(ui->actionRefresh);
 
-    WorldListProxyModel* proxy = new WorldListProxyModel(this);
+    auto* proxy = new WorldListProxyModel(this);
     proxy->setSortCaseSensitivity(Qt::CaseInsensitive);
     proxy->setSourceModel(m_worlds);
     proxy->setSortRole(Qt::UserRole);
@@ -178,9 +179,10 @@ bool WorldListPage::eventFilter(QObject* obj, QEvent* ev)
     if (ev->type() != QEvent::KeyPress) {
         return QWidget::eventFilter(obj, ev);
     }
-    QKeyEvent* keyEvent = static_cast<QKeyEvent*>(ev);
-    if (obj == ui->worldTreeView)
+    auto* keyEvent = static_cast<QKeyEvent*>(ev);
+    if (obj == ui->worldTreeView) {
         return worldListFilter(keyEvent);
+    }
     return QWidget::eventFilter(obj, ev);
 }
 
@@ -188,8 +190,9 @@ void WorldListPage::on_actionRemove_triggered()
 {
     auto proxiedIndex = getSelectedWorld();
 
-    if (!proxiedIndex.isValid())
+    if (!proxiedIndex.isValid()) {
         return;
+    }
 
     auto result = CustomMessageBox::selectable(this, tr("Confirm Deletion"),
                                                tr("You are about to delete \"%1\".\n"
@@ -220,8 +223,9 @@ void WorldListPage::on_actionData_Packs_triggered()
         return;
     }
 
-    if (!worldSafetyNagQuestion(tr("Manage Data Packs")))
+    if (!worldSafetyNagQuestion(tr("Manage Data Packs"))) {
         return;
+    }
 
     const QString fullPath = m_worlds->data(index, WorldList::FolderRole).toString();
     const QString folder = FS::PathCombine(fullPath, "datapacks");
@@ -237,7 +241,7 @@ void WorldListPage::on_actionData_Packs_triggered()
     GenericPageProvider provider(dialog->windowTitle());
 
     bool isIndexed = !APPLICATION->settings()->get("ModMetadataDisabled").toBool();
-    m_datapackModel.reset(new DataPackFolderModel(folder, m_inst, isIndexed, true));
+    m_datapackModel = std::make_unique<DataPackFolderModel>(folder, m_inst, isIndexed, true);
 
     provider.addPageCreator([this] { return new DataPackPage(m_inst, m_datapackModel.get(), this); });
 
@@ -268,8 +272,9 @@ void WorldListPage::on_actionReset_Icon_triggered()
 {
     auto proxiedIndex = getSelectedWorld();
 
-    if (!proxiedIndex.isValid())
+    if (!proxiedIndex.isValid()) {
         return;
+    }
 
     if (m_worlds->resetIcon(proxiedIndex.row())) {
         ui->actionReset_Icon->setEnabled(false);
@@ -297,8 +302,9 @@ void WorldListPage::on_actionCopy_Seed_triggered()
 
 void WorldListPage::on_actionMCEdit_triggered()
 {
-    if (m_mceditStarting)
+    if (m_mceditStarting) {
         return;
+    }
 
     auto mcedit = APPLICATION->mcedit();
 
@@ -310,8 +316,9 @@ void WorldListPage::on_actionMCEdit_triggered()
         return;
     }
 
-    if (!worldSafetyNagQuestion(tr("Open World in MCEdit")))
+    if (!worldSafetyNagQuestion(tr("Open World in MCEdit"))) {
         return;
+    }
 
     auto fullPath = m_worlds->data(index, WorldList::FolderRole).toString();
 
@@ -392,7 +399,7 @@ void WorldListPage::on_actionAdd_triggered()
                                         QString(), this->parentWidget());
     if (!list.empty()) {
         m_worlds->stopWatching();
-        for (auto filename : list) {
+        for (const auto& filename : list) {
             m_worlds->installWorld(QFileInfo(filename));
         }
         m_worlds->startWatching();
@@ -423,8 +430,9 @@ void WorldListPage::on_actionCopy_triggered()
         return;
     }
 
-    if (!worldSafetyNagQuestion(tr("Copy World")))
+    if (!worldSafetyNagQuestion(tr("Copy World"))) {
         return;
+    }
 
     auto worldVariant = m_worlds->data(index, WorldList::ObjectRole);
     auto world = (World*)worldVariant.value<void*>();
@@ -444,8 +452,9 @@ void WorldListPage::on_actionRename_triggered()
         return;
     }
 
-    if (!worldSafetyNagQuestion(tr("Rename World")))
+    if (!worldSafetyNagQuestion(tr("Rename World"))) {
         return;
+    }
 
     auto worldVariant = m_worlds->data(index, WorldList::ObjectRole);
     auto world = (World*)worldVariant.value<void*>();

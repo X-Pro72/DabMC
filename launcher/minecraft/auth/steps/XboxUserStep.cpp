@@ -1,6 +1,7 @@
 #include "XboxUserStep.h"
 
 #include <QNetworkRequest>
+#include <memory>
 
 #include "Application.h"
 #include "minecraft/auth/Parsers.h"
@@ -37,7 +38,7 @@ void XboxUserStep::perform()
         // https://learn.microsoft.com/en-us/gaming/gdk/_content/gc/reference/live/rest/additional/httpstandardheaders
         { "x-xbl-contract-version", "1" }
     };
-    m_response.reset(new QByteArray());
+    m_response = std::make_unique<QByteArray>();
     m_request = Net::Upload::makeByteArray(url, m_response.get(), xbox_auth_data.toUtf8());
     m_request->addHeaderProxy(std::make_unique<Net::RawHeaderProxy>(headers));
     m_request->enableAutoRetry(true);

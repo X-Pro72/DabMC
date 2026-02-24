@@ -6,18 +6,18 @@
 class MojangVersionFormatTest : public QObject {
     Q_OBJECT
 
-    static QJsonDocument readJson(const QString path)
+    static QJsonDocument readJson(const QString& path)
     {
         QFile jsonFile(path);
         if (!jsonFile.open(QIODevice::ReadOnly)) {
             qWarning() << "Failed to open file '" << jsonFile.fileName() << "' for reading!";
-            return QJsonDocument();
+            return {};
         }
         auto data = jsonFile.readAll();
         jsonFile.close();
         return QJsonDocument::fromJson(data);
     }
-    static void writeJson(const char* file, QJsonDocument doc)
+    static void writeJson(const char* file, const QJsonDocument& doc)
     {
         QFile jsonFile(file);
         if (!jsonFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
@@ -31,7 +31,7 @@ class MojangVersionFormatTest : public QObject {
     }
 
    private slots:
-    void test_Through_Simple()
+    static void test_Through_Simple()
     {
         QJsonDocument doc = readJson(QFINDTESTDATA("testdata/MojangVersionFormat/1.9-simple.json"));
         auto vfile = MojangVersionFormat::versionFileFromJson(doc, "1.9-simple.json");
@@ -41,7 +41,7 @@ class MojangVersionFormatTest : public QObject {
         QCOMPARE(doc.toJson(), doc2.toJson());
     }
 
-    void test_Through()
+    static void test_Through()
     {
         QJsonDocument doc = readJson(QFINDTESTDATA("testdata/MojangVersionFormat/1.9.json"));
         auto vfile = MojangVersionFormat::versionFileFromJson(doc, "1.9.json");

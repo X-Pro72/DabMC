@@ -21,12 +21,13 @@
 #include "Json.h"
 
 #include <QPainter>
+#include <memory>
 
 namespace Ftb {
 
 ListModel::ListModel(QObject* parent) : QAbstractListModel(parent) {}
 
-ListModel::~ListModel() {}
+ListModel::~ListModel() = default;
 
 int ListModel::rowCount(const QModelIndex& parent) const
 {
@@ -48,7 +49,8 @@ QVariant ListModel::data(const QModelIndex& index, int role) const
     FTB::Modpack pack = m_modpacks.at(pos);
     if (role == Qt::DisplayRole) {
         return pack.name;
-    } else if (role == Qt::ToolTipRole) {
+    }
+    if (role == Qt::ToolTipRole) {
         return pack.synopsis;
     } else if (role == Qt::DecorationRole) {
         QIcon placeholder = QIcon::fromTheme("screenshot-placeholder");
@@ -62,7 +64,7 @@ QVariant ListModel::data(const QModelIndex& index, int role) const
             return placeholder;
         }
 
-        for (auto art : pack.art) {
+        for (const auto& art : pack.art) {
             if (art.type == "square") {
                 ((ListModel*)this)->requestLogo(pack.safeName, art.url);
             }
@@ -74,10 +76,10 @@ QVariant ListModel::data(const QModelIndex& index, int role) const
         return v;
     }
 
-    return QVariant();
+    return {};
 }
 
-void ListModel::getLogo(const QString& logo, const QString& logoUrl, LogoCallback callback)
+void ListModel::getLogo(const QString& logo, const QString& logoUrl, const LogoCallback& callback)
 {
     if (m_logoMap.contains(logo)) {
         callback(APPLICATION->metacache()->resolveEntry("FTBPacks", QString("logos/%1").arg(logo))->getFullPath());
@@ -96,7 +98,7 @@ void ListModel::request()
 
     auto netJob = makeShared<NetJob>("Ftb::Request", APPLICATION->network());
     auto url = QString(BuildConfig.FTB_API_BASE_URL + "/modpack/all");
-    m_response.reset(new QByteArray());
+    m_response = std::make_unique<QByteArray>();
     netJob->addNetAction(Net::Download::makeByteArray(QUrl(url), m_response.get()));
     m_jobPtr = netJob;
     m_jobPtr->start();
@@ -136,7 +138,7 @@ void ListModel::requestFinished()
     }
 }
 
-void ListModel::requestFailed(QString)
+void ListModel::requestFailed(const QString&)
 {
     m_jobPtr.reset();
     m_remainingPacks.clear();
@@ -146,7 +148,7 @@ void ListModel::requestPack()
 {
     auto netJob = makeShared<NetJob>("Ftb::Search", APPLICATION->network());
     auto searchUrl = QString(BuildConfig.FTB_API_BASE_URL + "/modpack/%1").arg(m_currentPack);
-    m_response.reset(new QByteArray());
+    m_response = std::make_unique<QByteArray>();
     netJob->addNetAction(Net::Download::makeByteArray(QUrl(searchUrl), m_response.get()));
     m_jobPtr = netJob;
     m_jobPtr->start();
@@ -157,8 +159,9 @@ void ListModel::requestPack()
 
 void ListModel::packRequestFinished()
 {
-    if (!m_jobPtr || m_aborted)
+    if (!m_jobPtr || m_aborted) {
         return;
+    }
 
     m_jobPtr.reset();
     m_remainingPacks.removeOne(m_currentPack);
@@ -199,13 +202,13 @@ void ListModel::packRequestFinished()
     }
 }
 
-void ListModel::packRequestFailed(QString)
+void ListModel::packRequestFailed(const QString&)
 {
     m_jobPtr.reset();
     m_remainingPacks.removeOne(m_currentPack);
 }
 
-void ListModel::logoLoaded(QString logo)
+void ListModel::logoLoaded(const QString& logo)
 {
     auto& logoObj = m_logoMap[logo];
     logoObj.downloadJob.reset();
@@ -217,13 +220,13 @@ void ListModel::logoLoaded(QString logo)
     }
 }
 
-void ListModel::logoFailed(QString logo)
+void ListModel::logoFailed(const QString& logo)
 {
     m_logoMap[logo].failed = true;
     m_logoMap[logo].downloadJob.reset();
 }
 
-void ListModel::requestLogo(QString logo, QString url)
+void ListModel::requestLogo(const QString& logo, const QString& url)
 {
     if (m_logoMap.contains(logo)) {
         return;

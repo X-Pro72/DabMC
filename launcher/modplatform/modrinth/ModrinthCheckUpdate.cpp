@@ -37,8 +37,9 @@ ModrinthCheckUpdate::ModrinthCheckUpdate(QList<Resource*>& resources,
 
 bool ModrinthCheckUpdate::abort()
 {
-    if (m_job)
+    if (m_job) {
         return m_job->abort();
+    }
     return true;
 }
 
@@ -63,7 +64,8 @@ void ModrinthCheckUpdate::executeTask()
         // (though it will rarely happen, if at all)
         if (resource->metadata()->hash_format != m_hashType) {
             auto hash_task = Hashing::createHasher(resource->fileinfo().absoluteFilePath(), ModPlatform::ResourceProvider::MODRINTH);
-            connect(hash_task.get(), &Hashing::Hasher::resultsReady, [this, resource](QString hash) { m_mappings.insert(hash, resource); });
+            connect(hash_task.get(), &Hashing::Hasher::resultsReady,
+                    [this, resource](const QString& hash) { m_mappings.insert(hash, resource); });
             connect(hash_task.get(), &Task::failed, [this] { failed("Failed to generate hash"); });
             hashing_task->addTask(hash_task);
             startHasing = true;
@@ -91,7 +93,7 @@ void ModrinthCheckUpdate::getUpdateModsForLoader(std::optional<ModPlatform::ModL
     auto response = std::make_shared<QByteArray>();
     QStringList hashes;
     if (forceModLoaderCheck && loader.has_value()) {
-        for (auto hash : m_mappings.keys()) {
+        for (const auto& hash : m_mappings.keys()) {
             if (m_mappings.value(hash)->metadata()->loaders & loader.value()) {
                 hashes.append(hash);
             }
@@ -182,10 +184,11 @@ void ModrinthCheckUpdate::checkVersionsResponse(QByteArray* response, std::optio
 
                 QString old_version = resource->metadata()->version_number;
                 if (old_version.isEmpty()) {
-                    if (resource->status() == ResourceStatus::NOT_INSTALLED)
+                    if (resource->status() == ResourceStatus::NOT_INSTALLED) {
                         old_version = tr("Not installed");
-                    else
+                    } else {
                         old_version = tr("Unknown");
+                    }
                 }
 
                 m_updates.emplace_back(pack->name, hash, old_version, project_ver.version_number, project_ver.version_type,
@@ -211,7 +214,8 @@ void ModrinthCheckUpdate::checkNextLoader()
     if (m_loaderIdx < m_loadersList.size()) {  // this are mods so check with loades
         getUpdateModsForLoader(m_loadersList.at(m_loaderIdx), m_loaderIdx > m_initialSize);
         return;
-    } else if (m_loadersList.isEmpty() && m_loaderIdx == 0) {  // this are other resources no need to check more than once with empty loader
+    }
+    if (m_loadersList.isEmpty() && m_loaderIdx == 0) {  // this are other resources no need to check more than once with empty loader
         getUpdateModsForLoader();
         return;
     }
@@ -219,12 +223,13 @@ void ModrinthCheckUpdate::checkNextLoader()
     for (auto resource : m_mappings) {
         QString reason;
 
-        if (dynamic_cast<Mod*>(resource) != nullptr)
+        if (dynamic_cast<Mod*>(resource) != nullptr) {
             reason =
                 tr("No valid version found for this resource. It's probably unavailable for the current game "
                    "version / mod loader.");
-        else
+        } else {
             reason = tr("No valid version found for this resource. It's probably unavailable for the current game version.");
+        }
 
         emit checkFailed(resource, reason);
     }

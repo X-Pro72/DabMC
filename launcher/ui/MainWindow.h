@@ -69,8 +69,8 @@ class MainWindow : public QMainWindow {
     Q_OBJECT
 
    public:
-    explicit MainWindow(QWidget* parent = 0);
-    ~MainWindow();
+    explicit MainWindow(QWidget* parent = nullptr);
+    ~MainWindow() override;
 
     bool eventFilter(QObject* obj, QEvent* ev) override;
     void closeEvent(QCloseEvent* event) override;
@@ -96,11 +96,11 @@ class MainWindow : public QMainWindow {
 
     void on_actionAddInstance_triggered();
 
-    void on_actionREDDIT_triggered();
+    static void on_actionREDDIT_triggered();
 
-    void on_actionMATRIX_triggered();
+    static void on_actionMATRIX_triggered();
 
-    void on_actionDISCORD_triggered();
+    static void on_actionDISCORD_triggered();
 
     void on_actionCopyInstance_triggered();
 
@@ -108,31 +108,31 @@ class MainWindow : public QMainWindow {
 
     void on_actionChangeInstIcon_triggered();
 
-    void on_actionViewLauncherRootFolder_triggered();
+    static void on_actionViewLauncherRootFolder_triggered();
 
-    void on_actionViewInstanceFolder_triggered();
-    void on_actionViewCentralModsFolder_triggered();
+    static void on_actionViewInstanceFolder_triggered();
+    static void on_actionViewCentralModsFolder_triggered();
 
-    void on_actionViewIconThemeFolder_triggered();
-    void on_actionViewWidgetThemeFolder_triggered();
-    void on_actionViewCatPackFolder_triggered();
-    void on_actionViewIconsFolder_triggered();
-    void on_actionViewLogsFolder_triggered();
-    void on_actionViewJavaFolder_triggered();
+    static void on_actionViewIconThemeFolder_triggered();
+    static void on_actionViewWidgetThemeFolder_triggered();
+    static void on_actionViewCatPackFolder_triggered();
+    static void on_actionViewIconsFolder_triggered();
+    static void on_actionViewLogsFolder_triggered();
+    static void on_actionViewJavaFolder_triggered();
 
-    void on_actionViewSkinsFolder_triggered();
+    static void on_actionViewSkinsFolder_triggered();
 
     void on_actionViewSelectedInstFolder_triggered();
 
-    void refreshInstances();
+    static void refreshInstances();
 
-    void checkForUpdates();
+    static void checkForUpdates();
 
     void on_actionSettings_triggered();
 
     void on_actionManageAccounts_triggered();
 
-    void on_actionReportBug_triggered();
+    static void on_actionReportBug_triggered();
 
     void on_actionClearMetadata_triggered();
 
@@ -140,7 +140,7 @@ class MainWindow : public QMainWindow {
     void on_actionAddToPATH_triggered();
 #endif
 
-    void on_actionOpenWiki_triggered();
+    static void on_actionOpenWiki_triggered();
 
     void on_actionMoreNews_triggered();
 
@@ -152,8 +152,8 @@ class MainWindow : public QMainWindow {
 
     void on_actionDeleteInstance_triggered();
 
-    void deleteGroup(QString group);
-    void renameGroup(QString group);
+    void deleteGroup(const QString& group);
+    void renameGroup(const QString& group);
     void undoTrashInstance();
 
     inline void on_actionExportInstance_triggered() { on_actionExportInstanceZip_triggered(); }
@@ -172,7 +172,7 @@ class MainWindow : public QMainWindow {
     /**
      * called when an icon is changed in the icon model.
      */
-    void iconUpdated(QString);
+    void iconUpdated(const QString&);
 
     void showInstanceContextMenu(const QPoint&);
 
@@ -186,13 +186,13 @@ class MainWindow : public QMainWindow {
 
     void instanceChanged(const QModelIndex& current, const QModelIndex& previous);
 
-    void instanceSelectRequest(QString id);
+    void instanceSelectRequest(const QString& id);
 
     void instanceDataChanged(const QModelIndex& topLeft, const QModelIndex& bottomRight);
 
     void selectionBad();
 
-    void startTask(Task* task);
+    void startTask(Task* task) const;
 
     void defaultAccountChanged();
 
@@ -220,7 +220,7 @@ class MainWindow : public QMainWindow {
     void retranslateUi();
 
     void addInstance(const QString& url = QString(), const QMap<QString, QString>& extra_info = {});
-    void activateInstance(BaseInstance* instance);
+    static void activateInstance(BaseInstance* instance);
     void setCatBackground(bool enabled);
     void updateInstanceToolIcon(QString new_icon);
     void setSelectedInstanceById(const QString& id);

@@ -77,7 +77,7 @@ void Technic::TechnicPackProcessor::run(SettingsObject* globalSettings,
             data = file->readAll();
         } else {
             if (minecraftVersion.isEmpty()) {
-                emit failed(tr("Could not find \"version.json\" inside \"bin/modpack.jar\", but Minecraft version is unknown"));
+                emit failed(tr(R"(Could not find "version.json" inside "bin/modpack.jar", but Minecraft version is unknown)"));
                 return;
             }
             components->setComponentVersion("net.minecraft", minecraftVersion, true);
@@ -96,7 +96,10 @@ void Technic::TechnicPackProcessor::run(SettingsObject* globalSettings,
                 auto forgeVersionData = file->readAll();
                 INIFile iniFile;
                 iniFile.loadFile(forgeVersionData);
-                QString major, minor, revision, build;
+                QString major;
+                QString minor;
+                QString revision;
+                QString build;
                 major = iniFile["forge.major.number"].toString();
                 minor = iniFile["forge.minor.number"].toString();
                 revision = iniFile["forge.revision.number"].toString();
@@ -160,16 +163,16 @@ void Technic::TechnicPackProcessor::run(SettingsObject* globalSettings,
                     if (isVersionArg) {
                         neoforgeVersion = argument;
                         break;
-                    } else {
-                        isVersionArg = "--fml.neoForgeVersion" == argument || "--fml.forgeVersion" == argument;
                     }
+                    isVersionArg = "--fml.neoForgeVersion" == argument || "--fml.forgeVersion" == argument;
                 }
                 if (!neoforgeVersion.isEmpty()) {
                     components->setComponentVersion("net.neoforged", neoforgeVersion);
                 }
                 break;
-            } else if ((libraryName.startsWith("net.minecraftforge:forge:") || libraryName.startsWith("net.minecraftforge:fmlloader:")) &&
-                       libraryName.contains('-')) {
+            }
+            if ((libraryName.startsWith("net.minecraftforge:forge:") || libraryName.startsWith("net.minecraftforge:fmlloader:")) &&
+                libraryName.contains('-')) {
                 QString libraryVersion = libraryName.section(':', 2);
                 if (!libraryVersion.startsWith("1.7.10-")) {
                     components->setComponentVersion("net.minecraftforge", libraryName.section('-', 1));

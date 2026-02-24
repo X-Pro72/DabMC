@@ -49,12 +49,13 @@
 #include <QFileSystemWatcher>
 #include <QShortcut>
 #include <QUrl>
+#include <utility>
 
 OtherLogsPage::OtherLogsPage(QString id, QString displayName, QString helpPage, BaseInstance* instance, QWidget* parent)
     : QWidget(parent)
-    , m_id(id)
-    , m_displayName(displayName)
-    , m_helpPage(helpPage)
+    , m_id(std::move(id))
+    , m_displayName(std::move(displayName))
+    , m_helpPage(std::move(helpPage))
     , ui(new Ui::OtherLogsPage)
     , m_instance(instance)
     , m_basePath(instance ? instance->gameRoot() : APPLICATION->dataRoot())
@@ -154,10 +155,11 @@ void OtherLogsPage::openedImpl()
     const QStringList failedPaths = m_watcher.addPaths(m_logSearchPaths);
 
     for (const QString& path : m_logSearchPaths) {
-        if (failedPaths.contains(path))
+        if (failedPaths.contains(path)) {
             qDebug() << "Failed to start watching" << path;
-        else
+        } else {
             qDebug() << "Started watching" << path;
+        }
     }
 
     populateSelectLogBox();
@@ -168,10 +170,11 @@ void OtherLogsPage::closedImpl()
     const QStringList failedPaths = m_watcher.removePaths(m_logSearchPaths);
 
     for (const QString& path : m_logSearchPaths) {
-        if (failedPaths.contains(path))
+        if (failedPaths.contains(path)) {
             qDebug() << "Failed to stop watching" << path;
-        else
+        } else {
             qDebug() << "Stopped watching" << path;
+        }
     }
 }
 
@@ -181,8 +184,9 @@ void OtherLogsPage::populateSelectLogBox()
 
     ui->selectLogBox->blockSignals(true);
     ui->selectLogBox->clear();
-    if (!m_instance)
+    if (!m_instance) {
         ui->selectLogBox->addItem(tr("Current logs"));
+    }
     ui->selectLogBox->addItems(getPaths());
     ui->selectLogBox->blockSignals(false);
 
@@ -195,9 +199,9 @@ void OtherLogsPage::populateSelectLogBox()
             setControlsEnabled(true);
             // don't refresh file
             return;
-        } else {
-            setControlsEnabled(false);
         }
+        setControlsEnabled(false);
+
     } else if (!m_instance) {
         ui->selectLogBox->setCurrentIndex(0);
         setControlsEnabled(true);
@@ -227,11 +231,13 @@ void OtherLogsPage::on_selectLogBox_currentIndexChanged(const int index)
 void OtherLogsPage::on_btnReload_clicked()
 {
     if (!m_instance && m_currentFile.isEmpty()) {
-        if (!m_model)
+        if (!m_model) {
             return;
+        }
         m_model->clear();
-        if (m_container)
+        if (m_container) {
             m_container->refreshContainer();
+        }
     } else {
         reload();
     }
@@ -277,12 +283,15 @@ void OtherLogsPage::reload()
         MessageLevel last = MessageLevel::Unknown;
 
         auto handleLine = [this, &last](QString line) {
-            if (line.isEmpty())
+            if (line.isEmpty()) {
                 return false;
-            if (line.back() == '\n')
+            }
+            if (line.back() == '\n') {
                 line.resize(line.size() - 1);
-            if (line.back() == '\r')
+            }
+            if (line.back() == '\r') {
                 line.resize(line.size() - 1);
+            }
             MessageLevel level = MessageLevel::Unknown;
 
             QString lineTemp = line;  // don't edit out the time and level for clarity
@@ -328,7 +337,8 @@ void OtherLogsPage::reload()
             if (!error.isEmpty()) {
                 setPlainText(tr("The file (%1) encountered an error when reading: %2.").arg(file.fileName(), error));
                 return;
-            } else if (!line.isEmpty()) {
+            }
+            if (!line.isEmpty()) {
                 handleLine(line);
             }
         } else {
@@ -367,8 +377,9 @@ void OtherLogsPage::on_btnBottom_clicked()
 
 void OtherLogsPage::on_trackLogCheckbox_clicked(bool checked)
 {
-    if (!m_model)
+    if (!m_model) {
         return;
+    }
     m_model->suspend(!checked);
 }
 
@@ -403,7 +414,7 @@ void OtherLogsPage::on_btnClean_clicked()
     if (toDelete.isEmpty()) {
         return;
     }
-    QMessageBox* messageBox = new QMessageBox(this);
+    auto* messageBox = new QMessageBox(this);
     messageBox->setWindowTitle(tr("Confirm Cleanup"));
     if (toDelete.size() > 5) {
         messageBox->setText(tr("Are you sure you want to delete all log files?"));
@@ -421,7 +432,7 @@ void OtherLogsPage::on_btnClean_clicked()
         return;
     }
     QStringList failed;
-    for (auto item : toDelete) {
+    for (const auto& item : toDelete) {
         QString absolutePath = FS::PathCombine(m_basePath, item);
         QFile file(absolutePath);
         qDebug() << "Deleting log" << absolutePath;
@@ -433,7 +444,7 @@ void OtherLogsPage::on_btnClean_clicked()
         }
     }
     if (!failed.empty()) {
-        QMessageBox* messageBoxFailure = new QMessageBox(this);
+        auto* messageBoxFailure = new QMessageBox(this);
         messageBoxFailure->setWindowTitle(tr("Error"));
         if (failed.size() > 5) {
             messageBoxFailure->setText(tr("Couldn't delete some files!"));
@@ -453,8 +464,9 @@ void OtherLogsPage::on_btnClean_clicked()
 void OtherLogsPage::on_wrapCheckbox_clicked(bool checked)
 {
     ui->text->setWordWrap(checked);
-    if (!m_model)
+    if (!m_model) {
         return;
+    }
     m_model->setLineWrap(checked);
     ui->text->scrollToBottom();
 }
@@ -462,8 +474,9 @@ void OtherLogsPage::on_wrapCheckbox_clicked(bool checked)
 void OtherLogsPage::on_colorCheckbox_clicked(bool checked)
 {
     ui->text->setColorLines(checked);
-    if (!m_model)
+    if (!m_model) {
         return;
+    }
     m_model->setColorLines(checked);
     ui->text->scrollToBottom();
 }
@@ -499,18 +512,20 @@ QStringList OtherLogsPage::getPaths()
 
     QStringList result;
 
-    for (QString searchPath : m_logSearchPaths) {
+    for (const QString& searchPath : m_logSearchPaths) {
         QDir searchDir(searchPath);
 
         QStringList filters{ "*.log", "*.log.gz" };
 
-        if (searchPath != m_basePath)
+        if (searchPath != m_basePath) {
             filters.append("*.txt");
+        }
 
         QStringList entries = searchDir.entryList(filters, QDir::Files | QDir::Readable, QDir::SortFlag::Time);
 
-        for (const QString& name : entries)
+        for (const QString& name : entries) {
             result.append(baseDir.relativeFilePath(searchDir.filePath(name)));
+        }
     }
 
     return result;

@@ -21,6 +21,7 @@
 #include <QDebug>
 #include <algorithm>
 #include <memory>
+#include <utility>
 #include "Json.h"
 #include "QObjectPtr.h"
 #include "minecraft/PackProfile.h"
@@ -40,8 +41,8 @@ static ModPlatform::ModLoaderTypes mcLoaders(BaseInstance* inst)
     return static_cast<MinecraftInstance*>(inst)->getPackProfile()->getSupportedModLoaders().value();
 }
 
-static bool checkDependencies(std::shared_ptr<GetModDependenciesTask::PackDependency> sel,
-                              Version mcVersion,
+static bool checkDependencies(const std::shared_ptr<GetModDependenciesTask::PackDependency>& sel,
+                              const Version& mcVersion,
                               ModPlatform::ModLoaderTypes loaders)
 {
     return (sel->pack->versions.isEmpty() || sel->version.mcVersion.contains(mcVersion.toString())) &&
@@ -51,23 +52,28 @@ static bool checkDependencies(std::shared_ptr<GetModDependenciesTask::PackDepend
 GetModDependenciesTask::GetModDependenciesTask(BaseInstance* instance,
                                                ModFolderModel* folder,
                                                QList<std::shared_ptr<PackDependency>> selected)
-    : SequentialTask(tr("Get dependencies")), m_selected(selected), m_version(mcVersion(instance)), m_loaderType(mcLoaders(instance))
+    : SequentialTask(tr("Get dependencies"))
+    , m_selected(std::move(selected))
+    , m_version(mcVersion(instance))
+    , m_loaderType(mcLoaders(instance))
 {
     for (auto mod : folder->allMods()) {
         m_mods_file_names << mod->fileinfo().fileName();
-        if (auto meta = mod->metadata(); meta)
+        if (auto meta = mod->metadata(); meta) {
             m_mods.append(meta);
+        }
     }
     prepare();
 }
 
 void GetModDependenciesTask::prepare()
 {
-    for (auto sel : m_selected) {
-        if (checkDependencies(sel, m_version, m_loaderType))
-            for (auto dep : getDependenciesForVersion(sel->version, sel->pack->provider)) {
+    for (const auto& sel : m_selected) {
+        if (checkDependencies(sel, m_version, m_loaderType)) {
+            for (const auto& dep : getDependenciesForVersion(sel->version, sel->pack->provider)) {
                 addTask(prepareDependencyTask(dep, sel->pack->provider, 20));
             }
+        }
     }
 }
 
@@ -91,47 +97,52 @@ QList<ModPlatform::Dependency> GetModDependenciesTask::getDependenciesForVersion
 {
     QList<ModPlatform::Dependency> c_dependencies;
     for (auto ver_dep : version.dependencies) {
-        if (ver_dep.type != ModPlatform::DependencyType::REQUIRED)
+        if (ver_dep.type != ModPlatform::DependencyType::REQUIRED) {
             continue;
+        }
         ver_dep = getOverride(ver_dep, providerName);
         auto isOnlyVersion = providerName == ModPlatform::ResourceProvider::MODRINTH && ver_dep.addonId.toString().isEmpty();
         if (auto dep = std::find_if(c_dependencies.begin(), c_dependencies.end(),
                                     [&ver_dep, isOnlyVersion](const ModPlatform::Dependency& i) {
                                         return isOnlyVersion ? i.version == ver_dep.version : i.addonId == ver_dep.addonId;
                                     });
-            dep != c_dependencies.end())
+            dep != c_dependencies.end()) {
             continue;  // check the current dependency list
+        }
 
         if (auto dep = std::find_if(m_selected.begin(), m_selected.end(),
-                                    [&ver_dep, providerName, isOnlyVersion](std::shared_ptr<PackDependency> i) {
+                                    [&ver_dep, providerName, isOnlyVersion](const std::shared_ptr<PackDependency>& i) {
                                         return i->pack->provider == providerName && (isOnlyVersion ? i->version.version == ver_dep.version
                                                                                                    : i->pack->addonId == ver_dep.addonId);
                                     });
-            dep != m_selected.end())
+            dep != m_selected.end()) {
             continue;  // check the selected versions
+        }
 
         if (auto dep = std::find_if(m_mods.begin(), m_mods.end(),
-                                    [&ver_dep, providerName, isOnlyVersion](std::shared_ptr<Metadata::ModStruct> i) {
+                                    [&ver_dep, providerName, isOnlyVersion](const std::shared_ptr<Metadata::ModStruct>& i) {
                                         return i->provider == providerName &&
                                                (isOnlyVersion ? i->file_id == ver_dep.version : i->project_id == ver_dep.addonId);
                                     });
-            dep != m_mods.end())
+            dep != m_mods.end()) {
             continue;  // check the existing mods
+        }
 
         if (auto dep = std::find_if(m_pack_dependencies.begin(), m_pack_dependencies.end(),
-                                    [&ver_dep, providerName, isOnlyVersion](std::shared_ptr<PackDependency> i) {
+                                    [&ver_dep, providerName, isOnlyVersion](const std::shared_ptr<PackDependency>& i) {
                                         return i->pack->provider == providerName && (isOnlyVersion ? i->version.version == ver_dep.addonId
                                                                                                    : i->pack->addonId == ver_dep.addonId);
                                     });
-            dep != m_pack_dependencies.end())  // check loaded dependencies
+            dep != m_pack_dependencies.end()) {  // check loaded dependencies
             continue;
+        }
 
         c_dependencies.append(ver_dep);
     }
     return c_dependencies;
 }
 
-Task::Ptr GetModDependenciesTask::getProjectInfoTask(std::shared_ptr<PackDependency> pDep)
+Task::Ptr GetModDependenciesTask::getProjectInfoTask(const std::shared_ptr<PackDependency>& pDep)
 {
     auto provider = pDep->pack->provider;
     auto responseInfo = std::make_shared<QByteArray>();
@@ -183,7 +194,7 @@ Task::Ptr GetModDependenciesTask::prepareDependencyTask(const ModPlatform::Depen
 
     ResourceAPI::DependencySearchArgs args = { dep, m_version, m_loaderType };
     ResourceAPI::Callback<ModPlatform::IndexedVersion> callbacks;
-    callbacks.on_fail = [](QString reason, int) {
+    callbacks.on_fail = [](const QString& reason, int) {
         qCritical() << tr("A network error occurred. Could not load project dependencies:%1").arg(reason);
     };
     callbacks.on_succeed = [dep, provider, pDep, level, this](auto& pack) {
@@ -192,7 +203,7 @@ Task::Ptr GetModDependenciesTask::prepareDependencyTask(const ModPlatform::Depen
             if (m_loaderType & ModPlatform::Quilt) {  // falback for quilt
                 auto overide = ModPlatform::getOverrideDeps();
                 auto over = std::find_if(overide.cbegin(), overide.cend(),
-                                         [dep, provider](auto o) { return o.provider == provider && dep.addonId == o.quilt; });
+                                         [dep, provider](const auto& o) { return o.provider == provider && dep.addonId == o.quilt; });
                 if (over != overide.cend()) {
                     removePack(dep.addonId);
                     addTask(prepareDependencyTask({ over->fabric, dep.type }, provider, level));
@@ -225,7 +236,7 @@ Task::Ptr GetModDependenciesTask::prepareDependencyTask(const ModPlatform::Depen
             removePack(pDep->version.addonId);
             return;
         }
-        for (auto dep_ : getDependenciesForVersion(pDep->version, provider)) {
+        for (const auto& dep_ : getDependenciesForVersion(pDep->version, provider)) {
             addTask(prepareDependencyTask(dep_, provider, level - 1));
         }
     };
@@ -259,8 +270,9 @@ auto GetModDependenciesTask::getExtraInfo() -> QHash<QString, PackDependencyExtr
         auto version = mod->version.fileId;
         auto req = QStringList();
         for (auto& smod : fullList) {
-            if (provider != smod->pack->provider)
+            if (provider != smod->pack->provider) {
                 continue;
+            }
             auto deps = smod->version.dependencies;
             if (auto dep = std::find_if(deps.begin(), deps.end(),
                                         [addonId, provider, version](const ModPlatform::Dependency& d) {
@@ -283,11 +295,12 @@ auto GetModDependenciesTask::getExtraInfo() -> QHash<QString, PackDependencyExtr
 // convert all speratores to whitespace
 // simplify sequence of internal whitespace to a single space
 // efectivly compare two strings ignoring all separators and case
-auto laxCompare = [](QString fsfilename, QString metadataFilename, bool excludeDigits = false) {
+auto laxCompare = [](const QString& fsfilename, const QString& metadataFilename, bool excludeDigits = false) {
     // allowed character seperators
     QList<QChar> allowedSeperators = { '-', '+', '.', '_' };
-    if (excludeDigits)
+    if (excludeDigits) {
         allowedSeperators.append({ '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' });
+    }
 
     // copy in lowercase
     auto fsName = fsfilename.toLower();
@@ -306,28 +319,28 @@ auto laxCompare = [](QString fsfilename, QString metadataFilename, bool excludeD
     return fsName.compare(metaName) == 0;
 };
 
-bool GetModDependenciesTask::isLocalyInstalled(std::shared_ptr<PackDependency> pDep)
+bool GetModDependenciesTask::isLocalyInstalled(const std::shared_ptr<PackDependency>& pDep)
 {
     return pDep->version.fileName.isEmpty() ||
 
            std::find_if(m_selected.begin(), m_selected.end(),
-                        [pDep](std::shared_ptr<PackDependency> i) {
+                        [pDep](const std::shared_ptr<PackDependency>& i) {
                             return !i->version.fileName.isEmpty() && laxCompare(i->version.fileName, pDep->version.fileName);
                         }) != m_selected.end() ||  // check the selected versions
 
            std::find_if(m_mods_file_names.begin(), m_mods_file_names.end(),
-                        [pDep](QString i) { return !i.isEmpty() && laxCompare(i, pDep->version.fileName); }) !=
+                        [pDep](const QString& i) { return !i.isEmpty() && laxCompare(i, pDep->version.fileName); }) !=
                m_mods_file_names.end() ||  // check the existing mods
 
-           std::find_if(m_pack_dependencies.begin(), m_pack_dependencies.end(), [pDep](std::shared_ptr<PackDependency> i) {
+           std::find_if(m_pack_dependencies.begin(), m_pack_dependencies.end(), [pDep](const std::shared_ptr<PackDependency>& i) {
                return pDep->pack->addonId != i->pack->addonId && !i->version.fileName.isEmpty() &&
                       laxCompare(pDep->version.fileName, i->version.fileName);
            }) != m_pack_dependencies.end();  // check loaded dependencies
 }
 
-bool GetModDependenciesTask::maybeInstalled(std::shared_ptr<PackDependency> pDep)
+bool GetModDependenciesTask::maybeInstalled(const std::shared_ptr<PackDependency>& pDep)
 {
-    return std::find_if(m_mods_file_names.begin(), m_mods_file_names.end(), [pDep](QString i) {
+    return std::find_if(m_mods_file_names.begin(), m_mods_file_names.end(), [pDep](const QString& i) {
                return !i.isEmpty() && laxCompare(i, pDep->version.fileName, true);
            }) != m_mods_file_names.end();  // check the existing mods
 }

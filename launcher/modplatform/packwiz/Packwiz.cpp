@@ -34,7 +34,7 @@
 
 namespace Packwiz {
 
-auto getRealIndexName(const QDir& index_dir, QString normalized_fname, bool should_find_match) -> QString
+auto getRealIndexName(const QDir& index_dir, const QString& normalized_fname, bool should_find_match) -> QString
 {
     QFile index_file(index_dir.absoluteFilePath(normalized_fname));
 
@@ -61,13 +61,14 @@ auto getRealIndexName(const QDir& index_dir, QString normalized_fname, bool shou
 // Helpers
 static inline auto indexFileName(QString const& mod_slug) -> QString
 {
-    if (mod_slug.endsWith(".pw.toml"))
+    if (mod_slug.endsWith(".pw.toml")) {
         return mod_slug;
+    }
     return QString("%1.pw.toml").arg(mod_slug);
 }
 
 // Helper functions for extracting data from the TOML file
-auto stringEntry(toml::table table, QString entry_name) -> QString
+auto stringEntry(toml::table table, const QString& entry_name) -> QString
 {
     auto node = table[StringUtils::toStdString(entry_name)];
     if (!node) {
@@ -78,7 +79,7 @@ auto stringEntry(toml::table table, QString entry_name) -> QString
     return node.value_or("");
 }
 
-auto intEntry(toml::table table, QString entry_name) -> int
+auto intEntry(toml::table table, const QString& entry_name) -> int
 {
     auto node = table[StringUtils::toStdString(entry_name)];
     if (!node) {
@@ -119,8 +120,9 @@ auto V1::createModFormat([[maybe_unused]] const QDir& index_dir,
     mod.releaseType = mod_version.version_type;
 
     mod.version_number = mod_version.version_number;
-    if (mod.version_number.isNull())  // on CurseForge, there is only a version name - not a version number
+    if (mod.version_number.isNull()) {  // on CurseForge, there is only a version name - not a version number
         mod.version_number = mod_version.version;
+    }
 
     mod.dependencies = mod_version.dependencies;
     return mod;
@@ -140,8 +142,9 @@ void V1::updateModIndex(const QDir& index_dir, Mod& mod)
 
     QFile index_file(index_dir.absoluteFilePath(real_fname));
 
-    if (real_fname != normalized_fname)
+    if (real_fname != normalized_fname) {
         index_file.rename(normalized_fname);
+    }
 
     // There's already data on there!
     // TODO: We should do more stuff here, as the user is likely trying to
@@ -182,7 +185,7 @@ void V1::updateModIndex(const QDir& index_dir, Mod& mod)
         loaders.push_back(getModLoaderAsString(loader).toStdString());
     }
     toml::array mcVersions;
-    for (auto version : mod.mcVersions) {
+    for (const auto& version : mod.mcVersions) {
         mcVersions.push_back(version.toStdString());
     }
 
@@ -192,7 +195,7 @@ void V1::updateModIndex(const QDir& index_dir, Mod& mod)
     }
 
     toml::array deps;
-    for (auto dep : mod.dependencies) {
+    for (const auto& dep : mod.dependencies) {
         auto tbl = toml::table{ { "addonId", dep.addonId.toString().toStdString() },
                                 { "type", ModPlatform::DependencyTypeUtils::toString(dep.type).toStdString() } };
         if (!dep.version.isEmpty()) {
@@ -233,8 +236,9 @@ void V1::deleteModIndex(const QDir& index_dir, QString& mod_slug)
 {
     auto normalized_fname = indexFileName(mod_slug);
     auto real_fname = getRealIndexName(index_dir, normalized_fname);
-    if (real_fname.isEmpty())
+    if (real_fname.isEmpty()) {
         return;
+    }
 
     QFile index_file(index_dir.absoluteFilePath(real_fname));
 
@@ -248,14 +252,15 @@ void V1::deleteModIndex(const QDir& index_dir, QString& mod_slug)
     }
 }
 
-auto V1::getIndexForMod(const QDir& index_dir, QString slug) -> Mod
+auto V1::getIndexForMod(const QDir& index_dir, const QString& slug) -> Mod
 {
     Mod mod;
 
     auto normalized_fname = indexFileName(slug);
     auto real_fname = getRealIndexName(index_dir, normalized_fname, true);
-    if (real_fname.isEmpty())
+    if (real_fname.isEmpty()) {
         return {};
+    }
 
     toml::table table;
 #if TOML_EXCEPTIONS
@@ -368,8 +373,9 @@ auto V1::getIndexForMod(const QDir& index_dir, QVariant& mod_id) -> Mod
     for (auto& file_name : index_dir.entryList(QDir::Filter::Files)) {
         auto mod = getIndexForMod(index_dir, file_name);
 
-        if (mod.mod_id() == mod_id)
+        if (mod.mod_id() == mod_id) {
             return mod;
+        }
     }
 
     return {};

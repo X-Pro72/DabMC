@@ -52,8 +52,8 @@ class OtherLogsPage : public QWidget, public BasePage {
     Q_OBJECT
 
    public:
-    explicit OtherLogsPage(QString id, QString displayName, QString helpPage, BaseInstance* instance = nullptr, QWidget* parent = 0);
-    ~OtherLogsPage();
+    explicit OtherLogsPage(QString id, QString displayName, QString helpPage, BaseInstance* instance = nullptr, QWidget* parent = nullptr);
+    ~OtherLogsPage() override;
 
     QString id() const override { return m_id; }
     QString displayName() const override { return m_displayName; }

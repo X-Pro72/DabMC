@@ -37,23 +37,25 @@
 #include "SkinUpload.h"
 
 #include <QHttpMultiPart>
+#include <memory>
+#include <utility>
 
 #include "FileSystem.h"
 #include "net/DummySink.h"
 #include "net/RawHeaderProxy.h"
 
-SkinUpload::SkinUpload(QString path, QString variant) : NetRequest(), m_path(path), m_variant(variant)
+SkinUpload::SkinUpload(QString path, QString variant) : m_path(std::move(path)), m_variant(std::move(variant))
 {
     logCat = taskMCSkinsLogC;
 }
 
 QNetworkReply* SkinUpload::getReply(QNetworkRequest& request)
 {
-    QHttpMultiPart* multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType, this);
+    auto* multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType, this);
 
     QHttpPart skin;
     skin.setHeader(QNetworkRequest::ContentTypeHeader, QVariant("image/png"));
-    skin.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant("form-data; name=\"file\"; filename=\"skin.png\""));
+    skin.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant(R"(form-data; name="file"; filename="skin.png")"));
 
     skin.setBody(FS::read(m_path));
 
@@ -67,12 +69,12 @@ QNetworkReply* SkinUpload::getReply(QNetworkRequest& request)
     return m_network->post(request, multiPart);
 }
 
-SkinUpload::Ptr SkinUpload::make(QString token, QString path, QString variant)
+SkinUpload::Ptr SkinUpload::make(const QString& token, QString path, QString variant)
 {
-    auto up = makeShared<SkinUpload>(path, variant);
+    auto up = makeShared<SkinUpload>(std::move(path), std::move(variant));
     up->m_url = QUrl("https://api.minecraftservices.com/minecraft/profile/skins");
     up->setObjectName(QString("BYTES:") + up->m_url.toString());
-    up->m_sink.reset(new Net::DummySink());
+    up->m_sink = std::make_unique<Net::DummySink>();
     up->addHeaderProxy(std::make_unique<Net::RawHeaderProxy>(QList<Net::HeaderPair>{
         { "Authorization", QString("Bearer %1").arg(token).toLocal8Bit() },
     }));

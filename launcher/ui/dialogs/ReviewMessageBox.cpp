@@ -28,8 +28,9 @@ ReviewMessageBox::ReviewMessageBox(QWidget* parent, [[maybe_unused]] QString con
     auto shortcut = new QShortcut(QKeySequence::Copy, ui->modTreeWidget);
     connect(shortcut, &QShortcut::activated, [this]() {
         auto currentItem = this->ui->modTreeWidget->currentItem();
-        if (!currentItem)
+        if (!currentItem) {
             return;
+        }
         auto currentColumn = this->ui->modTreeWidget->currentColumn();
 
         auto data = currentItem->data(currentColumn, Qt::UserRole);
@@ -79,7 +80,7 @@ void ReviewMessageBox::appendResource(ResourceInformation&& info)
             requiredByItem->setData(0, Qt::UserRole, info.required_by.back());
         } else {
             requiredByItem->setText(0, tr("Required by:"));
-            for (auto req : info.required_by) {
+            for (const auto& req : info.required_by) {
                 auto reqItem = new QTreeWidgetItem(requiredByItem);
                 reqItem->setText(0, req);
             }
@@ -113,7 +114,7 @@ auto ReviewMessageBox::deselectedResources() -> QStringList
     return list;
 }
 
-void ReviewMessageBox::retranslateUi(QString resources_name)
+void ReviewMessageBox::retranslateUi(const QString& resources_name)
 {
     setWindowTitle(tr("Confirm %1 selection").arg(resources_name));
 
@@ -124,6 +125,7 @@ void ReviewMessageBox::on_toggleDepsButton_clicked()
 {
     m_deps_checked = !m_deps_checked;
     auto state = m_deps_checked ? Qt::Checked : Qt::Unchecked;
-    for (auto dep : m_deps)
+    for (auto dep : m_deps) {
         dep->setCheckState(0, state);
+    }
 };

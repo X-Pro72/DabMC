@@ -2,24 +2,26 @@
 #include <QDnsLookup>
 #include <QHostInfo>
 #include <QObject>
+#include <utility>
 
 #include "McResolver.h"
 
-McResolver::McResolver(QObject* parent, QString domain, int port) : QObject(parent), m_constrDomain(domain), m_constrPort(port) {}
+McResolver::McResolver(QObject* parent, QString domain, int port) : QObject(parent), m_constrDomain(std::move(domain)), m_constrPort(port)
+{}
 
 void McResolver::ping()
 {
     pingWithDomainSRV(m_constrDomain, m_constrPort);
 }
 
-void McResolver::pingWithDomainSRV(QString domain, int port)
+void McResolver::pingWithDomainSRV(const QString& domain, int port)
 {
-    QDnsLookup* lookup = new QDnsLookup(this);
+    auto* lookup = new QDnsLookup(this);
     lookup->setName(QString("_minecraft._tcp.%1").arg(domain));
     lookup->setType(QDnsLookup::SRV);
 
     connect(lookup, &QDnsLookup::finished, this, [this, domain, port]() {
-        QDnsLookup* lookup = qobject_cast<QDnsLookup*>(sender());
+        auto* lookup = qobject_cast<QDnsLookup*>(sender());
 
         lookup->deleteLater();
 
@@ -45,7 +47,7 @@ void McResolver::pingWithDomainSRV(QString domain, int port)
     lookup->lookup();
 }
 
-void McResolver::pingWithDomainA(QString domain, int port)
+void McResolver::pingWithDomainA(const QString& domain, int port)
 {
     QHostInfo::lookupHost(domain, this, [this, port](const QHostInfo& hostInfo) {
         if (hostInfo.error() != QHostInfo::NoError) {
@@ -64,7 +66,7 @@ void McResolver::pingWithDomainA(QString domain, int port)
     });
 }
 
-void McResolver::emitFail(QString error)
+void McResolver::emitFail(const QString& error)
 {
     qDebug() << "DNS resolver error:" << error;
     emit failed(error);
@@ -73,6 +75,6 @@ void McResolver::emitFail(QString error)
 
 void McResolver::emitSucceed(QString ip, int port)
 {
-    emit succeeded(ip, port);
+    emit succeeded(std::move(ip), port);
     emit finished();
 }

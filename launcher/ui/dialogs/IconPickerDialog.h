@@ -27,13 +27,13 @@ class IconPickerDialog : public QDialog {
     Q_OBJECT
 
    public:
-    explicit IconPickerDialog(QWidget* parent = 0);
-    ~IconPickerDialog();
-    int execWithSelection(QString selection);
+    explicit IconPickerDialog(QWidget* parent = nullptr);
+    ~IconPickerDialog() override;
+    int execWithSelection(const QString& selection);
     QString selectedIconKey;
 
    protected:
-    virtual bool eventFilter(QObject*, QEvent*);
+    bool eventFilter(QObject*, QEvent*) override;
 
    private:
     Ui::IconPickerDialog* ui;
@@ -42,11 +42,11 @@ class IconPickerDialog : public QDialog {
     QSortFilterProxyModel* proxyModel;
 
    private slots:
-    void selectionChanged(QItemSelection, QItemSelection);
+    void selectionChanged(QItemSelection, const QItemSelection&);
     void activated(QModelIndex);
     void delayed_scroll(QModelIndex);
     void addNewIcon();
-    void removeSelectedIcon();
-    void openFolder();
+    void removeSelectedIcon() const;
+    void openFolder() const;
     void filterIcons(const QString& text);
 };

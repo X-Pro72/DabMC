@@ -41,6 +41,7 @@
 #include "minecraft/mod/MetadataHandler.h"
 
 #include <QThread>
+#include <utility>
 
 ResourceFolderLoadTask::ResourceFolderLoadTask(const QDir& resource_dir,
                                                const QDir& index_dir,
@@ -52,15 +53,16 @@ ResourceFolderLoadTask::ResourceFolderLoadTask(const QDir& resource_dir,
     , m_index_dir(index_dir)
     , m_is_indexed(is_indexed)
     , m_clean_orphan(clean_orphan)
-    , m_create_func(create_function)
+    , m_create_func(std::move(create_function))
     , m_result(new Result())
     , m_thread_to_spawn_into(thread())
 {}
 
 void ResourceFolderLoadTask::executeTask()
 {
-    if (thread() != m_thread_to_spawn_into)
+    if (thread() != m_thread_to_spawn_into) {
         connect(this, &Task::finished, this->thread(), &QThread::quit);
+    }
 
     if (m_is_indexed) {
         // Read metadata first
@@ -123,27 +125,30 @@ void ResourceFolderLoadTask::executeTask()
         }
     }
 
-    for (auto mod : m_result->resources)
+    for (const auto& mod : m_result->resources) {
         mod->moveToThread(m_thread_to_spawn_into);
+    }
 
-    if (m_aborted)
+    if (m_aborted) {
         emit finished();
-    else
+    } else {
         emitSucceeded();
+    }
 }
 
 void ResourceFolderLoadTask::getFromMetadata()
 {
     m_index_dir.refresh();
-    for (auto entry : m_index_dir.entryList(QDir::Files)) {
+    for (const auto& entry : m_index_dir.entryList(QDir::Files)) {
         if (!entry.endsWith(".pw.toml")) {
             continue;
         }
 
         auto metadata = Metadata::get(m_index_dir, entry);
 
-        if (!metadata.isValid())
+        if (!metadata.isValid()) {
             continue;
+        }
 
         auto* resource = m_create_func(QFileInfo(m_resource_dir.filePath(metadata.filename)));
         resource->setMetadata(metadata);

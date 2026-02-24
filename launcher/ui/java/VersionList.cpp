@@ -27,10 +27,11 @@
 
 namespace Java {
 
-VersionList::VersionList(Meta::Version::Ptr version, QObject* parent) : BaseVersionList(parent), m_version(version)
+VersionList::VersionList(const Meta::Version::Ptr& version, QObject* parent) : BaseVersionList(parent), m_version(version)
 {
-    if (version->isLoaded())
+    if (version->isLoaded()) {
         sortVersions();
+    }
 }
 
 Task::Ptr VersionList::getLoadTask()
@@ -57,11 +58,13 @@ int VersionList::count() const
 
 QVariant VersionList::data(const QModelIndex& index, int role) const
 {
-    if (!index.isValid())
-        return QVariant();
+    if (!index.isValid()) {
+        return {};
+    }
 
-    if (index.row() > count())
-        return QVariant();
+    if (index.row() > count()) {
+        return {};
+    }
 
     auto version = (m_vlist[index.row()]);
     switch (role) {
@@ -89,7 +92,7 @@ QVariant VersionList::data(const QModelIndex& index, int role) const
         case Meta::VersionList::TimeRole:
             return version->releaseTime;
         default:
-            return QVariant();
+            return {};
     }
 }
 
@@ -98,7 +101,7 @@ BaseVersionList::RoleList VersionList::providesRoles() const
     return { VersionPointerRole, VersionIdRole, VersionRole, RecommendedRole, JavaNameRole, TypeRole, Meta::VersionList::TimeRole };
 }
 
-bool sortJavas(BaseVersion::Ptr left, BaseVersion::Ptr right)
+bool sortJavas(const BaseVersion::Ptr& left, const BaseVersion::Ptr& right)
 {
     auto rleft = std::dynamic_pointer_cast<Java::Metadata>(right);
     auto rright = std::dynamic_pointer_cast<Java::Metadata>(left);
@@ -107,15 +110,16 @@ bool sortJavas(BaseVersion::Ptr left, BaseVersion::Ptr right)
 
 void VersionList::sortVersions()
 {
-    if (!m_version || !m_version->data())
+    if (!m_version || !m_version->data()) {
         return;
+    }
     QString versionStr = SysInfo::getSupportedJavaArchitecture();
     beginResetModel();
     auto runtimes = m_version->data()->runtimes;
     m_vlist = {};
     if (!versionStr.isEmpty() && !runtimes.isEmpty()) {
         std::copy_if(runtimes.begin(), runtimes.end(), std::back_inserter(m_vlist),
-                     [versionStr](Java::MetadataPtr val) { return val->runtimeOS == versionStr; });
+                     [versionStr](const Java::MetadataPtr& val) { return val->runtimeOS == versionStr; });
         std::sort(m_vlist.begin(), m_vlist.end(), sortJavas);
     } else {
         qWarning() << "No Java versions found for your operating system:" << SysInfo::currentSystem() << SysInfo::useQTForArch();

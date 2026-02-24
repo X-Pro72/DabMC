@@ -34,10 +34,10 @@
 #include <QUrl>
 
 #include "Application.h"
-#include "settings/SettingsObject.h"
 #include "DesktopServices.h"
 #include "Json.h"
 #include "QObjectPtr.h"
+#include "settings/SettingsObject.h"
 
 #include "minecraft/auth/Parsers.h"
 #include "minecraft/skins/CapeChange.h"
@@ -54,7 +54,7 @@
 #include "ui/dialogs/ProgressDialog.h"
 #include "ui/instanceview/InstanceDelegate.h"
 
-SkinManageDialog::SkinManageDialog(QWidget* parent, MinecraftAccountPtr acct)
+SkinManageDialog::SkinManageDialog(QWidget* parent, const MinecraftAccountPtr& acct)
     : QDialog(parent), m_acct(acct), m_ui(new Ui::SkinManageDialog), m_list(this, APPLICATION->settings()->get("SkinsDir").toString(), acct)
 {
     m_ui->setupUi(this);
@@ -122,9 +122,8 @@ SkinManageDialog::SkinManageDialog(QWidget* parent, MinecraftAccountPtr acct)
 SkinManageDialog::~SkinManageDialog()
 {
     delete m_ui;
-    if (m_skinPreview) {
-        delete m_skinPreview;
-    }
+
+    delete m_skinPreview;
 }
 
 void SkinManageDialog::activated(QModelIndex index)
@@ -133,18 +132,21 @@ void SkinManageDialog::activated(QModelIndex index)
     accept();
 }
 
-void SkinManageDialog::selectionChanged(QItemSelection selected, [[maybe_unused]] QItemSelection deselected)
+void SkinManageDialog::selectionChanged(QItemSelection selected, [[maybe_unused]] const QItemSelection& deselected)
 {
-    if (selected.empty())
+    if (selected.empty()) {
         return;
+    }
 
     QString key = selected.first().indexes().first().data(Qt::UserRole).toString();
-    if (key.isEmpty())
+    if (key.isEmpty()) {
         return;
+    }
     m_selectedSkinKey = key;
     auto skin = getSelectedSkin();
-    if (!skin)
+    if (!skin) {
         return;
+    }
 
     if (m_skinPreview) {
         m_skinPreview->updateScene(skin);
@@ -182,7 +184,7 @@ void SkinManageDialog::on_fileBtn_clicked()
     }
 }
 
-QPixmap previewCape(QImage capeImage, bool elytra = false)
+QPixmap previewCape(const QImage& capeImage, bool elytra = false)
 {
     if (elytra) {
         auto wing = capeImage.copy(34, 2, 12, 20);
@@ -353,7 +355,7 @@ bool SkinManageDialog::eventFilter(QObject* obj, QEvent* ev)
 {
     if (obj == m_ui->listView) {
         if (ev->type() == QEvent::KeyPress) {
-            QKeyEvent* keyEvent = static_cast<QKeyEvent*>(ev);
+            auto* keyEvent = static_cast<QKeyEvent*>(ev);
             switch (keyEvent->key()) {
                 case Qt::Key_Delete:
                     on_action_Delete_Skin_triggered(false);
@@ -378,8 +380,9 @@ void SkinManageDialog::on_action_Rename_Skin_triggered(bool)
 
 void SkinManageDialog::on_action_Delete_Skin_triggered(bool)
 {
-    if (m_selectedSkinKey.isEmpty())
+    if (m_selectedSkinKey.isEmpty()) {
         return;
+    }
 
     if (m_list.getSkinIndex(m_selectedSkinKey) == m_list.getSelectedAccountSkin()) {
         CustomMessageBox::selectable(this, tr("Delete error"), tr("Can not delete skin that is in use."), QMessageBox::Warning)->exec();
@@ -387,8 +390,9 @@ void SkinManageDialog::on_action_Delete_Skin_triggered(bool)
     }
 
     auto skin = m_list.skin(m_selectedSkinKey);
-    if (!skin)
+    if (!skin) {
         return;
+    }
 
     auto response = CustomMessageBox::selectable(this, tr("Confirm Deletion"),
                                                  tr("You are about to delete \"%1\".\n"
@@ -437,8 +441,8 @@ void SkinManageDialog::on_urlBtn_clicked()
 
 class WaitTask : public Task {
    public:
-    WaitTask() : m_loop(), m_done(false) {};
-    virtual ~WaitTask() = default;
+    WaitTask() : m_done(false) {};
+    ~WaitTask() override = default;
 
    public slots:
     void quit()
@@ -448,10 +452,11 @@ class WaitTask : public Task {
     }
 
    protected:
-    virtual void executeTask()
+    void executeTask() override
     {
-        if (!m_done)
+        if (!m_done) {
             m_loop.exec();
+        }
         emitSucceeded();
     };
 
@@ -485,18 +490,18 @@ void SkinManageDialog::on_userBtn_clicked()
     QString failReason;
 
     connect(getUUID.get(), &Task::aborted, uuidLoop.get(), &WaitTask::quit);
-    connect(getUUID.get(), &Task::failed, this, [&failReason](QString reason) {
+    connect(getUUID.get(), &Task::failed, this, [&failReason](const QString& reason) {
         qCritical() << "Couldn't get user UUID:" << reason;
         failReason = tr("failed to get user UUID");
     });
     connect(getUUID.get(), &Task::failed, uuidLoop.get(), &WaitTask::quit);
     connect(getProfile.get(), &Task::aborted, profileLoop.get(), &WaitTask::quit);
     connect(getProfile.get(), &Task::failed, profileLoop.get(), &WaitTask::quit);
-    connect(getProfile.get(), &Task::failed, this, [&failReason](QString reason) {
+    connect(getProfile.get(), &Task::failed, this, [&failReason](const QString& reason) {
         qCritical() << "Couldn't get user profile:" << reason;
         failReason = tr("failed to get user profile");
     });
-    connect(downloadSkin.get(), &Task::failed, this, [&failReason](QString reason) {
+    connect(downloadSkin.get(), &Task::failed, this, [&failReason](const QString& reason) {
         qCritical() << "Couldn't download skin:" << reason;
         failReason = tr("failed to download skin");
     });

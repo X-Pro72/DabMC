@@ -55,7 +55,7 @@ enum class Side { NoSide = 0, ClientSide = 1 << 0, ServerSide = 1 << 1, Universa
 
 namespace SideUtils {
 QString toString(Side side);
-Side fromString(QString side);
+Side fromString(const QString& side);
 }  // namespace SideUtils
 
 namespace DependencyTypeUtils {
@@ -106,13 +106,13 @@ struct IndexedVersion {
     QVariant addonId;
     QVariant fileId;
     QString version;
-    QString version_number = {};
+    QString version_number;
     IndexedVersionType version_type;
     QStringList mcVersion;
     QString downloadUrl;
     QString date;
     QString fileName;
-    ModLoaderTypes loaders = {};
+    ModLoaderTypes loaders;
     QString hash_type;
     QString hash;
     bool is_preferred = true;
@@ -128,7 +128,7 @@ struct IndexedVersion {
         auto release_type = version_type.isValid() ? QString(" [%1]").arg(version_type.toString()) : "";
         auto versionStr = !version.contains(version_number) ? version_number : "";
         QString gameVersion = "";
-        for (auto v : mcVersion) {
+        for (const auto& v : mcVersion) {
             if (version.contains(v)) {
                 gameVersion = "";
                 break;
@@ -178,15 +178,17 @@ struct IndexedPack {
     // For internal use, not provided by APIs
     bool isVersionSelected(int index) const
     {
-        if (!versionsLoaded)
+        if (!versionsLoaded) {
             return false;
+        }
 
         return versions.at(index).is_currently_selected;
     }
     bool isAnyVersionSelected() const
     {
-        if (!versionsLoaded)
+        if (!versionsLoaded) {
             return false;
+        }
 
         return std::any_of(versions.constBegin(), versions.constEnd(), [](auto const& v) { return v.is_currently_selected; });
     }
@@ -208,10 +210,10 @@ inline auto getOverrideDeps() -> QList<OverrideDep>
              { "lwVhp9o5", "Ha28R6CL", "KotlinLibraries", ModPlatform::ResourceProvider::MODRINTH } };
 }
 
-QString getMetaURL(ResourceProvider provider, QVariant projectID);
+QString getMetaURL(ResourceProvider provider, const QVariant& projectID);
 
 auto getModLoaderAsString(ModLoaderType type) -> const QString;
-auto getModLoaderFromString(QString type) -> ModLoaderType;
+auto getModLoaderFromString(const QString& type) -> ModLoaderType;
 
 constexpr bool hasSingleModLoaderSelected(ModLoaderTypes l) noexcept
 {

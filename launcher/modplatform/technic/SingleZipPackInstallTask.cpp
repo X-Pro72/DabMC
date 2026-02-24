@@ -16,6 +16,8 @@
 #include "SingleZipPackInstallTask.h"
 
 #include <QtConcurrent>
+#include <memory>
+#include <utility>
 
 #include "FileSystem.h"
 #include "MMCZip.h"
@@ -66,7 +68,7 @@ void Technic::SingleZipPackInstallTask::downloadSucceeded()
     qDebug() << "Attempting to create instance from" << m_archivePath;
 
     // open the zip and find relevant files in it
-    m_packZip.reset(new MMCZip::ArchiveReader(m_archivePath));
+    m_packZip = std::make_unique<MMCZip::ArchiveReader>(m_archivePath);
     m_extractFuture =
         QtConcurrent::run(QThreadPool::globalInstance(), MMCZip::extractSubDir, m_packZip.get(), QString(""), extractDir.absolutePath());
     connect(&m_extractFutureWatcher, &QFutureWatcher<QStringList>::finished, this, &Technic::SingleZipPackInstallTask::extractFinished);
@@ -79,7 +81,7 @@ void Technic::SingleZipPackInstallTask::downloadFailed(QString reason)
 {
     m_abortable = false;
     m_filesNetJob.reset();
-    emitFailed(reason);
+    emitFailed(std::move(reason));
 }
 
 void Technic::SingleZipPackInstallTask::downloadProgressChanged(qint64 current, qint64 total)

@@ -62,17 +62,18 @@ ThemeManager::~ThemeManager()
 QString ThemeManager::addTheme(std::unique_ptr<ITheme> theme)
 {
     QString id = theme->id();
-    if (m_themes.find(id) == m_themes.end())
+    if (m_themes.find(id) == m_themes.end()) {
         m_themes.emplace(id, std::move(theme));
-    else
+    } else {
         themeWarningLog() << "Theme(" << id << ") not added to prevent id duplication";
+    }
     return id;
 }
 
 /// @brief Gets the Theme from the List via ID
 /// @param themeId Theme ID of theme to fetch
 /// @return Theme at themeId
-ITheme* ThemeManager::getTheme(QString themeId)
+ITheme* ThemeManager::getTheme(const QString& themeId)
 {
     return m_themes[themeId].get();
 }
@@ -80,10 +81,11 @@ ITheme* ThemeManager::getTheme(QString themeId)
 QString ThemeManager::addIconTheme(IconTheme theme)
 {
     QString id = theme.id();
-    if (m_icons.find(id) == m_icons.end())
+    if (m_icons.find(id) == m_icons.end()) {
         m_icons.emplace(id, std::move(theme));
-    else
+    } else {
         themeWarningLog() << "IconTheme(" << id << ") not added to prevent id duplication";
+    }
     return id;
 }
 
@@ -113,16 +115,18 @@ void ThemeManager::initializeIcons()
         themeDebugLog() << "Loaded Built-In Icon Theme" << id;
     }
 
-    if (!m_iconThemeFolder.mkpath("."))
+    if (!m_iconThemeFolder.mkpath(".")) {
         themeWarningLog() << "Couldn't create icon theme folder";
+    }
     themeDebugLog() << "Icon Theme Folder Path:" << m_iconThemeFolder.absolutePath();
 
     QDirIterator directoryIterator(m_iconThemeFolder.path(), QDir::Dirs | QDir::NoDotAndDotDot);
     while (directoryIterator.hasNext()) {
         QDir dir(directoryIterator.next());
         IconTheme theme(dir.dirName(), dir.path());
-        if (!theme.load())
+        if (!theme.load()) {
             continue;
+        }
 
         addIconTheme(std::move(theme));
         themeDebugLog() << "Loaded Custom Icon Theme from" << dir.path();
@@ -153,8 +157,9 @@ void ThemeManager::initializeWidgets()
     // TODO: need some way to differentiate same name themes in different subdirectories
     //  (maybe smaller grey text next to theme name in dropdown?)
 
-    if (!m_applicationThemeFolder.mkpath("."))
+    if (!m_applicationThemeFolder.mkpath(".")) {
         themeWarningLog() << "Couldn't create theme folder";
+    }
     themeDebugLog() << "Theme Folder Path:" << m_applicationThemeFolder.absolutePath();
 
     QDirIterator directoryIterator(m_applicationThemeFolder.path(), QDir::Dirs | QDir::NoDotAndDotDot);
@@ -280,16 +285,15 @@ void ThemeManager::applyCurrentlySelectedTheme(bool initial)
     themeDebugLog() << "<> Application theme set.";
 }
 
-QString ThemeManager::getCatPack(QString catName)
+QString ThemeManager::getCatPack(const QString& catName)
 {
     auto catIter = m_catPacks.find(!catName.isEmpty() ? catName : APPLICATION->settings()->get("BackgroundCat").toString());
     if (catIter != m_catPacks.end()) {
         auto& catPack = catIter->second;
         themeDebugLog() << "applying catpack" << catPack->id();
         return catPack->path();
-    } else {
-        themeWarningLog() << "Tried to get invalid catPack:" << catName;
     }
+    themeWarningLog() << "Tried to get invalid catPack:" << catName;
 
     return m_catPacks.begin()->second->path();
 }
@@ -297,10 +301,11 @@ QString ThemeManager::getCatPack(QString catName)
 QString ThemeManager::addCatPack(std::unique_ptr<CatPack> catPack)
 {
     QString id = catPack->id();
-    if (m_catPacks.find(id) == m_catPacks.end())
+    if (m_catPacks.find(id) == m_catPacks.end()) {
         m_catPacks.emplace(id, std::move(catPack));
-    else
+    } else {
         themeWarningLog() << "CatPack(" << id << ") not added to prevent id duplication";
+    }
     return id;
 }
 
@@ -310,18 +315,19 @@ void ThemeManager::initializeCatPacks()
                                                     { "rory", QObject::tr("Rory ID 11 (drawn by Ashtaka)") },
                                                     { "rory-flat", QObject::tr("Rory ID 11 (flat edition, drawn by Ashtaka)") },
                                                     { "teawie", QObject::tr("Teawie (drawn by SympathyTea)") } };
-    for (auto [id, name] : defaultCats) {
+    for (const auto& [id, name] : defaultCats) {
         addCatPack(std::unique_ptr<CatPack>(new BasicCatPack(id, name)));
     }
-    if (!m_catPacksFolder.mkpath("."))
+    if (!m_catPacksFolder.mkpath(".")) {
         themeWarningLog() << "Couldn't create catpacks folder";
+    }
     themeDebugLog() << "CatPacks Folder Path:" << m_catPacksFolder.absolutePath();
 
     QStringList supportedImageFormats;
-    for (auto format : QImageReader::supportedImageFormats()) {
+    for (const auto& format : QImageReader::supportedImageFormats()) {
         supportedImageFormats.append("*." + format);
     }
-    auto loadFiles = [this, supportedImageFormats](QDir dir) {
+    auto loadFiles = [this, supportedImageFormats](const QDir& dir) {
         // Load image files directly
         QDirIterator ImageFileIterator(dir.absoluteFilePath(""), supportedImageFormats, QDir::Files);
         while (ImageFileIterator.hasNext()) {

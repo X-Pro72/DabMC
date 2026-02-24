@@ -13,8 +13,8 @@ class NewsDialog : public QDialog {
     Q_OBJECT
 
    public:
-    NewsDialog(QList<NewsEntryPtr> entries, QWidget* parent = nullptr);
-    ~NewsDialog();
+    NewsDialog(const QList<NewsEntryPtr>& entries, QWidget* parent = nullptr);
+    ~NewsDialog() override;
 
    public slots:
     void toggleArticleList();

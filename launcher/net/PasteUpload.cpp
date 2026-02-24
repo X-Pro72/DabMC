@@ -43,6 +43,8 @@
 #include <QJsonObject>
 #include <QRegularExpression>
 #include <QUrlQuery>
+#include <memory>
+#include <utility>
 #include "logs/AnonymizeLog.h"
 
 const std::array<PasteUpload::PasteTypeInfo, 4> PasteUpload::PasteTypes = { { { "0x0.st", "https://0x0.st", "" },
@@ -54,12 +56,12 @@ QNetworkReply* PasteUpload::getReply(QNetworkRequest& request)
 {
     switch (m_paste_type) {
         case PasteUpload::NullPointer: {
-            QHttpMultiPart* multiPart = new QHttpMultiPart{ QHttpMultiPart::FormDataType, this };
+            auto* multiPart = new QHttpMultiPart{ QHttpMultiPart::FormDataType, this };
 
             QHttpPart filePart;
             filePart.setBody(m_log.toUtf8());
             filePart.setHeader(QNetworkRequest::ContentTypeHeader, "text/plain");
-            filePart.setHeader(QNetworkRequest::ContentDispositionHeader, "form-data; name=\"file\"; filename=\"log.txt\"");
+            filePart.setHeader(QNetworkRequest::ContentDispositionHeader, R"(form-data; name="file"; filename="log.txt")");
             multiPart->append(filePart);
 
             return m_network->post(request, multiPart);
@@ -110,7 +112,8 @@ auto PasteUpload::Sink::finalize(QNetworkReply& reply) -> Task::State
     if (reply.error() != QNetworkReply::NetworkError::NoError) {
         m_fail_reason = QObject::tr("Network error: %1").arg(reply.errorString());
         return Task::State::Failed;
-    } else if (statusCode != 200 && statusCode != 201) {
+    }
+    if (statusCode != 200 && statusCode != 201) {
         QString reasonPhrase = reply.attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString();
         m_fail_reason =
             QObject::tr("Error: %1 returned unexpected status code %2 %3").arg(m_d->url().toString()).arg(statusCode).arg(reasonPhrase);
@@ -201,18 +204,21 @@ auto PasteUpload::Sink::finalize(QNetworkReply& reply) -> Task::State
     return Task::State::Succeeded;
 }
 
-PasteUpload::PasteUpload(const QString& log, QString url, PasteType pasteType) : m_log(log), m_baseUrl(url), m_paste_type(pasteType)
+PasteUpload::PasteUpload(QString log, QString url, PasteType pasteType)
+    : m_log(std::move(log)), m_baseUrl(std::move(url)), m_paste_type(pasteType)
 {
     anonymizeLog(m_log);
     auto base = PasteUpload::PasteTypes.at(pasteType);
-    if (m_baseUrl.isEmpty())
+    if (m_baseUrl.isEmpty()) {
         m_baseUrl = base.defaultBase;
+    }
 
     // HACK: Paste's docs say the standard API path is at /api/<version> but the official instance paste.gg doesn't follow that??
-    if (pasteType == PasteUpload::PasteGG && m_baseUrl == base.defaultBase)
+    if (pasteType == PasteUpload::PasteGG && m_baseUrl == base.defaultBase) {
         m_url = "https://api.paste.gg/v1/pastes";
-    else
+    } else {
         m_url = m_baseUrl + base.endpointPath;
+    }
 
-    m_sink.reset(new Sink(this, m_output.get()));
+    m_sink = std::make_unique<Sink>(this, m_output.get());
 }

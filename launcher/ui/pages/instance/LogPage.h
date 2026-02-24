@@ -37,6 +37,7 @@
 
 #include <QIdentityProxyModel>
 #include <QWidget>
+#include <utility>
 
 #include "BaseInstance.h"
 #include "launch/LaunchTask.h"
@@ -52,7 +53,7 @@ class LogFormatProxyModel : public QIdentityProxyModel {
     LogFormatProxyModel(QObject* parent = nullptr) : QIdentityProxyModel(parent) {}
     QVariant data(const QModelIndex& index, int role) const override;
     QFont getFont() const { return m_font; }
-    void setFont(QFont font) { m_font = font; }
+    void setFont(QFont font) { m_font = std::move(font); }
     QModelIndex find(const QModelIndex& start, const QString& value, bool reverse) const;
 
    private:
@@ -63,14 +64,14 @@ class LogPage : public QWidget, public BasePage {
     Q_OBJECT
 
    public:
-    explicit LogPage(BaseInstance* instance, QWidget* parent = 0);
-    virtual ~LogPage();
-    virtual QString displayName() const override { return tr("Minecraft Log"); }
-    virtual QIcon icon() const override { return QIcon::fromTheme("log"); }
-    virtual QString id() const override { return "console"; }
-    virtual bool apply() override;
-    virtual QString helpPage() const override { return "Minecraft-Logs"; }
-    virtual bool shouldDisplay() const override;
+    explicit LogPage(BaseInstance* instance, QWidget* parent = nullptr);
+    ~LogPage() override;
+    QString displayName() const override { return tr("Minecraft Log"); }
+    QIcon icon() const override { return QIcon::fromTheme("log"); }
+    QString id() const override { return "console"; }
+    bool apply() override;
+    QString helpPage() const override { return "Minecraft-Logs"; }
+    bool shouldDisplay() const override;
     void retranslate() override;
 
    private slots:

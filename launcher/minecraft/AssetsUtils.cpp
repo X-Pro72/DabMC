@@ -42,6 +42,7 @@
 #include <QJsonObject>
 #include <QJsonParseError>
 #include <QVariant>
+#include <utility>
 
 #include "AssetsUtils.h"
 #include "BuildConfig.h"
@@ -55,7 +56,7 @@
 #include "update/AssetUpdateTask.h"
 
 namespace {
-QSet<QString> collectPathsFromDir(QString dirPath)
+QSet<QString> collectPathsFromDir(const QString& dirPath)
 {
     QFileInfo dirInfo(dirPath);
 
@@ -196,14 +197,15 @@ QDir getAssetsDir(const QString& assetsId, const QString& resourcesFolder)
     QString targetPath;
     if (index.isVirtual) {
         return virtualRoot;
-    } else if (index.mapToResources) {
+    }
+    if (index.mapToResources) {
         return QDir(resourcesFolder);
     }
     return virtualRoot;
 }
 
 // FIXME: ugly code duplication
-bool reconstructAssets(QString assetsId, QString resourcesFolder)
+bool reconstructAssets(const QString& assetsId, QString resourcesFolder)
 {
     QDir assetsDir = QDir("assets/");
     QDir indexDir = QDir(FS::PathCombine(assetsDir.path(), "indexes"));
@@ -234,13 +236,13 @@ bool reconstructAssets(QString assetsId, QString resourcesFolder)
         removeLeftovers = true;
         qDebug() << "Reconstructing virtual assets folder at" << targetPath;
     } else if (index.mapToResources) {
-        targetPath = resourcesFolder;
+        targetPath = std::move(resourcesFolder);
         qDebug() << "Reconstructing resources folder at" << targetPath;
     }
 
     if (!targetPath.isNull()) {
         auto presentFiles = collectPathsFromDir(targetPath);
-        for (QString map : index.objects.keys()) {
+        for (const QString& map : index.objects.keys()) {
             AssetObject asset_object = index.objects.value(map);
             QString target_path = FS::PathCombine(targetPath, map);
             QFile target(target_path);
@@ -249,8 +251,9 @@ bool reconstructAssets(QString assetsId, QString resourcesFolder)
 
             QString original_path = FS::PathCombine(objectDir.path(), tlk, asset_object.hash);
             QFile original(original_path);
-            if (!original.exists())
+            if (!original.exists()) {
                 continue;
+            }
 
             presentFiles.remove(target_path);
 
@@ -303,12 +306,12 @@ QUrl AssetObject::getUrl()
     return resourceURL + getRelPath();
 }
 
-QString AssetObject::getRelPath()
+QString AssetObject::getRelPath() const
 {
     return hash.left(2) + "/" + hash;
 }
 
-NetJob::Ptr AssetsIndex::getDownloadJob()
+NetJob::Ptr AssetsIndex::getDownloadJob() const
 {
     auto job = makeShared<NetJob>(QObject::tr("Assets for %1").arg(id), APPLICATION->network());
     for (auto& object : objects.values()) {
@@ -317,7 +320,8 @@ NetJob::Ptr AssetsIndex::getDownloadJob()
             job->addNetAction(dl);
         }
     }
-    if (job->size())
+    if (job->size()) {
         return job;
+    }
     return nullptr;
 }

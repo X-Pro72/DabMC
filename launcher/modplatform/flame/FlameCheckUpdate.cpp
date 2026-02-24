@@ -49,8 +49,9 @@ void FlameCheckUpdate::executeTask()
         auto project = std::make_shared<ModPlatform::IndexedPack>();
         project->addonId = resource->metadata()->project_id.toString();
         auto versionsUrlOptional = api.getVersionsURL({ project, m_gameVersions });
-        if (!versionsUrlOptional.has_value())
+        if (!versionsUrlOptional.has_value()) {
             continue;
+        }
 
         auto response = std::make_shared<QByteArray>();
         auto task = Net::ApiDownload::makeByteArray(versionsUrlOptional.value(), response.get());
@@ -89,18 +90,19 @@ void FlameCheckUpdate::getLatestVersionCallback(Resource* resource, QByteArray* 
         qCritical() << e.what();
         qDebug() << doc;
     }
-    auto latest_ver = api.getLatestVersion(pack->versions, m_loadersList, resource->metadata()->loaders, !m_loadersList.isEmpty());
+    auto latest_ver = FlameAPI::getLatestVersion(pack->versions, m_loadersList, resource->metadata()->loaders, !m_loadersList.isEmpty());
 
     setStatus(tr("Parsing the API response from CurseForge for '%1'...").arg(resource->name()));
 
     if (!latest_ver.has_value() || !latest_ver->addonId.isValid()) {
         QString reason;
-        if (dynamic_cast<Mod*>(resource) != nullptr)
+        if (dynamic_cast<Mod*>(resource) != nullptr) {
             reason =
                 tr("No valid version found for this resource. It's probably unavailable for the current game "
                    "version / mod loader.");
-        else
+        } else {
             reason = tr("No valid version found for this resource. It's probably unavailable for the current game version.");
+        }
 
         emit checkFailed(resource, reason);
         return;
@@ -115,15 +117,16 @@ void FlameCheckUpdate::getLatestVersionCallback(Resource* resource, QByteArray* 
         (resource->metadata()->hash != latest_ver->hash || resource->status() == ResourceStatus::NOT_INSTALLED)) {
         auto old_version = resource->metadata()->version_number;
         if (old_version.isEmpty()) {
-            if (resource->status() == ResourceStatus::NOT_INSTALLED)
+            if (resource->status() == ResourceStatus::NOT_INSTALLED) {
                 old_version = tr("Not installed");
-            else
+            } else {
                 old_version = tr("Unknown");
+            }
         }
 
         auto download_task = makeShared<ResourceDownloadTask>(pack, latest_ver.value(), m_resourceModel);
         m_updates.emplace_back(pack->name, resource->metadata()->hash, old_version, latest_ver->version, latest_ver->version_type,
-                               api.getModFileChangelog(latest_ver->addonId.toInt(), latest_ver->fileId.toInt()),
+                               FlameAPI::getModFileChangelog(latest_ver->addonId.toInt(), latest_ver->fileId.toInt()),
                                ModPlatform::ResourceProvider::FLAME, download_task, resource->enabled());
     }
     m_deps.append(std::make_shared<GetModDependenciesTask::PackDependency>(pack, latest_ver.value()));
@@ -145,7 +148,8 @@ void FlameCheckUpdate::collectBlockedMods()
     if (addonIds.isEmpty()) {
         emitSucceeded();
         return;
-    } else if (addonIds.size() == 1) {
+    }
+    if (addonIds.size() == 1) {
         projTask = api.getProject(*addonIds.begin(), response.get());
     } else {
         projTask = api.getProjects(addonIds, response.get());
@@ -163,10 +167,11 @@ void FlameCheckUpdate::collectBlockedMods()
 
         try {
             QJsonArray entries;
-            if (addonIds.size() == 1)
+            if (addonIds.size() == 1) {
                 entries = { Json::requireObject(Json::requireObject(doc), "data") };
-            else
+            } else {
                 entries = Json::requireArray(Json::requireObject(doc), "data");
+            }
 
             for (auto entry : entries) {
                 auto entry_obj = Json::requireObject(entry);

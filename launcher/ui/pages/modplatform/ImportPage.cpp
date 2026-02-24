@@ -58,12 +58,13 @@ class UrlValidator : public QValidator {
    public:
     using QValidator::QValidator;
 
-    State validate(QString& in, [[maybe_unused]] int& pos) const
+    State validate(QString& in, [[maybe_unused]] int& pos) const override
     {
         const QUrl url(in);
         if (url.isValid() && !url.isRelative() && !url.isEmpty()) {
             return Acceptable;
-        } else if (QFile::exists(in)) {
+        }
+        if (QFile::exists(in)) {
             return Acceptable;
         } else {
             return Intermediate;
@@ -134,10 +135,11 @@ void ImportPage::updateState()
             auto array = std::make_shared<QByteArray>();
 
             auto api = FlameAPI();
-            auto job = api.getFile(addonId, fileId, array.get());
+            auto job = FlameAPI::getFile(addonId, fileId, array.get());
 
-            connect(job.get(), &NetJob::failed, this,
-                    [this](QString reason) { CustomMessageBox::selectable(this, tr("Error"), reason, QMessageBox::Critical)->show(); });
+            connect(job.get(), &NetJob::failed, this, [this](const QString& reason) {
+                CustomMessageBox::selectable(this, tr("Error"), reason, QMessageBox::Critical)->show();
+            });
             connect(job.get(), &NetJob::succeeded, this, [this, array, addonId, fileId] {
                 qDebug() << "Returned CFURL Json:\n" << array->toStdString().c_str();
                 auto doc = Json::requireDocument(*array);
@@ -226,7 +228,6 @@ QUrl ImportPage::modpackUrl() const
     const QUrl url(ui->modpackEdit->text());
     if (url.isValid() && !url.isRelative() && !url.host().isEmpty()) {
         return url;
-    } else {
-        return QUrl::fromLocalFile(ui->modpackEdit->text());
     }
+    return QUrl::fromLocalFile(ui->modpackEdit->text());
 }

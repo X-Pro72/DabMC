@@ -36,18 +36,20 @@
 #include "ConcurrentTask.h"
 
 #include <QDebug>
+#include <utility>
 #include "tasks/Task.h"
 
-ConcurrentTask::ConcurrentTask(QString task_name, int max_concurrent) : Task(), m_total_max_size(max_concurrent)
+ConcurrentTask::ConcurrentTask(const QString& task_name, int max_concurrent) : m_total_max_size(max_concurrent)
 {
     setObjectName(task_name);
 }
 
 ConcurrentTask::~ConcurrentTask()
 {
-    for (auto task : m_doing) {
-        if (task)
+    for (const auto& task : m_doing) {
+        if (task) {
             task->disconnect(this);
+        }
     }
 }
 
@@ -56,15 +58,16 @@ auto ConcurrentTask::getStepProgress() const -> TaskStepProgressList
     return m_task_progress.values();
 }
 
-void ConcurrentTask::addTask(Task::Ptr task)
+void ConcurrentTask::addTask(const Task::Ptr& task)
 {
     m_queue.append(task);
 }
 
 void ConcurrentTask::executeTask()
 {
-    for (auto i = 0; i < m_total_max_size; i++)
+    for (auto i = 0; i < m_total_max_size; i++) {
         QMetaObject::invokeMethod(this, &ConcurrentTask::executeNextSubTask, Qt::QueuedConnection);
+    }
 }
 
 bool ConcurrentTask::abort()
@@ -84,14 +87,15 @@ bool ConcurrentTask::abort()
     QMutableHashIterator<Task*, Task::Ptr> doing_iter(m_doing);
     while (doing_iter.hasNext()) {
         auto task = doing_iter.next();
-        disconnect(task->get(), &Task::aborted, this, 0);
+        disconnect(task->get(), &Task::aborted, this, nullptr);
         suceedeed &= (task.value())->abort();
     }
 
-    if (suceedeed)
+    if (suceedeed) {
         emitAborted();
-    else
+    } else {
         emitFailed(tr("Failed to abort all running tasks."));
+    }
 
     return suceedeed;
 }
@@ -129,7 +133,7 @@ void ConcurrentTask::executeNextSubTask()
                 emitFailed(reason);
             } else {
                 QStringList failReason;
-                for (auto t : m_failed) {
+                for (const auto& t : m_failed) {
                     auto reason = t->failReason();
                     if (!reason.isEmpty()) {
                         failReason << reason;
@@ -148,15 +152,15 @@ void ConcurrentTask::executeNextSubTask()
     startSubTask(m_queue.dequeue());
 }
 
-void ConcurrentTask::startSubTask(Task::Ptr next)
+void ConcurrentTask::startSubTask(const Task::Ptr& next)
 {
     connect(next.get(), &Task::succeeded, this, [this, next]() { subTaskSucceeded(next); });
-    connect(next.get(), &Task::failed, this, [this, next](QString msg) { subTaskFailed(next, msg); });
+    connect(next.get(), &Task::failed, this, [this, next](const QString& msg) { subTaskFailed(next, msg); });
     // this should never happen but if it does, it's better to fail the task than get stuck
     connect(next.get(), &Task::aborted, this, [this, next] { subTaskFailed(next, "Aborted"); });
 
-    connect(next.get(), &Task::status, this, [this, next](QString msg) { subTaskStatus(next, msg); });
-    connect(next.get(), &Task::details, this, [this, next](QString msg) { subTaskDetails(next, msg); });
+    connect(next.get(), &Task::status, this, [this, next](const QString& msg) { subTaskStatus(next, msg); });
+    connect(next.get(), &Task::details, this, [this, next](const QString& msg) { subTaskDetails(next, msg); });
     connect(next.get(), &Task::stepProgress, this, &ConcurrentTask::stepProgress);
 
     connect(next.get(), &Task::progress, this, [this, next](qint64 current, qint64 total) { subTaskProgress(next, current, total); });
@@ -171,7 +175,7 @@ void ConcurrentTask::startSubTask(Task::Ptr next)
     QMetaObject::invokeMethod(next.get(), &Task::start, Qt::QueuedConnection);
 }
 
-void ConcurrentTask::subTaskFinished(Task::Ptr task, TaskStepState state)
+void ConcurrentTask::subTaskFinished(const Task::Ptr& task, TaskStepState state)
 {
     m_done.insert(task.get(), task);
     (state == TaskStepState::Succeeded ? m_succeeded : m_failed).insert(task.get(), task);
@@ -182,7 +186,7 @@ void ConcurrentTask::subTaskFinished(Task::Ptr task, TaskStepState state)
     task_progress.state = state;
     m_task_progress.remove(task->getUid());
 
-    disconnect(task.get(), 0, this, 0);
+    disconnect(task.get(), nullptr, this, nullptr);
 
     emit stepProgress(task_progress);
     updateState();
@@ -191,15 +195,15 @@ void ConcurrentTask::subTaskFinished(Task::Ptr task, TaskStepState state)
 
 void ConcurrentTask::subTaskSucceeded(Task::Ptr task)
 {
-    subTaskFinished(task, TaskStepState::Succeeded);
+    subTaskFinished(std::move(task), TaskStepState::Succeeded);
 }
 
 void ConcurrentTask::subTaskFailed(Task::Ptr task, [[maybe_unused]] const QString& msg)
 {
-    subTaskFinished(task, TaskStepState::Failed);
+    subTaskFinished(std::move(task), TaskStepState::Failed);
 }
 
-void ConcurrentTask::subTaskStatus(Task::Ptr task, const QString& msg)
+void ConcurrentTask::subTaskStatus(const Task::Ptr& task, const QString& msg)
 {
     auto task_progress = m_task_progress.value(task->getUid());
     task_progress->status = msg;
@@ -212,7 +216,7 @@ void ConcurrentTask::subTaskStatus(Task::Ptr task, const QString& msg)
     }
 }
 
-void ConcurrentTask::subTaskDetails(Task::Ptr task, const QString& msg)
+void ConcurrentTask::subTaskDetails(const Task::Ptr& task, const QString& msg)
 {
     auto task_progress = m_task_progress.value(task->getUid());
     task_progress->details = msg;
@@ -225,7 +229,7 @@ void ConcurrentTask::subTaskDetails(Task::Ptr task, const QString& msg)
     }
 }
 
-void ConcurrentTask::subTaskProgress(Task::Ptr task, qint64 current, qint64 total)
+void ConcurrentTask::subTaskProgress(const Task::Ptr& task, qint64 current, qint64 total)
 {
     auto task_progress = m_task_progress.value(task->getUid());
 

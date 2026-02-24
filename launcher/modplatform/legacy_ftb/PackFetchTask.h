@@ -14,7 +14,7 @@ class PackFetchTask : public QObject {
 
    public:
     PackFetchTask(QNetworkAccessManager* network) : QObject(nullptr), m_network(network) {};
-    virtual ~PackFetchTask() = default;
+    ~PackFetchTask() override = default;
 
     void fetch();
     void fetchPrivate(const QStringList& toFetch);
@@ -26,22 +26,22 @@ class PackFetchTask : public QObject {
     std::unique_ptr<QByteArray> publicModpacksXmlFileData = std::make_unique<QByteArray>();
     std::unique_ptr<QByteArray> thirdPartyModpacksXmlFileData = std::make_unique<QByteArray>();
 
-    bool parseAndAddPacks(QByteArray& data, PackType packType, ModpackList& list);
+    static bool parseAndAddPacks(QByteArray& data, PackType packType, ModpackList& list);
     ModpackList publicPacks;
     ModpackList thirdPartyPacks;
 
    protected slots:
     void fileDownloadFinished();
-    void fileDownloadFailed(QString reason);
+    void fileDownloadFailed(const QString& reason);
     void fileDownloadAborted();
 
    signals:
-    void finished(ModpackList publicPacks, ModpackList thirdPartyPacks);
-    void failed(QString reason);
+    void finished(const ModpackList& publicPacks, const ModpackList& thirdPartyPacks);
+    void failed(const QString& reason);
     void aborted();
 
     void privateFileDownloadFinished(const Modpack& modpack);
-    void privateFileDownloadFailed(QString reason, QString packCode);
+    void privateFileDownloadFailed(const QString& reason, const QString& packCode);
 };
 
 }  // namespace LegacyFTB

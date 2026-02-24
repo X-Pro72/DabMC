@@ -38,11 +38,13 @@
 #include "PSaveFile.h"
 #include "Sink.h"
 
+#include <utility>
+
 namespace Net {
 class FileSink : public Sink {
    public:
-    FileSink(QString filename) : m_filename(filename) {};
-    virtual ~FileSink() = default;
+    FileSink(QString filename) : m_filename(std::move(filename)) {};
+    ~FileSink() override = default;
 
    public:
     auto init(QNetworkRequest& request) -> Task::State override;

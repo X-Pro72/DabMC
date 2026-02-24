@@ -25,7 +25,7 @@ class FilterModel : public QSortFilterProxyModel {
     QString translateCurrentSorting();
     void setSorting(Sorting sorting);
     Sorting getCurrentSorting();
-    void setSearchTerm(QString term);
+    void setSearchTerm(const QString& term);
 
    protected:
     bool filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const override;
@@ -46,16 +46,16 @@ class ListModel : public QAbstractListModel {
     FTBLogoMap m_logoMap;
     QMap<QString, LogoCallback> waitingCallbacks;
 
-    void requestLogo(QString file);
-    QString translatePackType(PackType type) const;
+    void requestLogo(const QString& file);
+    static QString translatePackType(PackType type);
 
    private slots:
-    void logoFailed(QString logo);
-    void logoLoaded(QString logo, QIcon out);
+    void logoFailed(const QString& logo);
+    void logoLoaded(const QString& logo, const QIcon& out);
 
    public:
     ListModel(QObject* parent);
-    ~ListModel();
+    ~ListModel() override;
     int rowCount(const QModelIndex& parent) const override;
     int columnCount(const QModelIndex& parent) const override;
     QVariant data(const QModelIndex& index, int role) const override;
@@ -67,7 +67,7 @@ class ListModel : public QAbstractListModel {
     void remove(int row);
 
     Modpack at(int row);
-    void getLogo(const QString& logo, LogoCallback callback);
+    void getLogo(const QString& logo, const LogoCallback& callback);
 };
 
 }  // namespace LegacyFTB

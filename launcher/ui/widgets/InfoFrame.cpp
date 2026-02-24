@@ -48,8 +48,9 @@
 void setupLinkToolTip(QLabel* label)
 {
     QObject::connect(label, &QLabel::linkHovered, [label](const QString& link) {
-        if (auto url = QUrl(link); !url.isValid() || (url.scheme() != "http" && url.scheme() != "https"))
+        if (auto url = QUrl(link); !url.isValid() || (url.scheme() != "http" && url.scheme() != "https")) {
             return;
+        }
         label->setToolTip(link);
     });
 }
@@ -85,18 +86,20 @@ void InfoFrame::updateWithMod(Mod const& m)
     QString text = "";
     QString name = "";
     QString link = m.homepage();
-    if (m.name().isEmpty())
+    if (m.name().isEmpty()) {
         name = m.internal_id();
-    else
+    } else {
         name = m.name();
+    }
 
-    if (link.isEmpty())
+    if (link.isEmpty()) {
         text = name;
-    else {
+    } else {
         text = "<a href=\"" + QUrl(link).toEncoded() + "\">" + name + "</a>";
     }
-    if (!m.authors().isEmpty())
+    if (!m.authors().isEmpty()) {
         text += " by " + m.authors().join(", ");
+    }
 
     setName(text);
 
@@ -111,7 +114,7 @@ void InfoFrame::updateWithMod(Mod const& m)
     auto licenses = m.licenses();
     QString licenseText = "";
     if (!licenses.empty()) {
-        for (auto l : licenses) {
+        for (const auto& l : licenses) {
             if (!licenseText.isEmpty()) {
                 licenseText += "\n";  // add newline between licenses
             }
@@ -147,15 +150,16 @@ void InfoFrame::updateWithResource(const Resource& resource)
 {
     const QString homepage = resource.homepage();
 
-    if (!homepage.isEmpty())
+    if (!homepage.isEmpty()) {
         setName("<a href=\"" + homepage + "\">" + resource.name() + "</a>");
-    else
+    } else {
         setName(resource.name());
+    }
 
     setImage();
 }
 
-QString InfoFrame::renderColorCodes(QString input)
+QString InfoFrame::renderColorCodes(const QString& input)
 {
     // We have to manually set the colors for use.
     //
@@ -267,7 +271,7 @@ void InfoFrame::updateHiddenState()
     }
 }
 
-void InfoFrame::setName(QString text)
+void InfoFrame::setName(const QString& text)
 {
     if (text.isEmpty()) {
         ui->nameLabel->setHidden(true);
@@ -278,16 +282,16 @@ void InfoFrame::setName(QString text)
     updateHiddenState();
 }
 
-void InfoFrame::setDescription(QString text)
+void InfoFrame::setDescription(const QString& text)
 {
     if (text.isEmpty()) {
         ui->descriptionLabel->setHidden(true);
         updateHiddenState();
         return;
-    } else {
-        ui->descriptionLabel->setHidden(false);
-        updateHiddenState();
     }
+    ui->descriptionLabel->setHidden(false);
+    updateHiddenState();
+
     ui->descriptionLabel->setToolTip("");
     QString intermediatetext = text.trimmed();
     bool prev(false);
@@ -332,16 +336,16 @@ void InfoFrame::setDescription(QString text)
     ui->descriptionLabel->setText(labeltext);
 }
 
-void InfoFrame::setLicense(QString text)
+void InfoFrame::setLicense(const QString& text)
 {
     if (text.isEmpty()) {
         ui->licenseLabel->setHidden(true);
         updateHiddenState();
         return;
-    } else {
-        ui->licenseLabel->setHidden(false);
-        updateHiddenState();
     }
+    ui->licenseLabel->setHidden(false);
+    updateHiddenState();
+
     ui->licenseLabel->setToolTip("");
     QString intermediatetext = text.trimmed();
     bool prev(false);
@@ -371,7 +375,7 @@ void InfoFrame::setLicense(QString text)
     ui->licenseLabel->setText(labeltext);
 }
 
-void InfoFrame::setIssueTracker(QString text)
+void InfoFrame::setIssueTracker(const QString& text)
 {
     if (text.isEmpty()) {
         ui->issueTrackerLabel->setHidden(true);
@@ -382,7 +386,7 @@ void InfoFrame::setIssueTracker(QString text)
     updateHiddenState();
 }
 
-void InfoFrame::setImage(QPixmap img)
+void InfoFrame::setImage(const QPixmap& img)
 {
     if (img.isNull()) {
         ui->iconLabel->setHidden(true);
@@ -392,7 +396,7 @@ void InfoFrame::setImage(QPixmap img)
     }
 }
 
-void InfoFrame::descriptionEllipsisHandler([[maybe_unused]] QString link)
+void InfoFrame::descriptionEllipsisHandler([[maybe_unused]] const QString& link)
 {
     if (!m_current_box) {
         m_current_box = CustomMessageBox::selectable(this, "", m_description);
@@ -403,7 +407,7 @@ void InfoFrame::descriptionEllipsisHandler([[maybe_unused]] QString link)
     }
 }
 
-void InfoFrame::licenseEllipsisHandler([[maybe_unused]] QString link)
+void InfoFrame::licenseEllipsisHandler([[maybe_unused]] const QString& link)
 {
     if (!m_current_box) {
         m_current_box = CustomMessageBox::selectable(this, "", m_license);

@@ -23,12 +23,12 @@
 #include <QIcon>
 #include <QProcessEnvironment>
 #include "Application.h"
-#include "settings/SettingsObject.h"
 #include "Exception.h"
 #include "FileSystem.h"
 #include "Json.h"
 #include "StringUtils.h"
 #include "modplatform/import_ftb/PackHelpers.h"
+#include "settings/SettingsObject.h"
 #include "ui/widgets/ProjectItem.h"
 
 namespace FTBImportAPP {
@@ -45,8 +45,9 @@ QString getFTBRoot()
 QString getDynamicPath()
 {
     auto settingsPath = FS::PathCombine(getFTBRoot(), "storage", "settings.json");
-    if (!QFileInfo::exists(settingsPath))
+    if (!QFileInfo::exists(settingsPath)) {
         settingsPath = FS::PathCombine(getFTBRoot(), "bin", "settings.json");
+    }
     if (!QFileInfo::exists(settingsPath)) {
         qWarning() << "The ftb app setings doesn't exist.";
         return {};
@@ -67,27 +68,31 @@ void ListModel::update()
     beginResetModel();
     m_modpacks.clear();
 
-    auto wasPathAdded = [this](QString path) {
-        for (auto pack : m_modpacks) {
-            if (pack.path == path)
+    auto wasPathAdded = [this](const QString& path) {
+        for (const auto& pack : m_modpacks) {
+            if (pack.path == path) {
                 return true;
+            }
         }
         return false;
     };
 
-    auto scanPath = [this, wasPathAdded](QString path) {
-        if (path.isEmpty())
+    auto scanPath = [this, wasPathAdded](const QString& path) {
+        if (path.isEmpty()) {
             return;
-        if (auto instancesInfo = QFileInfo(path); !instancesInfo.exists() || !instancesInfo.isDir())
+        }
+        if (auto instancesInfo = QFileInfo(path); !instancesInfo.exists() || !instancesInfo.isDir()) {
             return;
+        }
         QDirIterator directoryIterator(path, QDir::Dirs | QDir::NoDotAndDotDot | QDir::Readable | QDir::Hidden,
                                        QDirIterator::FollowSymlinks);
         while (directoryIterator.hasNext()) {
             auto currentPath = directoryIterator.next();
             if (!wasPathAdded(currentPath)) {
                 auto modpack = parseDirectory(currentPath);
-                if (!modpack.path.isEmpty())
+                if (!modpack.path.isEmpty()) {
                     m_modpacks.append(modpack);
+                }
             }
         }
     };
@@ -102,7 +107,7 @@ QVariant ListModel::data(const QModelIndex& index, int role) const
 {
     int pos = index.row();
     if (pos >= m_modpacks.size() || pos < 0 || !index.isValid()) {
-        return QVariant();
+        return {};
     }
 
     auto pack = m_modpacks.at(pos);
@@ -154,8 +159,8 @@ bool FilterModel::lessThan(const QModelIndex& left, const QModelIndex& right) co
         Version lv(leftPack.mcVersion);
         Version rv(rightPack.mcVersion);
         return lv < rv;
-
-    } else if (m_currentSorting == Sorting::ByName) {
+    }
+    if (m_currentSorting == Sorting::ByName) {
         return StringUtils::naturalCompare(leftPack.name, rightPack.name, Qt::CaseSensitive) >= 0;
     }
 
@@ -176,7 +181,7 @@ bool FilterModel::filterAcceptsRow([[maybe_unused]] int sourceRow, [[maybe_unuse
     return pack.name.contains(m_searchTerm, Qt::CaseInsensitive);
 }
 
-void FilterModel::setSearchTerm(const QString term)
+void FilterModel::setSearchTerm(const QString& term)
 {
     m_searchTerm = term.trimmed();
     invalidate();
@@ -202,7 +207,7 @@ FilterModel::Sorting FilterModel::getCurrentSorting()
 {
     return m_currentSorting;
 }
-void ListModel::setPath(QString path)
+void ListModel::setPath(const QString& path)
 {
     APPLICATION->settings()->set("FTBAppInstancesPath", path);
     update();
@@ -211,8 +216,9 @@ void ListModel::setPath(QString path)
 QString ListModel::getUserPath()
 {
     auto path = APPLICATION->settings()->get("FTBAppInstancesPath").toString();
-    if (path.isEmpty())
+    if (path.isEmpty()) {
         path = m_instances_path;
+    }
     return path;
 }
 }  // namespace FTBImportAPP

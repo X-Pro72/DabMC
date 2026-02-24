@@ -10,14 +10,14 @@
 class JVisualVM : public BaseProfiler {
     Q_OBJECT
    public:
-    JVisualVM(SettingsObject* settings, BaseInstance* instance, QObject* parent = 0);
+    JVisualVM(SettingsObject* settings, BaseInstance* instance, QObject* parent = nullptr);
 
    private slots:
     void profilerStarted();
     void profilerFinished(int exit, QProcess::ExitStatus status);
 
    protected:
-    void beginProfilingImpl(LaunchTask* process);
+    void beginProfilingImpl(LaunchTask* process) override;
 };
 
 JVisualVM::JVisualVM(SettingsObject* settings, BaseInstance* instance, QObject* parent) : BaseProfiler(settings, instance, parent) {}
@@ -34,13 +34,13 @@ void JVisualVM::profilerFinished([[maybe_unused]] int exit, QProcess::ExitStatus
     }
     if (m_profilerProcess) {
         m_profilerProcess->deleteLater();
-        m_profilerProcess = 0;
+        m_profilerProcess = nullptr;
     }
 }
 
 void JVisualVM::beginProfilingImpl(LaunchTask* process)
 {
-    QProcess* profiler = new QProcess(this);
+    auto* profiler = new QProcess(this);
     QStringList profilerArgs = { "--openpid", QString::number(process->pid()) };
     auto programPath = globalSettings->get("JVisualVMPath").toString();
 

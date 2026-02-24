@@ -159,7 +159,7 @@ class ResourceFolderModel : public QAbstractListModel {
 
     QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
 
-    void setupHeaderAction(QAction* act, int column);
+    void setupHeaderAction(QAction* act, int column) const;
     void saveColumns(QTreeView* tree);
     void loadColumns(QTreeView* tree);
     QMenu* createHeaderContextMenu(QTreeView* tree);
@@ -168,7 +168,7 @@ class ResourceFolderModel : public QAbstractListModel {
      *
      *  The actual comparisons and filtering are done directly by the Resource, so to modify behavior go there instead!
      */
-    QSortFilterProxyModel* createFilterProxyModel(QObject* parent = nullptr);
+    static QSortFilterProxyModel* createFilterProxyModel(QObject* parent = nullptr);
 
     SortType columnToSortKey(size_t column) const;
     QList<QHeaderView::ResizeMode> columnResizeModes() const { return m_column_resize_modes; }
@@ -217,7 +217,7 @@ class ResourceFolderModel : public QAbstractListModel {
     void applyUpdates(QSet<QString>& current_set, QSet<QString>& new_set, QMap<QString, Resource::Ptr>& new_resources);
 
    protected slots:
-    void directoryChanged(QString);
+    void directoryChanged(const QString&);
 
     /** Called when the update task is successful.
      *

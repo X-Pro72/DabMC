@@ -24,10 +24,10 @@
 class GenericProfiler : public BaseProfiler {
     Q_OBJECT
    public:
-    GenericProfiler(SettingsObject* settings, BaseInstance* instance, QObject* parent = 0);
+    GenericProfiler(SettingsObject* settings, BaseInstance* instance, QObject* parent = nullptr);
 
    protected:
-    void beginProfilingImpl(LaunchTask* process);
+    void beginProfilingImpl(LaunchTask* process) override;
 };
 
 GenericProfiler::GenericProfiler(SettingsObject* settings, BaseInstance* instance, QObject* parent)

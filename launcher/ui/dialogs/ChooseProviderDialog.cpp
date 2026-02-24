@@ -36,7 +36,7 @@ ChooseProviderDialog::~ChooseProviderDialog()
     delete ui;
 }
 
-void ChooseProviderDialog::setDescription(QString desc)
+void ChooseProviderDialog::setDescription(const QString& desc)
 {
     ui->explanationLabel->setText(desc);
 }
@@ -84,8 +84,9 @@ void ChooseProviderDialog::addProviders()
 
 void ChooseProviderDialog::disableInput()
 {
-    for (auto& btn : m_providers.buttons())
+    for (auto& btn : m_providers.buttons()) {
         btn->setEnabled(false);
+    }
 
     ui->skipOneButton->setEnabled(false);
     ui->skipAllButton->setEnabled(false);

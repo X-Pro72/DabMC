@@ -38,11 +38,12 @@
 
 #include "Json.h"
 
-static ATLauncher::DownloadType parseDownloadType(QString rawType)
+static ATLauncher::DownloadType parseDownloadType(const QString& rawType)
 {
     if (rawType == QString("server")) {
         return ATLauncher::DownloadType::Server;
-    } else if (rawType == QString("browser")) {
+    }
+    if (rawType == QString("browser")) {
         return ATLauncher::DownloadType::Browser;
     } else if (rawType == QString("direct")) {
         return ATLauncher::DownloadType::Direct;
@@ -51,12 +52,13 @@ static ATLauncher::DownloadType parseDownloadType(QString rawType)
     return ATLauncher::DownloadType::Unknown;
 }
 
-static ATLauncher::ModType parseModType(QString rawType)
+static ATLauncher::ModType parseModType(const QString& rawType)
 {
     // See https://wiki.atlauncher.com/mod_types
     if (rawType == QString("root")) {
         return ATLauncher::ModType::Root;
-    } else if (rawType == QString("forge")) {
+    }
+    if (rawType == QString("forge")) {
         return ATLauncher::ModType::Forge;
     } else if (rawType == QString("jar")) {
         return ATLauncher::ModType::Jar;

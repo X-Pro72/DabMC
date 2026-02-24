@@ -7,14 +7,14 @@ class LibrariesTask : public Task {
     Q_OBJECT
    public:
     LibrariesTask(MinecraftInstance* inst);
-    virtual ~LibrariesTask() = default;
+    ~LibrariesTask() override = default;
 
     void executeTask() override;
 
     bool canAbort() const override;
 
    private slots:
-    void jarlibFailed(QString reason);
+    void jarlibFailed(const QString& reason);
 
    public slots:
     bool abort() override;

@@ -35,7 +35,7 @@ class FilterModel : public QSortFilterProxyModel {
     QString translateCurrentSorting();
     void setSorting(Sorting sorting);
     Sorting getCurrentSorting();
-    void setSearchTerm(QString term);
+    void setSearchTerm(const QString& term);
 
    protected:
     bool filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const override;
@@ -52,16 +52,16 @@ class ListModel : public QAbstractListModel {
 
    public:
     ListModel(QObject* parent);
-    virtual ~ListModel() = default;
+    ~ListModel() override = default;
 
-    int rowCount(const QModelIndex& parent) const { return m_modpacks.size(); }
-    int columnCount(const QModelIndex& parent) const { return 1; }
-    QVariant data(const QModelIndex& index, int role) const;
+    int rowCount(const QModelIndex& parent) const override { return m_modpacks.size(); }
+    int columnCount(const QModelIndex& parent) const override { return 1; }
+    QVariant data(const QModelIndex& index, int role) const override;
 
     void update();
 
     QString getUserPath();
-    void setPath(QString path);
+    void setPath(const QString& path);
 
    private:
     ModpackList m_modpacks;

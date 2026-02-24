@@ -14,21 +14,23 @@
  */
 
 #include "Setting.h"
+
+#include <utility>
 #include "settings/SettingsObject.h"
 
-Setting::Setting(QStringList synonyms, QVariant defVal) : QObject(), m_synonyms(synonyms), m_defVal(defVal) {}
+Setting::Setting(QStringList synonyms, QVariant defVal) : m_synonyms(std::move(synonyms)), m_defVal(std::move(defVal)) {}
 
 QVariant Setting::get() const
 {
     SettingsObject* sbase = m_storage;
     if (!sbase) {
         return defValue();
-    } else {
-        QVariant test = sbase->retrieveValue(*this);
-        if (!test.isValid())
-            return defValue();
-        return test;
     }
+    QVariant test = sbase->retrieveValue(*this);
+    if (!test.isValid()) {
+        return defValue();
+    }
+    return test;
 }
 
 QVariant Setting::defValue() const
@@ -38,7 +40,7 @@ QVariant Setting::defValue() const
 
 void Setting::set(QVariant value)
 {
-    emit SettingChanged(*this, value);
+    emit SettingChanged(*this, std::move(value));
 }
 
 void Setting::reset()

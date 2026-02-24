@@ -7,7 +7,7 @@ class AssetUpdateTask : public Task {
     Q_OBJECT
    public:
     AssetUpdateTask(MinecraftInstance* inst);
-    virtual ~AssetUpdateTask() = default;
+    ~AssetUpdateTask() override = default;
 
     void executeTask() override;
 
@@ -18,8 +18,8 @@ class AssetUpdateTask : public Task {
 
    private slots:
     void assetIndexFinished();
-    void assetIndexFailed(QString reason);
-    void assetsFailed(QString reason);
+    void assetIndexFailed(const QString& reason);
+    void assetsFailed(const QString& reason);
 
    public slots:
     bool abort() override;

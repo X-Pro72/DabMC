@@ -2,6 +2,7 @@
 #include <QJsonObject>
 #include <QObject>
 #include <QTcpSocket>
+#include <utility>
 
 #include <Exception.h>
 #include "Json.h"
@@ -12,7 +13,9 @@
 // last bit
 #define CONTINUE_BIT 0x80
 
-McClient::McClient(QObject* parent, QString domain, QString ip, short port) : QObject(parent), m_domain(domain), m_ip(ip), m_port(port) {}
+McClient::McClient(QObject* parent, QString domain, QString ip, short port)
+    : QObject(parent), m_domain(std::move(domain)), m_ip(std::move(ip)), m_port(port)
+{}
 
 void McClient::getStatusData()
 {
@@ -60,7 +63,7 @@ void McClient::readRawResponse()
     if (m_responseReadState == 1 && m_resp.size() >= m_wantedRespLength) {
         if (m_resp.size() > m_wantedRespLength) {
             qDebug().nospace() << "Warning: Packet length doesn't match actual packet size (" << m_wantedRespLength << " expected vs "
-                     << m_resp.size() << " received)";
+                               << m_resp.size() << " received)";
         }
         parseResponse();
         m_responseReadState = 2;
@@ -114,14 +117,16 @@ int McClient::readVarInt(QByteArray& data)
         currentByte = readByte(data);
         value |= (currentByte & SEGMENT_BITS) << position;
 
-        if ((currentByte & CONTINUE_BIT) == 0)
+        if ((currentByte & CONTINUE_BIT) == 0) {
             break;
+        }
 
         position += 7;
     }
 
-    if (position >= 32)
+    if (position >= 32) {
         throw Exception("VarInt is too big");
+    }
 
     return value;
 }
@@ -164,7 +169,7 @@ void McClient::writePacketToSocket(QByteArray& data)
     data.clear();
 }
 
-void McClient::emitFail(QString error)
+void McClient::emitFail(const QString& error)
 {
     qDebug() << "Minecraft server ping for status error:" << error;
     emit failed(error);
@@ -173,6 +178,6 @@ void McClient::emitFail(QString error)
 
 void McClient::emitSucceed(QJsonObject data)
 {
-    emit succeeded(data);
+    emit succeeded(std::move(data));
     emit finished();
 }

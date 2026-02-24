@@ -11,7 +11,7 @@ class LauncherLoginStep : public AuthStep {
 
    public:
     explicit LauncherLoginStep(AccountData* data);
-    virtual ~LauncherLoginStep() noexcept = default;
+    ~LauncherLoginStep() noexcept override = default;
 
     void perform() override;
 

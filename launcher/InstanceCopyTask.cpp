@@ -20,8 +20,9 @@ InstanceCopyTask::InstanceCopyTask(BaseInstance* origInstance, const InstanceCop
 
     QString filters = prefs.getSelectedFiltersAsRegex();
     if (m_useLinks || m_useHardLinks) {
-        if (!filters.isEmpty())
+        if (!filters.isEmpty()) {
             filters += "|";
+        }
         filters += "instance.cfg";
     }
 
@@ -47,7 +48,7 @@ void InstanceCopyTask::executeTask()
             folderClone(true);
             setProgress(0, folderClone.totalCloned());
             connect(&folderClone, &FS::clone::fileCloned,
-                    [this](QString src, QString dst) { setProgress(m_progress + 1, m_progressTotal); });
+                    [this](const QString& src, const QString& dst) { setProgress(m_progress + 1, m_progressTotal); });
             return folderClone();
         }
         if (m_useLinks || m_useHardLinks) {
@@ -57,16 +58,18 @@ void InstanceCopyTask::executeTask()
                 QFileInfo dotMCDir(FS::PathCombine(m_stagingPath, ".minecraft"));
 
                 QString staging_mc_dir;
-                if (dotMCDir.exists() && !mcDir.exists())
+                if (dotMCDir.exists() && !mcDir.exists()) {
                     staging_mc_dir = dotMCDir.filePath();
-                else
+                } else {
                     staging_mc_dir = mcDir.filePath();
+                }
 
                 savesCopy = std::make_unique<FS::copy>(FS::PathCombine(m_origInstance->gameRoot(), "saves"),
                                                        FS::PathCombine(staging_mc_dir, "saves"));
                 (*savesCopy)(true);
                 setProgress(0, savesCopy->totalCopied());
-                connect(savesCopy.get(), &FS::copy::fileCopied, [this](QString src) { setProgress(m_progress + 1, m_progressTotal); });
+                connect(savesCopy.get(), &FS::copy::fileCopied,
+                        [this](const QString& src) { setProgress(m_progress + 1, m_progressTotal); });
             }
             FS::create_link folderLink(m_origInstance->instanceRoot(), m_stagingPath);
             int depth = m_linkRecursively ? -1 : 0;  // we need to at least link the top level instead of the instance folder
@@ -75,7 +78,7 @@ void InstanceCopyTask::executeTask()
             folderLink(true);
             setProgress(0, m_progressTotal + folderLink.totalToLink());
             connect(&folderLink, &FS::create_link::fileLinked,
-                    [this](QString src, QString dst) { setProgress(m_progress + 1, m_progressTotal); });
+                    [this](const QString& src, const QString& dst) { setProgress(m_progress + 1, m_progressTotal); });
             bool there_were_errors = false;
 
             if (!folderLink()) {
@@ -161,15 +164,17 @@ void InstanceCopyTask::copyFinished()
         QByteArray allowed_symlinks;
         if (allowed_symlinks_file.exists()) {
             allowed_symlinks.append(FS::read(allowed_symlinks_file.filePath()));
-            if (allowed_symlinks.right(1) != "\n")
+            if (allowed_symlinks.right(1) != "\n") {
                 allowed_symlinks.append("\n");  // we want to be on a new line
+            }
         }
         allowed_symlinks.append(m_origInstance->gameRoot().toUtf8());
         allowed_symlinks.append("\n");
-        if (allowed_symlinks_file.isSymLink())
+        if (allowed_symlinks_file.isSymLink()) {
             FS::deletePath(
                 allowed_symlinks_file
                     .filePath());  // we dont want to modify the original. also make sure the resulting file is not itself a link.
+        }
 
         try {
             FS::write(allowed_symlinks_file.filePath(), allowed_symlinks);
@@ -184,7 +189,6 @@ void InstanceCopyTask::copyFinished()
 void InstanceCopyTask::copyAborted()
 {
     emitFailed(tr("Instance folder copy has been aborted."));
-    return;
 }
 
 bool InstanceCopyTask::abort()

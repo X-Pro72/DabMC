@@ -42,6 +42,8 @@
 #include <QJsonDocument>
 #include <QPushButton>
 #include <QRegularExpressionValidator>
+#include <memory>
+#include <utility>
 
 #include "ui/dialogs/ProgressDialog.h"
 
@@ -50,7 +52,7 @@
 #include "net/Upload.h"
 
 ProfileSetupDialog::ProfileSetupDialog(MinecraftAccountPtr accountToSetup, QWidget* parent)
-    : QDialog(parent), m_accountToSetup(accountToSetup), ui(new Ui::ProfileSetupDialog)
+    : QDialog(parent), m_accountToSetup(std::move(accountToSetup)), ui(new Ui::ProfileSetupDialog)
 {
     ui->setupUi(this);
     ui->errorLabel->setVisible(false);
@@ -90,7 +92,7 @@ void ProfileSetupDialog::on_buttonBox_rejected()
     reject();
 }
 
-void ProfileSetupDialog::setNameStatus(ProfileSetupDialog::NameStatus status, QString errorString = QString())
+void ProfileSetupDialog::setNameStatus(ProfileSetupDialog::NameStatus status, const QString& errorString = QString())
 {
     nameStatus = status;
     auto okButton = ui->buttonBox->button(QDialogButtonBox::Ok);
@@ -159,9 +161,10 @@ void ProfileSetupDialog::checkName(const QString& name)
                                            { "Accept", "application/json" },
                                            { "Authorization", QString("Bearer %1").arg(m_accountToSetup->accessToken()).toUtf8() } };
 
-    m_check_response.reset(new QByteArray());
-    if (m_check_task)
+    m_check_response = std::make_unique<QByteArray>();
+    if (m_check_task) {
         disconnect(m_check_task.get(), nullptr, this, nullptr);
+    }
     m_check_task = Net::Download::makeByteArray(url, m_check_response.get());
     m_check_task->addHeaderProxy(std::make_unique<Net::RawHeaderProxy>(headers));
 
@@ -198,14 +201,14 @@ void ProfileSetupDialog::setupProfile(const QString& profileName)
         return;
     }
 
-    QString payloadTemplate("{\"profileName\":\"%1\"}");
+    QString payloadTemplate(R"({"profileName":"%1"})");
 
     QUrl url("https://api.minecraftservices.com/minecraft/profile");
     auto headers = QList<Net::HeaderPair>{ { "Content-Type", "application/json" },
                                            { "Accept", "application/json" },
                                            { "Authorization", QString("Bearer %1").arg(m_accountToSetup->accessToken()).toUtf8() } };
 
-    m_profile_response.reset(new QByteArray());
+    m_profile_response = std::make_unique<QByteArray>();
     m_profile_task = Net::Upload::makeByteArray(url, m_profile_response.get(), payloadTemplate.arg(profileName).toUtf8());
     m_profile_task->addHeaderProxy(std::make_unique<Net::RawHeaderProxy>(headers));
 
@@ -223,7 +226,7 @@ void ProfileSetupDialog::setupProfile(const QString& profileName)
 namespace {
 
 struct MojangError {
-    static MojangError fromJSON(QByteArray data)
+    static MojangError fromJSON(const QByteArray& data)
     {
         MojangError out;
         out.rawError = QString::fromUtf8(data);

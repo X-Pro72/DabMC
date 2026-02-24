@@ -61,8 +61,9 @@ bool processZIP(ShaderPack& pack, ProcessingLevel level)
     Q_ASSERT(pack.type() == ResourceType::ZIPFILE);
 
     MMCZip::ArchiveReader zip(pack.fileinfo().filePath());
-    if (!zip.collectFiles(false))
+    if (!zip.collectFiles(false)) {
         return false;  // can't open zip file
+    }
 
     if (!zip.exists("/shaders")) {
         // assets dir does not exists at zip root, but shader packs
@@ -78,16 +79,17 @@ bool processZIP(ShaderPack& pack, ProcessingLevel level)
         // folder with the "shader" subfolder. In case
         // there are multiple, the first one is picked.
         bool isShaderPresent = false;
-        for (QString f : files) {
+        for (const QString& f : files) {
             if (f.contains("/shaders/", Qt::CaseInsensitive)) {
                 isShaderPresent = true;
                 break;
             }
         }
 
-        if (!isShaderPresent)
+        if (!isShaderPresent) {
             // assets dir does not exist.
             return false;
+        }
     }
     pack.setPackFormat(ShaderPackFormat::VALID);
 
@@ -98,7 +100,7 @@ bool processZIP(ShaderPack& pack, ProcessingLevel level)
     return true;
 }
 
-bool validate(QFileInfo file)
+bool validate(const QFileInfo& file)
 {
     ShaderPack sp{ file };
     return ShaderPackUtils::process(sp, ProcessingLevel::BasicInfoOnly) && sp.valid();
@@ -121,8 +123,9 @@ void LocalShaderPackParseTask::executeTask()
         return;
     }
 
-    if (m_aborted)
+    if (m_aborted) {
         emitAborted();
-    else
+    } else {
         emitSucceeded();
+    }
 }

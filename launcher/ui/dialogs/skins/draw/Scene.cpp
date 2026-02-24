@@ -25,7 +25,7 @@
 #include <QOpenGLWindow>
 
 namespace opengl {
-Scene::Scene(const QImage& skin, bool slim, const QImage& cape) : QOpenGLFunctions(), m_slim(slim), m_capeVisible(!cape.isNull())
+Scene::Scene(const QImage& skin, bool slim, const QImage& cape) : m_slim(slim), m_capeVisible(!cape.isNull())
 {
     initializeOpenGLFunctions();
     m_staticComponents = {
@@ -106,7 +106,7 @@ Scene::Scene(const QImage& skin, bool slim, const QImage& cape) : QOpenGLFunctio
 }
 Scene::~Scene()
 {
-    for (auto array :
+    for (const auto& array :
          { m_staticComponents, m_normalArms, m_slimArms, m_elytra, m_staticComponentsOverlay, m_normalArmsOverlay, m_slimArmsOverlay }) {
         for (auto g : array) {
             delete g;
@@ -125,8 +125,8 @@ void Scene::draw(QOpenGLShaderProgram* program)
 {
     m_skinTexture->bind();
     program->setUniformValue("texture", 0);
-    for (auto toDraw : { m_staticComponents, m_slim ? m_slimArms : m_normalArms, m_staticComponentsOverlay,
-                         m_slim ? m_slimArmsOverlay : m_normalArmsOverlay }) {
+    for (const auto& toDraw : { m_staticComponents, m_slim ? m_slimArms : m_normalArms, m_staticComponentsOverlay,
+                                m_slim ? m_slimArmsOverlay : m_normalArmsOverlay }) {
         for (auto g : toDraw) {
             g->draw(program);
         }
@@ -151,8 +151,9 @@ void Scene::draw(QOpenGLShaderProgram* program)
 void updateTexture(QOpenGLTexture* texture, const QImage& img)
 {
     if (texture) {
-        if (texture->isBound())
+        if (texture->isBound()) {
             texture->release();
+        }
         texture->destroy();
         texture->create();
         texture->setSize(img.width(), img.height());

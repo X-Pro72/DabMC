@@ -35,10 +35,10 @@
 
 #include "ListModel.h"
 #include "Application.h"
-#include "settings/SettingsObject.h"
 #include "net/ApiDownload.h"
 #include "net/HttpMetaCache.h"
 #include "net/NetJob.h"
+#include "settings/SettingsObject.h"
 
 #include <Version.h>
 #include "StringUtils.h"
@@ -46,6 +46,7 @@
 
 #include <QLabel>
 #include <QtMath>
+#include <utility>
 
 #include <RWStorage.h>
 
@@ -73,8 +74,8 @@ bool FilterModel::lessThan(const QModelIndex& left, const QModelIndex& right) co
         Version lv(leftPack.mcVersion);
         Version rv(rightPack.mcVersion);
         return lv < rv;
-
-    } else if (currentSorting == Sorting::ByName) {
+    }
+    if (currentSorting == Sorting::ByName) {
         return StringUtils::naturalCompare(leftPack.name, rightPack.name, Qt::CaseSensitive) >= 0;
     }
 
@@ -92,12 +93,13 @@ bool FilterModel::filterAcceptsRow([[maybe_unused]] int sourceRow, [[maybe_unuse
     QVariant raw = sourceModel()->data(index, Qt::UserRole);
     Q_ASSERT(raw.canConvert<Modpack>());
     auto pack = raw.value<Modpack>();
-    if (searchTerm.startsWith("#"))
+    if (searchTerm.startsWith("#")) {
         return pack.packCode == searchTerm.mid(1);
+    }
     return pack.name.contains(searchTerm, Qt::CaseInsensitive);
 }
 
-void FilterModel::setSearchTerm(const QString term)
+void FilterModel::setSearchTerm(const QString& term)
 {
     searchTerm = term.trimmed();
     invalidate();
@@ -126,9 +128,9 @@ FilterModel::Sorting FilterModel::getCurrentSorting()
 
 ListModel::ListModel(QObject* parent) : QAbstractListModel(parent) {}
 
-ListModel::~ListModel() {}
+ListModel::~ListModel() = default;
 
-QString ListModel::translatePackType(PackType type) const
+QString ListModel::translatePackType(PackType type)
 {
     switch (type) {
         case PackType::Public:
@@ -139,7 +141,7 @@ QString ListModel::translatePackType(PackType type) const
             return tr("Private Modpack");
     }
     qWarning() << "Unknown FTB modpack type:" << int(type);
-    return QString();
+    return {};
 }
 
 int ListModel::rowCount(const QModelIndex& parent) const
@@ -187,7 +189,8 @@ QVariant ListModel::data(const QModelIndex& index, int role) const
             if (pack.broken) {
                 // FIXME: Hardcoded color
                 return QColor(255, 0, 50);
-            } else if (pack.bugged) {
+            }
+            if (pack.bugged) {
                 // FIXME: Hardcoded color
                 // bugged pack, currently only indicates bugged xml
                 return QColor(244, 229, 66);
@@ -214,7 +217,7 @@ QVariant ListModel::data(const QModelIndex& index, int role) const
 void ListModel::fill(ModpackList modpacks_)
 {
     beginResetModel();
-    this->modpacks = modpacks_;
+    this->modpacks = std::move(modpacks_);
     endResetModel();
 }
 
@@ -248,27 +251,27 @@ void ListModel::remove(int row)
     endRemoveRows();
 }
 
-void ListModel::logoLoaded(QString logo, QIcon out)
+void ListModel::logoLoaded(const QString& logo, const QIcon& out)
 {
     m_loadingLogos.removeAll(logo);
     m_logoMap.insert(logo, out);
     emit dataChanged(createIndex(0, 0), createIndex(1, 0));
 }
 
-void ListModel::logoFailed(QString logo)
+void ListModel::logoFailed(const QString& logo)
 {
     m_failedLogos.append(logo);
     m_loadingLogos.removeAll(logo);
 }
 
-void ListModel::requestLogo(QString file)
+void ListModel::requestLogo(const QString& file)
 {
     if (m_loadingLogos.contains(file) || m_failedLogos.contains(file)) {
         return;
     }
 
     MetaEntryPtr entry = APPLICATION->metacache()->resolveEntry("FTBPacks", QString("logos/%1").arg(file));
-    NetJob* job = new NetJob(QString("FTB Icon Download for %1").arg(file), APPLICATION->network());
+    auto* job = new NetJob(QString("FTB Icon Download for %1").arg(file), APPLICATION->network());
     job->setAskRetry(false);
     job->addNetAction(Net::ApiDownload::makeCached(QUrl(QString(BuildConfig.LEGACY_FTB_CDN_BASE_URL + "static/%1").arg(file)), entry));
 
@@ -291,7 +294,7 @@ void ListModel::requestLogo(QString file)
     m_loadingLogos.append(file);
 }
 
-void ListModel::getLogo(const QString& logo, LogoCallback callback)
+void ListModel::getLogo(const QString& logo, const LogoCallback& callback)
 {
     if (m_logoMap.contains(logo)) {
         callback(APPLICATION->metacache()->resolveEntry("FTBPacks", QString("logos/%1").arg(logo))->getFullPath());

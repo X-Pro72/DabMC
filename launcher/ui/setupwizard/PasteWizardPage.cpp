@@ -2,8 +2,8 @@
 #include "ui_PasteWizardPage.h"
 
 #include "Application.h"
-#include "settings/SettingsObject.h"
 #include "net/PasteUpload.h"
+#include "settings/SettingsObject.h"
 
 PasteWizardPage::PasteWizardPage(QWidget* parent) : BaseWizardPage(parent), ui(new Ui::PasteWizardPage)
 {
@@ -25,8 +25,9 @@ bool PasteWizardPage::validatePage()
     if (ui->previousSettingsRadioButton->isChecked()) {
         bool usingDefaultBase = prevPasteURL == PasteUpload::PasteTypes.at(PasteUpload::PasteType::NullPointer).defaultBase;
         s->set("PastebinType", PasteUpload::PasteType::NullPointer);
-        if (!usingDefaultBase)
+        if (!usingDefaultBase) {
             s->set("PastebinCustomAPIBase", prevPasteURL);
+        }
     }
 
     return true;

@@ -84,7 +84,7 @@ FtbPage::~FtbPage()
 bool FtbPage::eventFilter(QObject* watched, QEvent* event)
 {
     if (watched == m_ui->searchEdit && event->type() == QEvent::KeyPress) {
-        QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
+        auto* keyEvent = static_cast<QKeyEvent*>(event);
         if (keyEvent->key() == Qt::Key_Return) {
             triggerSearch();
             keyEvent->accept();
@@ -116,8 +116,9 @@ void FtbPage::openedImpl()
 
 void FtbPage::closedImpl()
 {
-    if (m_listModel->isMakingRequest())
+    if (m_listModel->isMakingRequest()) {
         m_listModel->abortRequest();
+    }
 }
 
 void FtbPage::suggestCurrent()
@@ -132,11 +133,11 @@ void FtbPage::suggestCurrent()
     }
 
     m_dialog->setSuggestedPack(m_selected.name, m_selectedVersion, new FTB::PackInstallTask(m_selected, m_selectedVersion, this));
-    for (auto art : m_selected.art) {
+    for (const auto& art : m_selected.art) {
         if (art.type == "square") {
             auto editedLogoName = "ftb_" + m_selected.safeName;
             m_listModel->getLogo(m_selected.safeName, art.url,
-                                 [this, editedLogoName](QString logo) { m_dialog->setSuggestedIconFromFile(logo, editedLogoName); });
+                                 [this, editedLogoName](const QString& logo) { m_dialog->setSuggestedIconFromFile(logo, editedLogoName); });
         }
     }
 }
@@ -146,7 +147,7 @@ void FtbPage::triggerSearch()
     m_filterModel->setSearchTerm(m_ui->searchEdit->text());
 }
 
-void FtbPage::onSortingSelectionChanged(QString data)
+void FtbPage::onSortingSelectionChanged(const QString& data)
 {
     auto toSet = m_filterModel->getAvailableSortings().value(data);
     m_filterModel->setSorting(toSet);
@@ -176,7 +177,7 @@ void FtbPage::onSelectionChanged(QModelIndex first, QModelIndex second)
     suggestCurrent();
 }
 
-void FtbPage::onVersionSelectionChanged(QString data)
+void FtbPage::onVersionSelectionChanged(const QString& data)
 {
     if (data.isNull() || data.isEmpty()) {
         m_selectedVersion = "";

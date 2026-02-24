@@ -106,11 +106,11 @@ void ExternalToolsPage::on_jprofilerPathBtn_clicked()
         if (!APPLICATION->profilers()["jprofiler"]->check(cooked_dir, &error)) {
             QMessageBox::critical(this, tr("Error"), tr("Error while checking JProfiler install:\n%1").arg(error));
             continue;
-        } else {
-            ui->jprofilerPathEdit->setText(cooked_dir);
-            break;
         }
-    } while (1);
+        ui->jprofilerPathEdit->setText(cooked_dir);
+        break;
+
+    } while (true);
 }
 void ExternalToolsPage::on_jprofilerCheckBtn_clicked()
 {
@@ -135,11 +135,11 @@ void ExternalToolsPage::on_jvisualvmPathBtn_clicked()
         if (!APPLICATION->profilers()["jvisualvm"]->check(cooked_dir, &error)) {
             QMessageBox::critical(this, tr("Error"), tr("Error while checking VisualVM install:\n%1").arg(error));
             continue;
-        } else {
-            ui->jvisualvmPathEdit->setText(cooked_dir);
-            break;
         }
-    } while (1);
+        ui->jvisualvmPathEdit->setText(cooked_dir);
+        break;
+
+    } while (true);
 }
 void ExternalToolsPage::on_jvisualvmCheckBtn_clicked()
 {
@@ -168,11 +168,11 @@ void ExternalToolsPage::on_mceditPathBtn_clicked()
         if (!APPLICATION->mcedit()->check(cooked_dir, error)) {
             QMessageBox::critical(this, tr("Error"), tr("Error while checking MCEdit install:\n%1").arg(error));
             continue;
-        } else {
-            ui->mceditPathEdit->setText(cooked_dir);
-            break;
         }
-    } while (1);
+        ui->mceditPathEdit->setText(cooked_dir);
+        break;
+
+    } while (true);
 }
 void ExternalToolsPage::on_mceditCheckBtn_clicked()
 {

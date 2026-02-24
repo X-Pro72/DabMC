@@ -73,11 +73,13 @@ class ModFilterWidget : public QTabWidget {
         }
         bool operator!=(const Filter& other) const { return !(*this == other); }
 
-        bool checkMcVersions(QStringList value)
+        bool checkMcVersions(const QStringList& value)
         {
-            for (auto mcVersion : versions)
-                if (value.contains(mcVersion.toString()))
+            for (const auto& mcVersion : versions) {
+                if (value.contains(mcVersion.toString())) {
                     return true;
+                }
+            }
 
             return versions.empty();
         }
@@ -92,7 +94,7 @@ class ModFilterWidget : public QTabWidget {
     };
 
     static std::unique_ptr<ModFilterWidget> create(MinecraftInstance* instance, bool extended);
-    virtual ~ModFilterWidget();
+    ~ModFilterWidget() override;
 
     auto getFilter() -> std::shared_ptr<Filter>;
     auto changed() const -> bool { return m_filter_changed; }

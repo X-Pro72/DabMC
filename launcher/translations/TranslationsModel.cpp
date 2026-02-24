@@ -43,6 +43,7 @@
 #include <QLocale>
 #include <QTranslator>
 #include <locale>
+#include <memory>
 
 #include "BuildConfig.h"
 #include "FileSystem.h"
@@ -138,9 +139,9 @@ struct Language {
     QLocale locale;
     bool updated;
 
-    QString file_name = QString();
+    QString file_name;
     std::size_t file_size = 0;
-    QString file_sha1 = QString();
+    QString file_sha1;
 
     unsigned translated = 0;
     unsigned untranslated = 0;
@@ -175,9 +176,9 @@ struct TranslationsModel::Private {
     bool no_language_set = false;
 };
 
-TranslationsModel::TranslationsModel(QString path, QObject* parent) : QAbstractListModel(parent)
+TranslationsModel::TranslationsModel(const QString& path, QObject* parent) : QAbstractListModel(parent)
 {
-    d.reset(new Private);
+    d = std::make_unique<Private>();
     d->m_dir.setPath(path);
     FS::ensureFolderPathExists(path);
     reloadLocalFiles();
@@ -187,7 +188,7 @@ TranslationsModel::TranslationsModel(QString path, QObject* parent) : QAbstractL
     d->watcher->addPath(d->m_dir.canonicalPath());
 }
 
-TranslationsModel::~TranslationsModel() {}
+TranslationsModel::~TranslationsModel() = default;
 
 void TranslationsModel::translationDirChanged(const QString& path)
 {
@@ -349,14 +350,16 @@ enum class Column { Language, Completeness };
 
 QVariant TranslationsModel::data(const QModelIndex& index, int role) const
 {
-    if (!index.isValid())
-        return QVariant();
+    if (!index.isValid()) {
+        return {};
+    }
 
     int row = index.row();
     auto column = static_cast<Column>(index.column());
 
-    if (row < 0 || row >= d->m_languages.size())
-        return QVariant();
+    if (row < 0 || row >= d->m_languages.size()) {
+        return {};
+    }
 
     auto& lang = d->m_languages[row];
     switch (role) {
@@ -378,7 +381,7 @@ QVariant TranslationsModel::data(const QModelIndex& index, int role) const
         case Qt::UserRole:
             return lang.key;
         default:
-            return QVariant();
+            return {};
     }
 }
 
@@ -425,8 +428,9 @@ QList<Language>::Iterator TranslationsModel::findLanguage(const QString& key)
 std::optional<Language> TranslationsModel::findLanguageAsOptional(const QString& key)
 {
     auto found = findLanguage(key);
-    if (found != d->m_languages.end())
+    if (found != d->m_languages.end()) {
         return *found;
+    }
     return {};
 }
 
@@ -479,7 +483,7 @@ bool TranslationsModel::selectLanguage(QString key)
     // otherwise install new translations
     bool successful = false;
     // FIXME: this is likely never present. FIX IT.
-    d->m_qt_translator.reset(new QTranslator());
+    d->m_qt_translator = std::make_unique<QTranslator>();
     if (d->m_qt_translator->load("qt_" + langCode, QLibraryInfo::path(QLibraryInfo::TranslationsPath))) {
         qDebug() << "Loading Qt Language File for" << langCode.toLocal8Bit().constData() << "...";
         if (!QCoreApplication::installTranslator(d->m_qt_translator.get())) {
@@ -508,7 +512,7 @@ bool TranslationsModel::selectLanguage(QString key)
             d->m_app_translator.reset();
         }
     } else if (langPtr->localFileType == FileType::QM) {
-        d->m_app_translator.reset(new QTranslator());
+        d->m_app_translator = std::make_unique<QTranslator>();
         if (d->m_app_translator->load("mmc_" + langCode, d->m_dir.path())) {
             qDebug() << "Loading Application Language File for" << langCode.toLocal8Bit().constData() << "...";
             if (!QCoreApplication::installTranslator(d->m_app_translator.get())) {
@@ -533,7 +537,7 @@ QModelIndex TranslationsModel::selectedIndex()
     if (found != d->m_languages.end()) {
         return index(std::distance(d->m_languages.begin(), found), 0, QModelIndex());
     }
-    return QModelIndex();
+    return {};
 }
 
 QString TranslationsModel::selectedLanguage()
@@ -559,7 +563,7 @@ void TranslationsModel::downloadIndex()
     d->m_index_job->start();
 }
 
-void TranslationsModel::updateLanguage(QString key)
+void TranslationsModel::updateLanguage(const QString& key)
 {
     if (key == defaultLangCode) {
         qWarning() << "Cannot update builtin language" << key;
@@ -575,7 +579,7 @@ void TranslationsModel::updateLanguage(QString key)
     }
 }
 
-void TranslationsModel::downloadTranslation(QString key)
+void TranslationsModel::downloadTranslation(const QString& key)
 {
     if (d->m_dl_job) {
         d->m_nextDownload = key;
@@ -613,7 +617,7 @@ void TranslationsModel::downloadNext()
     }
 }
 
-void TranslationsModel::dlFailed(QString reason)
+void TranslationsModel::dlFailed(const QString& reason)
 {
     qCritical() << "Translations Download Failed:" << reason;
     d->m_dl_job.reset();
@@ -631,7 +635,7 @@ void TranslationsModel::dlGood()
     downloadNext();
 }
 
-void TranslationsModel::indexFailed(QString reason)
+void TranslationsModel::indexFailed(const QString& reason)
 {
     qCritical() << "Translations Index Download Failed:" << reason;
     d->m_index_job.reset();

@@ -27,8 +27,8 @@
 #include "ui_BlockedModsDialog.h"
 
 #include "Application.h"
-#include "settings/SettingsObject.h"
 #include "modplatform/helpers/HashUtils.h"
+#include "settings/SettingsObject.h"
 
 #include <QDebug>
 #include <QDesktopServices>
@@ -42,9 +42,10 @@
 #include <QPushButton>
 #include <QStandardPaths>
 #include <QTimer>
+#include <utility>
 
 BlockedModsDialog::BlockedModsDialog(QWidget* parent, const QString& title, const QString& text, QList<BlockedMod>& mods, QString hash_type)
-    : QDialog(parent), ui(new Ui::BlockedModsDialog), m_mods(mods), m_hashType(hash_type)
+    : QDialog(parent), ui(new Ui::BlockedModsDialog), m_mods(mods), m_hashType(std::move(hash_type))
 {
     m_hashingTask = shared_qobject_ptr<ConcurrentTask>(
         new ConcurrentTask("MakeHashesTask", APPLICATION->settings()->get("NumberOfConcurrentTasks").toInt()));
@@ -73,7 +74,7 @@ BlockedModsDialog::BlockedModsDialog(QWidget* parent, const QString& title, cons
     ui->labelDescription->setText(text);
 
     // force all URL handling as external
-    connect(ui->textBrowserWatched, &QTextBrowser::anchorClicked, this, [](const QUrl url) { QDesktopServices::openUrl(url); });
+    connect(ui->textBrowserWatched, &QTextBrowser::anchorClicked, this, [](const QUrl& url) { QDesktopServices::openUrl(url); });
 
     setAcceptDrops(true);
 
@@ -183,7 +184,7 @@ void BlockedModsDialog::update()
 
 /// @brief Signal fired when a watched directory has changed
 /// @param path the path to the changed directory
-void BlockedModsDialog::directoryChanged(QString path)
+void BlockedModsDialog::directoryChanged(const QString& path)
 {
     qDebug() << "[Blocked Mods Dialog] Directory changed:" << path;
     validateMatchedMods();
@@ -200,7 +201,7 @@ void BlockedModsDialog::setupWatch()
     watchPath(modsFolder, true);
 }
 
-void BlockedModsDialog::watchPath(QString path, bool watch_recursive)
+void BlockedModsDialog::watchPath(const QString& path, bool watch_recursive)
 {
     auto to_watch = QFileInfo(path);
     if (!to_watch.isReadable()) {
@@ -208,14 +209,16 @@ void BlockedModsDialog::watchPath(QString path, bool watch_recursive)
         return;
     }
     auto to_watch_path = to_watch.canonicalFilePath();
-    if (m_watcher.directories().contains(to_watch_path))
+    if (m_watcher.directories().contains(to_watch_path)) {
         return;  // don't watch the same path twice (no loops!)
+    }
 
     qDebug() << "[Blocked Mods Dialog] Adding Watch Path:" << path;
     m_watcher.addPath(to_watch_path);
 
-    if (!to_watch.isDir() || !watch_recursive)
+    if (!to_watch.isDir() || !watch_recursive) {
         return;
+    }
 
     QDirIterator it(to_watch_path, QDir::Filter::Dirs | QDir::Filter::NoDotAndDotDot, QDirIterator::NoIteratorFlags);
     while (it.hasNext()) {
@@ -236,7 +239,7 @@ void BlockedModsDialog::scanPaths()
 /// @brief Scan the directory at path, skip paths that do not contain a file name
 ///        of a blocked mod we are looking for
 /// @param path the directory to scan
-void BlockedModsDialog::scanPath(QString path, bool start_task)
+void BlockedModsDialog::scanPath(const QString& path, bool start_task)
 {
     QDir scan_dir(path);
     QDirIterator scan_it(path, QDir::Filter::Files | QDir::Filter::Hidden, QDirIterator::NoIteratorFlags);
@@ -257,7 +260,7 @@ void BlockedModsDialog::scanPath(QString path, bool start_task)
 
 /// @brief add a hashing task for the file located at path, add the path to the pending set if the hashing task is already running
 /// @param path the path to the local file being hashed
-void BlockedModsDialog::addHashTask(QString path)
+void BlockedModsDialog::addHashTask(const QString& path)
 {
     qDebug() << "[Blocked Mods Dialog] adding a Hash task for" << path << "to the pending set.";
     m_pendingHashPaths.insert(path);
@@ -266,7 +269,7 @@ void BlockedModsDialog::addHashTask(QString path)
 /// @brief add a hashing task for the file located at path and connect it to check that hash against
 ///        our blocked mods list
 /// @param path the path to the local file being hashed
-void BlockedModsDialog::buildHashTask(QString path)
+void BlockedModsDialog::buildHashTask(const QString& path)
 {
     auto hash_task = Hashing::createHasher(path, m_hashType);
 
@@ -282,7 +285,7 @@ void BlockedModsDialog::buildHashTask(QString path)
 ///        mod we are looking for
 /// @param hash the computed hash for the provided path
 /// @param path the path to the local file being compared
-void BlockedModsDialog::checkMatchHash(QString hash, QString path)
+void BlockedModsDialog::checkMatchHash(const QString& hash, const QString& path)
 {
     bool match = false;
 
@@ -316,12 +319,12 @@ void BlockedModsDialog::checkMatchHash(QString hash, QString path)
 /// @brief Check if the name of the file at path matches the name of a blocked mod we are searching for
 /// @param path the path to check
 /// @return boolean: did the path match the name of a blocked mod?
-bool BlockedModsDialog::checkValidPath(QString path)
+bool BlockedModsDialog::checkValidPath(const QString& path)
 {
     const QFileInfo file = QFileInfo(path);
     const QString filename = file.fileName();
 
-    auto compare = [](QString fsFilename, QString metadataFilename) {
+    auto compare = [](const QString& fsFilename, const QString& metadataFilename) {
         return metadataFilename.compare(fsFilename, Qt::CaseInsensitive) == 0;
     };
 
@@ -330,7 +333,7 @@ bool BlockedModsDialog::checkValidPath(QString path)
     // convert all speratores to whitespace
     // simplify sequence of internal whitespace to a single space
     // efectivly compare two strings ignoring all separators and case
-    auto laxCompare = [](QString fsfilename, QString metadataFilename) {
+    auto laxCompare = [](const QString& fsfilename, const QString& metadataFilename) {
         // allowed character seperators
         QList<QChar> allowedSeperators = { '-', '+', '.', '_' };
 

@@ -22,6 +22,7 @@
 #include <QStringList>
 #include <QVariant>
 #include <memory>
+#include <utility>
 
 #ifdef Q_OS_MACOS
 #include "macsandbox/SecurityBookmarkFileAccess.h"
@@ -55,8 +56,8 @@ class SettingsObject : public QObject {
     };
 
    public:
-    explicit SettingsObject(QObject* parent = 0);
-    virtual ~SettingsObject();
+    explicit SettingsObject(QObject* parent = nullptr);
+    ~SettingsObject() override;
     /*!
      * Registers an override setting for the given original setting in this settings object
      * gate decides if the passthrough (true) or the original (false) is used for value
@@ -65,7 +66,7 @@ class SettingsObject : public QObject {
      * the one that is being registered.
      * \return A valid Setting shared pointer if successful.
      */
-    std::shared_ptr<Setting> registerOverride(std::shared_ptr<Setting> original, std::shared_ptr<Setting> gate);
+    std::shared_ptr<Setting> registerOverride(const std::shared_ptr<Setting>& original, const std::shared_ptr<Setting>& gate);
 
     /*!
      * Registers a passthorugh setting for the given original setting in this settings object
@@ -75,7 +76,7 @@ class SettingsObject : public QObject {
      * the one that is being registered.
      * \return A valid Setting shared pointer if successful.
      */
-    std::shared_ptr<Setting> registerPassthrough(std::shared_ptr<Setting> original, std::shared_ptr<Setting> gate);
+    std::shared_ptr<Setting> registerPassthrough(const std::shared_ptr<Setting>& original, const std::shared_ptr<Setting>& gate);
 
     /*!
      * Registers the given setting with this SettingsObject and connects the necessary  signals.
@@ -84,7 +85,7 @@ class SettingsObject : public QObject {
      * the one that is being registered.
      * \return A valid Setting shared pointer if successful.
      */
-    std::shared_ptr<Setting> registerSetting(QStringList synonyms, QVariant defVal = QVariant());
+    std::shared_ptr<Setting> registerSetting(QStringList synonyms, const QVariant& defVal = QVariant());
 
     /*!
      * Registers the given setting with this SettingsObject and connects the necessary signals.
@@ -93,7 +94,10 @@ class SettingsObject : public QObject {
      * the one that is being registered.
      * \return A valid Setting shared pointer if successful.
      */
-    std::shared_ptr<Setting> registerSetting(QString id, QVariant defVal = QVariant()) { return registerSetting(QStringList(id), defVal); }
+    std::shared_ptr<Setting> registerSetting(const QString& id, QVariant defVal = QVariant())
+    {
+        return registerSetting(QStringList(id), defVal);
+    }
 
     /*!
      * \brief Gets the setting with the given ID.
@@ -120,7 +124,7 @@ class SettingsObject : public QObject {
      * \return The setting's value as a QVariant.
      * If no setting with the given ID exists, returns an invalid QVariant.
      */
-    QVariant get(const QString& id);
+    QVariant get(const QString& id) const;
 
 #ifdef Q_OS_MACOS
     /*!
@@ -130,7 +134,7 @@ class SettingsObject : public QObject {
      * If a bookmark is not valid or stored, use default logic (directly return the stored path).
      * This can attempt to create a bookmark if the path is accessible and the bookmark is not valid.
      */
-    QString getPathFromBookmark(const QString& id);
+    QString getPathFromBookmark(const QString& id) const;
     /*!
      * \brief Set a security-scoped bookmark to the provided path for the associated setting.
      * \param id The setting ID of the relevant directory - this should not include "Bookmark" at the end.
@@ -149,7 +153,7 @@ class SettingsObject : public QObject {
      * \param value The new value of the setting.
      * \return True if successful, false if it failed.
      */
-    bool set(const QString& id, QVariant value);
+    bool set(const QString& id, QVariant value) const;
 
     /*!
      * \brief Reverts the setting with the given ID to default.
@@ -180,7 +184,7 @@ class SettingsObject : public QObject {
      * \param setting A reference to the Setting object that changed.
      * \param value The Setting object's new value.
      */
-    void SettingChanged(const Setting& setting, QVariant value);
+    void SettingChanged(const Setting& setting, const QVariant& value);
 
     /*!
      * \brief Signal emitted when one of this SettingsObject object's settings resets.
@@ -215,7 +219,7 @@ class SettingsObject : public QObject {
      * \brief Connects the necessary signals to the given Setting.
      * \param setting The setting to connect.
      */
-    void connectSignals(const Setting& setting);
+    void connectSignals(const Setting& setting) const;
 
     /*!
      * \brief Function used by Setting objects to get their values from the SettingsObject.

@@ -6,6 +6,7 @@
 #include <QKeyEvent>
 #include <QProgressBar>
 #include <QVBoxLayout>
+#include <utility>
 
 #include "VersionProxyModel.h"
 
@@ -42,8 +43,9 @@ VersionSelectWidget::VersionSelectWidget(QWidget* parent) : QWidget(parent)
             const QModelIndex first = listView->model()->index(0, 0);
             listView->selectionModel()->setCurrentIndex(first, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
             listView->scrollToTop();
-        } else
+        } else {
             listView->scrollTo(listView->selectionModel()->currentIndex(), QAbstractItemView::PositionAtCenter);
+        }
     });
     search->installEventFilter(this);
 
@@ -65,12 +67,12 @@ void VersionSelectWidget::setCurrentVersion(const QString& version)
 
 void VersionSelectWidget::setEmptyString(QString emptyString)
 {
-    listView->setEmptyString(emptyString);
+    listView->setEmptyString(std::move(emptyString));
 }
 
 void VersionSelectWidget::setEmptyErrorString(QString emptyErrorString)
 {
-    listView->setEmptyErrorString(emptyErrorString);
+    listView->setEmptyErrorString(std::move(emptyErrorString));
 }
 
 void VersionSelectWidget::setEmptyMode(VersionListView::EmptyMode mode)
@@ -78,7 +80,7 @@ void VersionSelectWidget::setEmptyMode(VersionListView::EmptyMode mode)
     listView->setEmptyMode(mode);
 }
 
-VersionSelectWidget::~VersionSelectWidget() {}
+VersionSelectWidget::~VersionSelectWidget() = default;
 
 void VersionSelectWidget::setResizeOn(int column)
 {
@@ -169,11 +171,13 @@ void VersionSelectWidget::currentRowChanged(const QModelIndex& current, const QM
 
 void VersionSelectWidget::preselect()
 {
-    if (preselectedAlready)
+    if (preselectedAlready) {
         return;
+    }
     selectCurrent();
-    if (preselectedAlready)
+    if (preselectedAlready) {
         return;
+    }
     selectRecommended();
 }
 
@@ -224,20 +228,20 @@ BaseVersion::Ptr VersionSelectWidget::selectedVersion() const
 
 void VersionSelectWidget::setFuzzyFilter(BaseVersionList::ModelRoles role, QString filter)
 {
-    m_proxyModel->setFilter(role, Filters::contains(filter));
+    m_proxyModel->setFilter(role, Filters::contains(std::move(filter)));
 }
 
 void VersionSelectWidget::setExactFilter(BaseVersionList::ModelRoles role, QString filter)
 {
-    m_proxyModel->setFilter(role, Filters::equals(filter));
+    m_proxyModel->setFilter(role, Filters::equals(std::move(filter)));
 }
 
 void VersionSelectWidget::setExactIfPresentFilter(BaseVersionList::ModelRoles role, QString filter)
 {
-    m_proxyModel->setFilter(role, Filters::equalsOrEmpty(filter));
+    m_proxyModel->setFilter(role, Filters::equalsOrEmpty(std::move(filter)));
 }
 
 void VersionSelectWidget::setFilter(BaseVersionList::ModelRoles role, Filter filter)
 {
-    m_proxyModel->setFilter(role, filter);
+    m_proxyModel->setFilter(role, std::move(filter));
 }

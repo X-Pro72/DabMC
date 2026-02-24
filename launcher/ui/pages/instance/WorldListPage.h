@@ -52,18 +52,18 @@ class WorldListPage : public QMainWindow, public BasePage {
     Q_OBJECT
 
    public:
-    explicit WorldListPage(MinecraftInstance* inst, WorldList* worlds, QWidget* parent = 0);
-    virtual ~WorldListPage();
+    explicit WorldListPage(MinecraftInstance* inst, WorldList* worlds, QWidget* parent = nullptr);
+    ~WorldListPage() override;
 
-    virtual QString displayName() const override { return tr("Worlds"); }
-    virtual QIcon icon() const override { return QIcon::fromTheme("worlds"); }
-    virtual QString id() const override { return "worlds"; }
-    virtual QString helpPage() const override { return "Worlds"; }
-    virtual bool shouldDisplay() const override;
+    QString displayName() const override { return tr("Worlds"); }
+    QIcon icon() const override { return QIcon::fromTheme("worlds"); }
+    QString id() const override { return "worlds"; }
+    QString helpPage() const override { return "Worlds"; }
+    bool shouldDisplay() const override;
     void retranslate() override;
 
-    virtual void openedImpl() override;
-    virtual void closedImpl() override;
+    void openedImpl() override;
+    void closedImpl() override;
 
    protected:
     bool eventFilter(QObject* obj, QEvent* ev) override;

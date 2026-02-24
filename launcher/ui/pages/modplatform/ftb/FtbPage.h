@@ -55,13 +55,13 @@ class FtbPage : public QWidget, public ModpackProviderBasePage {
     Q_OBJECT
 
    public:
-    explicit FtbPage(NewInstanceDialog* dialog, QWidget* parent = 0);
-    virtual ~FtbPage();
-    virtual QString displayName() const override { return "FTB"; }
-    virtual QIcon icon() const override { return QIcon::fromTheme("ftb_logo"); }
-    virtual QString id() const override { return "ftb"; }
-    virtual QString helpPage() const override { return "FTB-platform"; }
-    virtual bool shouldDisplay() const override;
+    explicit FtbPage(NewInstanceDialog* dialog, QWidget* parent = nullptr);
+    ~FtbPage() override;
+    QString displayName() const override { return "FTB"; }
+    QIcon icon() const override { return QIcon::fromTheme("ftb_logo"); }
+    QString id() const override { return "ftb"; }
+    QString helpPage() const override { return "FTB-platform"; }
+    bool shouldDisplay() const override;
     void retranslate() override;
 
     void openedImpl() override;
@@ -70,9 +70,9 @@ class FtbPage : public QWidget, public ModpackProviderBasePage {
     bool eventFilter(QObject* watched, QEvent* event) override;
 
     /** Programatically set the term in the search bar. */
-    virtual void setSearchTerm(QString) override;
+    void setSearchTerm(QString) override;
     /** Get the current term in the search bar. */
-    [[nodiscard]] virtual QString getSerachTerm() const override;
+    [[nodiscard]] QString getSerachTerm() const override;
 
    private:
     void suggestCurrent();
@@ -80,9 +80,9 @@ class FtbPage : public QWidget, public ModpackProviderBasePage {
    private slots:
     void triggerSearch();
 
-    void onSortingSelectionChanged(QString data);
+    void onSortingSelectionChanged(const QString& data);
     void onSelectionChanged(QModelIndex first, QModelIndex second);
-    void onVersionSelectionChanged(QString data);
+    void onVersionSelectionChanged(const QString& data);
 
    private:
     Ui::FtbPage* m_ui = nullptr;

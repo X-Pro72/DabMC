@@ -64,7 +64,7 @@ class ResourceDownloadDialog : public QDialog, public BasePageProvider {
     bool selectPage(QString pageId);
     ResourcePage* selectedPage();
 
-    void addResource(ModPlatform::IndexedPack::Ptr, ModPlatform::IndexedVersion&);
+    void addResource(const ModPlatform::IndexedPack::Ptr&, ModPlatform::IndexedVersion&);
     void removeResource(const QString&);
 
     const QList<DownloadTaskPtr> getTasks();
@@ -77,7 +77,7 @@ class ResourceDownloadDialog : public QDialog, public BasePageProvider {
     void reject() override;
 
    protected slots:
-    void selectedPageChanged(BasePage* previous, BasePage* selected);
+    static void selectedPageChanged(BasePage* previous, BasePage* selected);
 
     virtual void confirm();
 

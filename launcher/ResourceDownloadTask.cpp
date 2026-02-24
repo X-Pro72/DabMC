@@ -19,6 +19,8 @@
 
 #include "ResourceDownloadTask.h"
 
+#include <utility>
+
 #include "Application.h"
 
 #include "FileSystem.h"
@@ -82,8 +84,9 @@ void ResourceDownloadTask::downloadSucceeded()
     auto oldName = std::get<0>(to_delete);
     auto oldFilename = std::get<1>(to_delete);
 
-    if (oldName.isEmpty() || oldFilename == m_pack_version.fileName)
+    if (oldName.isEmpty() || oldFilename == m_pack_version.fileName) {
         return;
+    }
 
     m_pack_model->uninstallResource(oldFilename, true);
 
@@ -95,8 +98,9 @@ void ResourceDownloadTask::downloadSucceeded()
         if (oldConfig.exists() && !newConfig.exists()) {
             bool success = FS::move(oldConfig.filePath(), newConfig.filePath());
 
-            if (!success)
+            if (!success) {
                 emit logWarning(tr("Failed to rename shader config from '%1' to '%2'").arg(oldConfig.fileName(), newConfig.fileName()));
+            }
         }
     }
 }
@@ -104,7 +108,7 @@ void ResourceDownloadTask::downloadSucceeded()
 void ResourceDownloadTask::downloadFailed(QString reason)
 {
     m_filesNetJob.reset();
-    emitFailed(reason);
+    emitFailed(std::move(reason));
 }
 
 void ResourceDownloadTask::downloadProgressChanged(qint64 current, qint64 total)
@@ -114,7 +118,7 @@ void ResourceDownloadTask::downloadProgressChanged(qint64 current, qint64 total)
 
 // This indirection is done so that we don't delete a mod before being sure it was
 // downloaded successfully!
-void ResourceDownloadTask::hasOldResource(QString name, QString filename)
+void ResourceDownloadTask::hasOldResource(const QString& name, const QString& filename)
 {
     to_delete = { name, filename };
 }

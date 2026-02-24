@@ -77,7 +77,7 @@ class ModFolderModel : public ResourceFolderModel {
     };
     ModFolderModel(const QDir& dir, BaseInstance* instance, bool is_indexed, bool create_dir, QObject* parent = nullptr);
 
-    virtual QString id() const override { return "mods"; }
+    QString id() const override { return "mods"; }
 
     QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
 
@@ -97,8 +97,8 @@ class ModFolderModel : public ResourceFolderModel {
     RESOURCE_HELPERS(Mod)
 
    public:
-    QStringList requiresList(QString id);
-    QStringList requiredByList(QString id);
+    QStringList requiresList(const QString& id);
+    QStringList requiredByList(const QString& id);
 
    private slots:
     void onParseSucceeded(int ticket, QString resource_id) override;

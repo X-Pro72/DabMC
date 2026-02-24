@@ -58,7 +58,7 @@
 
 namespace Net {
 
-NetRequest::NetRequest() : Task()
+NetRequest::NetRequest()
 {
     connect(&m_retryTimer, &QTimer::timeout, this, &NetRequest::executeTask);
 }
@@ -119,12 +119,13 @@ void NetRequest::executeTask()
     request.setTransferTimeout();
 #endif
 
-    m_last_progress_time = m_clock.now();
+    m_last_progress_time = std::chrono::steady_clock::now();
     m_last_progress_bytes = 0;
 
     auto rep = getReply(request);
-    if (rep == nullptr)  // it failed
+    if (rep == nullptr) {  // it failed
         return;
+    }
     m_reply.reset(rep);
     connect(rep, &QNetworkReply::uploadProgress, this, &NetRequest::onProgress);
     connect(rep, &QNetworkReply::downloadProgress, this, &NetRequest::onProgress);
@@ -136,7 +137,7 @@ void NetRequest::executeTask()
 
 void NetRequest::onProgress(qint64 bytesReceived, qint64 bytesTotal)
 {
-    auto now = m_clock.now();
+    auto now = std::chrono::steady_clock::now();
     auto elapsed = now - m_last_progress_time;
 
     // use milliseconds for speed precision
@@ -192,10 +193,12 @@ void NetRequest::downloadError(QNetworkReply::NetworkError error)
         }
         // error happened during download.
         qCCritical(logCat) << getUid().toString() << "Failed" << m_url.toString() << "with error" << error;
-        if (m_reply)
+        if (m_reply) {
             qCCritical(logCat) << getUid().toString() << "HTTP status:" << replyStatusCode() << errorString();
-        if (m_errorResponse.size() > 0)
+        }
+        if (m_errorResponse.size() > 0) {
             qCCritical(logCat) << getUid().toString() << "Response from server:" << m_errorResponse;
+        }
         m_state = State::Failed;
     }
 }
@@ -203,7 +206,7 @@ void NetRequest::downloadError(QNetworkReply::NetworkError error)
 void NetRequest::sslErrors(const QList<QSslError>& errors)
 {
     int i = 1;
-    for (auto error : errors) {
+    for (const auto& error : errors) {
         qCCritical(logCat).nospace() << getUid().toString() << " Request " << m_url.toString() << " SSL Error #" << i << ": "
                                      << error.errorString();
         auto cert = error.certificate();
@@ -276,14 +279,13 @@ void NetRequest::handleAutoRetry(int64_t delay)
         emitFailed(tr("Request Rate Limited for %n second(s): Retry After %1", "seconds", delay)
                        .arg(retryAfter.toLocalTime().toString(QLocale::system().dateTimeFormat(QLocale::ShortFormat))));
         return;
-    } else {
-        qCDebug(logCat) << getUid().toString() << "Retyring Request in" << delay << "seconds";
-        setStatus(tr("Rate Limited: Waiting %n second(s)", "seconds", delay));
-        m_retryTimer.setTimerType(Qt::VeryCoarseTimer);
-        m_retryTimer.setSingleShot(true);
-        m_retryTimer.setInterval(delay * 1000);
-        m_retryTimer.start();
     }
+    qCDebug(logCat) << getUid().toString() << "Retyring Request in" << delay << "seconds";
+    setStatus(tr("Rate Limited: Waiting %n second(s)", "seconds", delay));
+    m_retryTimer.setTimerType(Qt::VeryCoarseTimer);
+    m_retryTimer.setSingleShot(true);
+    m_retryTimer.setInterval(delay * 1000);
+    m_retryTimer.start();
 }
 
 void NetRequest::downloadFinished()
@@ -307,7 +309,8 @@ void NetRequest::downloadFinished()
         emit succeeded();
         emit finished();
         return;
-    } else if (m_state == State::Failed) {
+    }
+    if (m_state == State::Failed) {
         qCDebug(logCat) << getUid().toString() << "Request failed in previous step:" << m_url.toString();
         m_sink->abort();
         m_failReason = m_reply->errorString();

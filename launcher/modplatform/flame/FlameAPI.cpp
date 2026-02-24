@@ -125,7 +125,7 @@ Task::Ptr FlameAPI::getProjects(QStringList addonIds, QByteArray* response) cons
     return netJob;
 }
 
-Task::Ptr FlameAPI::getFiles(const QStringList& fileIds, QByteArray* response) const
+Task::Ptr FlameAPI::getFiles(const QStringList& fileIds, QByteArray* response)
 {
     auto netJob = makeShared<NetJob>(QString("Flame::GetFiles"), APPLICATION->network());
 
@@ -147,7 +147,7 @@ Task::Ptr FlameAPI::getFiles(const QStringList& fileIds, QByteArray* response) c
     return netJob;
 }
 
-Task::Ptr FlameAPI::getFile(const QString& addonId, const QString& fileId, QByteArray* response) const
+Task::Ptr FlameAPI::getFile(const QString& addonId, const QString& fileId, QByteArray* response)
 {
     auto netJob = makeShared<NetJob>(QString("Flame::GetFile"), APPLICATION->network());
     netJob->addNetAction(
@@ -176,7 +176,7 @@ Task::Ptr FlameAPI::getCategories(QByteArray* response, ModPlatform::ResourceTyp
     auto netJob = makeShared<NetJob>(QString("Flame::GetCategories"), APPLICATION->network());
     netJob->addNetAction(Net::ApiDownload::makeByteArray(
         QUrl(QString(BuildConfig.FLAME_BASE_URL + "/categories?gameId=432&classId=%1").arg(getClassId(type))), response));
-    QObject::connect(netJob.get(), &Task::failed, [](QString msg) { qDebug() << "Flame failed to get categories:" << msg; });
+    QObject::connect(netJob.get(), &Task::failed, [](const QString& msg) { qDebug() << "Flame failed to get categories:" << msg; });
     return netJob;
 }
 
@@ -216,15 +216,15 @@ QList<ModPlatform::Category> FlameAPI::loadModCategories(QByteArray* response)
     return categories;
 };
 
-std::optional<ModPlatform::IndexedVersion> FlameAPI::getLatestVersion(QList<ModPlatform::IndexedVersion> versions,
-                                                                      QList<ModPlatform::ModLoaderType> instanceLoaders,
+std::optional<ModPlatform::IndexedVersion> FlameAPI::getLatestVersion(const QList<ModPlatform::IndexedVersion>& versions,
+                                                                      const QList<ModPlatform::ModLoaderType>& instanceLoaders,
                                                                       ModPlatform::ModLoaderTypes modLoaders,
                                                                       bool checkLoaders)
 {
     static const auto noLoader = ModPlatform::ModLoaderType(0);
     if (!checkLoaders) {
         std::optional<ModPlatform::IndexedVersion> ver;
-        for (auto file_tmp : versions) {
+        for (const auto& file_tmp : versions) {
             if (!ver.has_value() || file_tmp.date > ver->date) {
                 ver = file_tmp;
             }
@@ -242,7 +242,7 @@ std::optional<ModPlatform::IndexedVersion> FlameAPI::getLatestVersion(QList<ModP
             bestMatch[loader] = version;
         }
     };
-    for (auto file_tmp : versions) {
+    for (const auto& file_tmp : versions) {
         auto loaders = ModPlatform::modLoaderTypesToList(file_tmp.loaders);
         if (loaders.isEmpty()) {
             checkVersion(file_tmp, noLoader);

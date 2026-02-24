@@ -73,8 +73,8 @@ class InstanceList : public QAbstractListModel {
     Q_OBJECT
 
    public:
-    explicit InstanceList(SettingsObject* settings, const QString& instDir, QObject* parent = 0);
-    virtual ~InstanceList();
+    explicit InstanceList(SettingsObject* settings, const QString& instDir, QObject* parent = nullptr);
+    ~InstanceList() override;
 
    public:
     QModelIndex index(int row, int column = 0, const QModelIndex& parent = QModelIndex()) const override;
@@ -104,7 +104,7 @@ class InstanceList : public QAbstractListModel {
     void saveNow();
 
     /* O(n) */
-    BaseInstance* getInstanceById(QString id) const;
+    BaseInstance* getInstanceById(const QString& id) const;
     /* O(n) */
     BaseInstance* getInstanceByManagedName(const QString& managed_name) const;
     QModelIndex getInstanceIndexById(const QString& id) const;
@@ -142,7 +142,7 @@ class InstanceList : public QAbstractListModel {
      * Destroy a previously created staging area given by @keyPath - used when creation fails.
      * Used by instance manipulation tasks.
      */
-    bool destroyStagingPath(const QString& keyPath);
+    static bool destroyStagingPath(const QString& keyPath);
 
     int getTotalPlayTime();
 
@@ -162,11 +162,11 @@ class InstanceList : public QAbstractListModel {
    signals:
     void dataIsInvalid();
     void instancesChanged();
-    void instanceSelectRequest(QString instanceId);
-    void groupsChanged(QSet<QString> groups);
+    void instanceSelectRequest(const QString& instanceId);
+    void groupsChanged(const QSet<QString>& groups);
 
    public slots:
-    void on_InstFolderChanged(const Setting& setting, QVariant value);
+    void on_InstFolderChanged(const Setting& setting, const QVariant& value);
     void on_GroupStateChanged(const QString& group, bool collapsed);
 
    private slots:

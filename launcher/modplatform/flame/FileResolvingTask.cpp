@@ -18,6 +18,8 @@
 
 #include "FileResolvingTask.h"
 #include <algorithm>
+#include <memory>
+#include <utility>
 
 #include "Json.h"
 #include "modplatform/ModIndex.h"
@@ -51,13 +53,13 @@ void Flame::FileResolvingTask::executeTask()
     }
     setStatus(tr("Resolving mod IDs..."));
     setProgress(0, 3);
-    m_result.reset(new QByteArray());
+    m_result = std::make_unique<QByteArray>();
 
     QStringList fileIds;
-    for (auto file : m_manifest.files) {
+    for (const auto& file : m_manifest.files) {
         fileIds.push_back(QString::number(file.fileId));
     }
-    m_task = flameAPI.getFiles(fileIds, m_result.get());
+    m_task = FlameAPI::getFiles(fileIds, m_result.get());
 
     auto step_progress = std::make_shared<TaskStepProgress>();
     connect(m_task.get(), &Task::succeeded, this, [this, step_progress]() {
@@ -68,7 +70,7 @@ void Flame::FileResolvingTask::executeTask()
     connect(m_task.get(), &Task::failed, this, [this, step_progress](QString reason) {
         step_progress->state = TaskStepState::Failed;
         stepProgress(*step_progress);
-        emitFailed(reason);
+        emitFailed(std::move(reason));
     });
     connect(m_task.get(), &Task::stepProgress, this, &FileResolvingTask::propagateStepProgress);
     connect(m_task.get(), &Task::progress, this, [this, step_progress](qint64 current, qint64 total) {
@@ -77,7 +79,7 @@ void Flame::FileResolvingTask::executeTask()
         stepProgress(*step_progress);
     });
     connect(m_task.get(), &Task::status, this, [this, step_progress](QString status) {
-        step_progress->status = status;
+        step_progress->status = std::move(status);
         stepProgress(*step_progress);
     });
 
@@ -153,8 +155,8 @@ void Flame::FileResolvingTask::netJobFinished()
         getFlameProjects();
         return;
     }
-    m_result.reset(new QByteArray());
-    m_task = modrinthAPI.currentVersions(hashes, "sha1", m_result.get());
+    m_result = std::make_unique<QByteArray>();
+    m_task = ModrinthAPI::currentVersions(hashes, "sha1", m_result.get());
     (dynamic_cast<NetJob*>(m_task.get()))->setAskRetry(false);
     auto step_progress = std::make_shared<TaskStepProgress>();
     connect(m_task.get(), &Task::succeeded, this, [this, step_progress]() {
@@ -200,7 +202,7 @@ void Flame::FileResolvingTask::netJobFinished()
         }
         getFlameProjects();
     });
-    connect(m_task.get(), &Task::failed, this, [this, step_progress](QString reason) {
+    connect(m_task.get(), &Task::failed, this, [this, step_progress](const QString& reason) {
         step_progress->state = TaskStepState::Failed;
         stepProgress(*step_progress);
         getFlameProjects();
@@ -212,7 +214,7 @@ void Flame::FileResolvingTask::netJobFinished()
         stepProgress(*step_progress);
     });
     connect(m_task.get(), &Task::status, this, [this, step_progress](QString status) {
-        step_progress->status = status;
+        step_progress->status = std::move(status);
         stepProgress(*step_progress);
     });
 
@@ -222,9 +224,9 @@ void Flame::FileResolvingTask::netJobFinished()
 void Flame::FileResolvingTask::getFlameProjects()
 {
     setProgress(2, 3);
-    m_result.reset(new QByteArray());
+    m_result = std::make_unique<QByteArray>();
     QStringList addonIds;
-    for (auto file : m_manifest.files) {
+    for (const auto& file : m_manifest.files) {
         addonIds.push_back(QString::number(file.projectId));
     }
 
@@ -273,7 +275,7 @@ void Flame::FileResolvingTask::getFlameProjects()
     connect(m_task.get(), &Task::failed, this, [this, step_progress](QString reason) {
         step_progress->state = TaskStepState::Failed;
         stepProgress(*step_progress);
-        emitFailed(reason);
+        emitFailed(std::move(reason));
     });
     connect(m_task.get(), &Task::stepProgress, this, &FileResolvingTask::propagateStepProgress);
     connect(m_task.get(), &Task::progress, this, [this, step_progress](qint64 current, qint64 total) {
@@ -282,7 +284,7 @@ void Flame::FileResolvingTask::getFlameProjects()
         stepProgress(*step_progress);
     });
     connect(m_task.get(), &Task::status, this, [this, step_progress](QString status) {
-        step_progress->status = status;
+        step_progress->status = std::move(status);
         stepProgress(*step_progress);
     });
 

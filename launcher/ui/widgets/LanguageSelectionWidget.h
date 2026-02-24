@@ -26,14 +26,14 @@ class QCheckBox;
 class LanguageSelectionWidget : public QWidget {
     Q_OBJECT
    public:
-    explicit LanguageSelectionWidget(QWidget* parent = 0);
-    virtual ~LanguageSelectionWidget() {};
+    explicit LanguageSelectionWidget(QWidget* parent = nullptr);
+    ~LanguageSelectionWidget() override = default;
 
     QString getSelectedLanguageKey() const;
     void retranslate();
 
    protected slots:
-    void languageRowChanged(const QModelIndex& current, const QModelIndex& previous);
+    static void languageRowChanged(const QModelIndex& current, const QModelIndex& previous);
     void languageSettingChanged(const Setting&, const QVariant&);
 
    private:

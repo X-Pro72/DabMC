@@ -53,8 +53,8 @@ class LauncherPage : public QWidget, public BasePage {
     Q_OBJECT
 
    public:
-    explicit LauncherPage(QWidget* parent = 0);
-    ~LauncherPage();
+    explicit LauncherPage(QWidget* parent = nullptr);
+    ~LauncherPage() override;
 
     QString displayName() const override { return tr("General"); }
     QIcon icon() const override { return QIcon::fromTheme("settings"); }

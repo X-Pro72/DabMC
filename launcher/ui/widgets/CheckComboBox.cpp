@@ -35,18 +35,19 @@ class CheckComboModel : public QIdentityProxyModel {
    public:
     explicit CheckComboModel(QObject* parent = nullptr) : QIdentityProxyModel(parent) {}
 
-    virtual Qt::ItemFlags flags(const QModelIndex& index) const { return QIdentityProxyModel::flags(index) | Qt::ItemIsUserCheckable; }
-    virtual QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const
+    Qt::ItemFlags flags(const QModelIndex& index) const override { return QIdentityProxyModel::flags(index) | Qt::ItemIsUserCheckable; }
+    QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override
     {
         if (role == Qt::CheckStateRole) {
             auto txt = QIdentityProxyModel::data(index, Qt::DisplayRole).toString();
             return m_checked.contains(txt) ? Qt::Checked : Qt::Unchecked;
         }
-        if (role == Qt::DisplayRole)
+        if (role == Qt::DisplayRole) {
             return QIdentityProxyModel::data(index, Qt::DisplayRole);
+        }
         return {};
     }
-    virtual bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole)
+    bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole) override
     {
         if (role == Qt::CheckStateRole) {
             auto txt = QIdentityProxyModel::data(index, Qt::DisplayRole).toString();
@@ -92,8 +93,9 @@ void CheckComboBox::setSourceModel(QAbstractItemModel* new_model)
 
 void CheckComboBox::hidePopup()
 {
-    if (!m_containerMousePress)
+    if (!m_containerMousePress) {
         QComboBox::hidePopup();
+    }
 }
 
 void CheckComboBox::emitCheckedItemsChanged()
@@ -126,11 +128,12 @@ bool CheckComboBox::eventFilter(QObject* receiver, QEvent* event)
     switch (event->type()) {
         case QEvent::KeyPress:
         case QEvent::KeyRelease: {
-            QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
+            auto* keyEvent = static_cast<QKeyEvent*>(event);
             if (receiver == this && (keyEvent->key() == Qt::Key_Up || keyEvent->key() == Qt::Key_Down)) {
                 showPopup();
                 return true;
-            } else if (keyEvent->key() == Qt::Key_Enter || keyEvent->key() == Qt::Key_Return || keyEvent->key() == Qt::Key_Escape) {
+            }
+            if (keyEvent->key() == Qt::Key_Enter || keyEvent->key() == Qt::Key_Return || keyEvent->key() == Qt::Key_Escape) {
                 QComboBox::hidePopup();
                 return (keyEvent->key() != Qt::Key_Escape);
             }
@@ -153,7 +156,7 @@ void CheckComboBox::toggleCheckState(int index)
 {
     QVariant value = itemData(index, Qt::CheckStateRole);
     if (value.isValid()) {
-        Qt::CheckState state = static_cast<Qt::CheckState>(value.toInt());
+        auto state = static_cast<Qt::CheckState>(value.toInt());
         setItemData(index, (state == Qt::Unchecked ? Qt::Checked : Qt::Unchecked), Qt::CheckStateRole);
     }
     emitCheckedItemsChanged();
@@ -171,14 +174,15 @@ void CheckComboBox::setItemCheckState(int index, Qt::CheckState state)
 
 QStringList CheckComboBox::checkedItems() const
 {
-    if (model())
+    if (model()) {
         return dynamic_cast<CheckComboModel*>(model())->getChecked();
+    }
     return {};
 }
 
 void CheckComboBox::setCheckedItems(const QStringList& items)
 {
-    for (auto text : items) {
+    for (const auto& text : items) {
         auto index = findText(text);
         setItemCheckState(index, index != -1 ? Qt::Checked : Qt::Unchecked);
     }
@@ -193,10 +197,11 @@ void CheckComboBox::paintEvent(QPaintEvent*)
     QStyleOptionComboBox opt;
     initStyleOption(&opt);
     QStringList items = checkedItems();
-    if (items.isEmpty())
+    if (items.isEmpty()) {
         opt.currentText = defaultText();
-    else
+    } else {
         opt.currentText = items.join(separator());
+    }
     painter.drawComplexControl(QStyle::CC_ComboBox, opt);
 
     // draw the icon and text

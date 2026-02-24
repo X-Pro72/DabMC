@@ -58,19 +58,22 @@
 #include <QFileInfo>
 #include <QtConcurrentRun>
 #include <memory>
+#include <utility>
 
-InstanceImportTask::InstanceImportTask(const QUrl& sourceUrl, QWidget* parent, QMap<QString, QString>&& extra_info)
-    : m_sourceUrl(sourceUrl), m_extra_info(extra_info), m_parent(parent)
+InstanceImportTask::InstanceImportTask(QUrl sourceUrl, QWidget* parent, QMap<QString, QString>&& extra_info)
+    : m_sourceUrl(std::move(sourceUrl)), m_extra_info(extra_info), m_parent(parent)
 {}
 
 bool InstanceImportTask::abort()
 {
-    if (!canAbort())
+    if (!canAbort()) {
         return false;
+    }
 
     bool wasAborted = false;
-    if (m_task)
+    if (m_task) {
         wasAborted = m_task->abort();
+    }
     return wasAborted;
 }
 
@@ -108,13 +111,15 @@ void InstanceImportTask::downloadFromUrl()
     filesNetJob->start();
 }
 
-QString cleanPath(QString path)
+QString cleanPath(const QString& path)
 {
-    if (path == ".")
-        return QString();
+    if (path == ".") {
+        return {};
+    }
     QString result = path;
-    if (result.startsWith("./"))
+    if (result.startsWith("./")) {
         result = result.mid(2);
+    }
     return result;
 }
 
@@ -187,7 +192,7 @@ void InstanceImportTask::processZipPack()
     connect(zipTask.get(), &Task::failed, this, [this, progressStep](QString reason) {
         progressStep->state = TaskStepState::Failed;
         stepProgress(*progressStep);
-        emitFailed(reason);
+        emitFailed(std::move(reason));
     });
     connect(zipTask.get(), &Task::stepProgress, this, &InstanceImportTask::propagateStepProgress);
 
@@ -196,7 +201,7 @@ void InstanceImportTask::processZipPack()
         stepProgress(*progressStep);
     });
     connect(zipTask.get(), &Task::status, this, [this, progressStep](QString status) {
-        progressStep->status = status;
+        progressStep->status = std::move(status);
         stepProgress(*progressStep);
     });
     connect(zipTask.get(), &Task::warningLogged, this, [this](const QString& line) { m_Warnings.append(line); });
@@ -251,13 +256,15 @@ void InstanceImportTask::extractFinished()
     }
 }
 
-bool installIcon(QString root, QString instIconKey)
+bool installIcon(const QString& root, const QString& instIconKey)
 {
     auto importIconPath = IconUtils::findBestIconIn(root, instIconKey);
-    if (importIconPath.isNull() || !QFile::exists(importIconPath))
+    if (importIconPath.isNull() || !QFile::exists(importIconPath)) {
         importIconPath = IconUtils::findBestIconIn(root, "icon.png");
-    if (importIconPath.isNull() || !QFile::exists(importIconPath))
+    }
+    if (importIconPath.isNull() || !QFile::exists(importIconPath)) {
         importIconPath = IconUtils::findBestIconIn(FS::PathCombine(root, "overrides"), "icon.png");
+    }
     if (!importIconPath.isNull() && QFile::exists(importIconPath)) {
         // import icon
         auto iconList = APPLICATION->icons();
@@ -284,8 +291,9 @@ void InstanceImportTask::processFlame()
 
         QString original_instance_id;
         auto original_instance_id_it = m_extra_info.constFind("original_instance_id");
-        if (original_instance_id_it != m_extra_info.constEnd())
+        if (original_instance_id_it != m_extra_info.constEnd()) {
             original_instance_id = original_instance_id_it.value();
+        }
 
         inst_creation_task =
             makeShared<FlameCreationTask>(m_stagingPath, m_globalSettings, m_parent, pack_id, pack_version_id, original_instance_id);
@@ -373,13 +381,15 @@ void InstanceImportTask::processModrinth()
 
         QString pack_version_id;
         auto pack_version_id_it = m_extra_info.constFind("pack_version_id");
-        if (pack_version_id_it != m_extra_info.constEnd())
+        if (pack_version_id_it != m_extra_info.constEnd()) {
             pack_version_id = pack_version_id_it.value();
+        }
 
         QString original_instance_id;
         auto original_instance_id_it = m_extra_info.constFind("original_instance_id");
-        if (original_instance_id_it != m_extra_info.constEnd())
+        if (original_instance_id_it != m_extra_info.constEnd()) {
             original_instance_id = original_instance_id_it.value();
+        }
 
         inst_creation_task =
             makeShared<ModrinthCreationTask>(m_stagingPath, m_globalSettings, m_parent, pack_id, pack_version_id, original_instance_id);

@@ -14,18 +14,18 @@
 
 class ModrinthAPI : public ResourceAPI {
    public:
-    Task::Ptr currentVersion(QString hash, QString hash_format, QByteArray* response);
+    static Task::Ptr currentVersion(const QString& hash, const QString& hash_format, QByteArray* response);
 
-    Task::Ptr currentVersions(const QStringList& hashes, QString hash_format, QByteArray* response);
+    static Task::Ptr currentVersions(const QStringList& hashes, const QString& hash_format, QByteArray* response);
 
-    Task::Ptr latestVersion(QString hash,
-                            QString hash_format,
+    Task::Ptr latestVersion(const QString& hash,
+                            const QString& hash_format,
                             std::optional<std::vector<Version>> mcVersions,
                             std::optional<ModPlatform::ModLoaderTypes> loaders,
                             QByteArray* response);
 
     Task::Ptr latestVersions(const QStringList& hashes,
-                             QString hash_format,
+                             const QString& hash_format,
                              std::optional<std::vector<Version>> mcVersions,
                              std::optional<ModPlatform::ModLoaderTypes> loaders,
                              QByteArray* response);
@@ -33,13 +33,13 @@ class ModrinthAPI : public ResourceAPI {
     Task::Ptr getProjects(QStringList addonIds, QByteArray* response) const override;
 
     static Task::Ptr getModCategories(QByteArray* response);
-    static QList<ModPlatform::Category> loadCategories(QByteArray* response, QString projectType);
+    static QList<ModPlatform::Category> loadCategories(QByteArray* response, const QString& projectType);
     static QList<ModPlatform::Category> loadModCategories(QByteArray* response);
 
    public:
     auto getSortingMethods() const -> QList<ResourceAPI::SortingMethod> override;
 
-    inline auto getAuthorURL(const QString& name) const -> QString { return "https://modrinth.com/user/" + name; };
+    static inline auto getAuthorURL(const QString& name) -> QString { return "https://modrinth.com/user/" + name; };
 
     static auto getModLoaderStrings(const ModPlatform::ModLoaderTypes types) -> const QStringList
     {
@@ -57,16 +57,16 @@ class ModrinthAPI : public ResourceAPI {
     static auto getModLoaderFilters(ModPlatform::ModLoaderTypes types) -> const QString
     {
         QStringList l;
-        for (auto loader : getModLoaderStrings(types)) {
+        for (const auto& loader : getModLoaderStrings(types)) {
             l << QString("\"categories:%1\"").arg(loader);
         }
         return l.join(',');
     }
 
-    static auto getCategoriesFilters(QStringList categories) -> const QString
+    static auto getCategoriesFilters(const QStringList& categories) -> const QString
     {
         QStringList l;
-        for (auto cat : categories) {
+        for (const auto& cat : categories) {
             l << QString("\"categories:%1\"").arg(cat);
         }
         return l.join(',');
@@ -76,11 +76,11 @@ class ModrinthAPI : public ResourceAPI {
     {
         switch (side) {
             case ModPlatform::Side::ClientSide:
-                return QString("\"client_side:required\",\"client_side:optional\"],[\"server_side:optional\",\"server_side:unsupported\"");
+                return { R"("client_side:required","client_side:optional"],["server_side:optional","server_side:unsupported")" };
             case ModPlatform::Side::ServerSide:
-                return QString("\"server_side:required\",\"server_side:optional\"],[\"client_side:optional\",\"client_side:unsupported\"");
+                return { R"("server_side:required","server_side:optional"],["client_side:optional","client_side:unsupported")" };
             case ModPlatform::Side::UniversalSide:
-                return QString("\"client_side:required\"],[\"server_side:required\"");
+                return { R"("client_side:required"],["server_side:required")" };
             case ModPlatform::Side::NoSide:
             // fallthrough
             default:
@@ -129,19 +129,24 @@ class ModrinthAPI : public ResourceAPI {
     {
         QStringList facets_list;
 
-        if (args.loaders.has_value() && args.loaders.value() != 0)
+        if (args.loaders.has_value() && args.loaders.value() != 0) {
             facets_list.append(QString("[%1]").arg(getModLoaderFilters(args.loaders.value())));
-        if (args.versions.has_value() && !args.versions.value().empty())
+        }
+        if (args.versions.has_value() && !args.versions.value().empty()) {
             facets_list.append(QString("[%1]").arg(getGameVersionsArray(args.versions.value())));
+        }
         if (args.side.has_value()) {
             auto side = getSideFilters(args.side.value());
-            if (!side.isEmpty())
+            if (!side.isEmpty()) {
                 facets_list.append(QString("[%1]").arg(side));
+            }
         }
-        if (args.categoryIds.has_value() && !args.categoryIds->empty())
+        if (args.categoryIds.has_value() && !args.categoryIds->empty()) {
             facets_list.append(QString("[%1]").arg(getCategoriesFilters(args.categoryIds.value())));
-        if (args.openSource)
+        }
+        if (args.openSource) {
             facets_list.append("[\"open_source:true\"]");
+        }
 
         facets_list.append(QString("[\"project_type:%1\"]").arg(resourceTypeParameter(args.type)));
 
@@ -161,10 +166,12 @@ class ModrinthAPI : public ResourceAPI {
         QStringList get_arguments;
         get_arguments.append(QString("offset=%1").arg(args.offset));
         get_arguments.append(QString("limit=25"));
-        if (args.search.has_value())
+        if (args.search.has_value()) {
             get_arguments.append(QString("query=%1").arg(args.search.value()));
-        if (args.sorting.has_value())
+        }
+        if (args.sorting.has_value()) {
             get_arguments.append(QString("index=%1").arg(args.sorting.value().name));
+        }
         get_arguments.append(QString("facets=%1").arg(createFacets(args)));
 
         return BuildConfig.MODRINTH_PROD_URL + "/search?" + get_arguments.join('&');
@@ -175,7 +182,7 @@ class ModrinthAPI : public ResourceAPI {
         return BuildConfig.MODRINTH_PROD_URL + "/project/" + id;
     };
 
-    inline auto getMultipleModInfoURL(QStringList ids) const -> QString
+    static inline auto getMultipleModInfoURL(const QStringList& ids) -> QString
     {
         return BuildConfig.MODRINTH_PROD_URL + QString("/projects?ids=[\"%1\"]").arg(ids.join("\",\""));
     };
@@ -183,16 +190,18 @@ class ModrinthAPI : public ResourceAPI {
     inline auto getVersionsURL(VersionSearchArgs const& args) const -> std::optional<QString> override
     {
         QStringList get_arguments;
-        if (args.mcVersions.has_value())
+        if (args.mcVersions.has_value()) {
             get_arguments.append(QString("game_versions=[%1]").arg(getGameVersionsString(args.mcVersions.value())));
-        if (args.loaders.has_value())
+        }
+        if (args.loaders.has_value()) {
             get_arguments.append(QString("loaders=[\"%1\"]").arg(getModLoaderStrings(args.loaders.value()).join("\",\"")));
+        }
 
         return QString("%1/project/%2/version%3%4")
             .arg(BuildConfig.MODRINTH_PROD_URL, args.pack->addonId.toString(), get_arguments.isEmpty() ? "" : "?", get_arguments.join('&'));
     };
 
-    QString getGameVersionsArray(std::vector<Version> mcVersions) const
+    QString getGameVersionsArray(const std::vector<Version>& mcVersions) const
     {
         QString s;
         for (auto& ver : mcVersions) {
@@ -212,7 +221,7 @@ class ModrinthAPI : public ResourceAPI {
     std::optional<QString> getDependencyURL(DependencySearchArgs const& args) const override
     {
         return args.dependency.version.length() != 0 ? QString("%1/version/%2").arg(BuildConfig.MODRINTH_PROD_URL, args.dependency.version)
-                                                     : QString("%1/project/%2/version?game_versions=[\"%3\"]&loaders=[\"%4\"]")
+                                                     : QString(R"(%1/project/%2/version?game_versions=["%3"]&loaders=["%4"])")
                                                            .arg(BuildConfig.MODRINTH_PROD_URL)
                                                            .arg(args.dependency.addonId.toString())
                                                            .arg(mapMCVersionToModrinth(args.mcVersion))

@@ -17,6 +17,7 @@
  */
 #include "java/download/ArchiveDownloadTask.h"
 #include <memory>
+#include <utility>
 
 #include "Application.h"
 #include "archive/ArchiveReader.h"
@@ -27,7 +28,10 @@
 
 namespace Java {
 ArchiveDownloadTask::ArchiveDownloadTask(QUrl url, QString final_path, QString checksumType, QString checksumHash)
-    : m_url(url), m_final_path(final_path), m_checksum_type(checksumType), m_checksum_hash(checksumHash)
+    : m_url(std::move(url))
+    , m_final_path(std::move(final_path))
+    , m_checksum_type(std::move(checksumType))
+    , m_checksum_hash(std::move(checksumHash))
 {}
 
 void ArchiveDownloadTask::executeTask()
@@ -63,7 +67,7 @@ void ArchiveDownloadTask::executeTask()
     m_task->start();
 }
 
-void ArchiveDownloadTask::extractJava(QString input)
+void ArchiveDownloadTask::extractJava(const QString& input)
 {
     setStatus(tr("Extracting Java"));
 
@@ -91,7 +95,7 @@ void ArchiveDownloadTask::extractJava(QString input)
     connect(m_task.get(), &Task::failed, this, [this, progressStep](QString reason) {
         progressStep->state = TaskStepState::Failed;
         stepProgress(*progressStep);
-        emitFailed(reason);
+        emitFailed(std::move(reason));
     });
     connect(m_task.get(), &Task::stepProgress, this, &ArchiveDownloadTask::propagateStepProgress);
 
@@ -100,18 +104,18 @@ void ArchiveDownloadTask::extractJava(QString input)
         stepProgress(*progressStep);
     });
     connect(m_task.get(), &Task::status, this, [this, progressStep](QString status) {
-        progressStep->status = status;
+        progressStep->status = std::move(status);
         stepProgress(*progressStep);
     });
     m_task->start();
-    return;
 }
 
 bool ArchiveDownloadTask::abort()
 {
     auto aborted = canAbort();
-    if (m_task)
+    if (m_task) {
         aborted = m_task->abort();
+    }
     return aborted;
 };
 }  // namespace Java

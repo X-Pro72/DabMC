@@ -45,6 +45,7 @@
 #include <StringUtils.h>
 #include <QDesktopServices>
 #include <QKeyEvent>
+#include <utility>
 
 #include "Markdown.h"
 
@@ -93,8 +94,8 @@ ResourcePage::ResourcePage(ResourceDownloadDialog* parent, BaseInstance& base_in
 ResourcePage::~ResourcePage()
 {
     delete m_ui;
-    if (m_model)
-        delete m_model;
+
+    delete m_model;
 }
 
 void ResourcePage::retranslate()
@@ -127,12 +128,13 @@ auto ResourcePage::eventFilter(QObject* watched, QEvent* event) -> bool
                 triggerSearch();
                 keyEvent->accept();
                 return true;
-            } else {
-                if (m_searchTimer.isActive())
-                    m_searchTimer.stop();
-
-                m_searchTimer.start(350);
             }
+            if (m_searchTimer.isActive()) {
+                m_searchTimer.stop();
+            }
+
+            m_searchTimer.start(350);
+
         } else if (watched == m_ui->packView) {
             // stop the event from going to the confirm button
             if (keyEvent->key() == Qt::Key_Return) {
@@ -158,7 +160,7 @@ QString ResourcePage::getSearchTerm() const
     return m_ui->searchEdit->text();
 }
 
-void ResourcePage::setSearchTerm(QString term)
+void ResourcePage::setSearchTerm(const QString& term)
 {
     m_ui->searchEdit->setText(term);
 }
@@ -170,11 +172,12 @@ void ResourcePage::addSortings()
     auto sorts = m_model->getSortingMethods();
     std::sort(sorts.begin(), sorts.end(), [](auto const& l, auto const& r) { return l.index < r.index; });
 
-    for (auto&& sorting : sorts)
+    for (auto&& sorting : sorts) {
         m_ui->sortByBox->addItem(sorting.readable_name, QVariant(sorting.index));
+    }
 }
 
-bool ResourcePage::setCurrentPack(ModPlatform::IndexedPack::Ptr pack)
+bool ResourcePage::setCurrentPack(const ModPlatform::IndexedPack::Ptr& pack)
 {
     QVariant v;
     v.setValue(pack);
@@ -188,8 +191,9 @@ ModPlatform::IndexedPack::Ptr ResourcePage::getCurrentPack() const
 
 void ResourcePage::updateUi(const QModelIndex& index)
 {
-    if (index != m_ui->packView->currentIndex())
+    if (index != m_ui->packView->currentIndex()) {
         return;
+    }
 
     auto current_pack = getCurrentPack();
     if (!current_pack) {
@@ -200,10 +204,11 @@ void ResourcePage::updateUi(const QModelIndex& index)
     QString text = "";
     QString name = current_pack->name;
 
-    if (current_pack->websiteUrl.isEmpty())
+    if (current_pack->websiteUrl.isEmpty()) {
         text = name;
-    else
+    } else {
         text = "<a href=\"" + current_pack->websiteUrl + "\">" + name + "</a>";
+    }
 
     if (!current_pack->authors.empty()) {
         auto authorToStr = [](ModPlatform::ModpackAuthor& author) -> QString {
@@ -242,14 +247,18 @@ void ResourcePage::updateUi(const QModelIndex& index)
             text += "<br><br>" + tr("External links:") + "<br>";
         }
 
-        if (!current_pack->extraData.issuesUrl.isEmpty())
+        if (!current_pack->extraData.issuesUrl.isEmpty()) {
             text += "- " + tr("Issues: <a href=%1>%1</a>").arg(current_pack->extraData.issuesUrl) + "<br>";
-        if (!current_pack->extraData.wikiUrl.isEmpty())
+        }
+        if (!current_pack->extraData.wikiUrl.isEmpty()) {
             text += "- " + tr("Wiki: <a href=%1>%1</a>").arg(current_pack->extraData.wikiUrl) + "<br>";
-        if (!current_pack->extraData.sourceUrl.isEmpty())
+        }
+        if (!current_pack->extraData.sourceUrl.isEmpty()) {
             text += "- " + tr("Source code: <a href=%1>%1</a>").arg(current_pack->extraData.sourceUrl) + "<br>";
-        if (!current_pack->extraData.discordUrl.isEmpty())
+        }
+        if (!current_pack->extraData.discordUrl.isEmpty()) {
             text += "- " + tr("Discord: <a href=%1>%1</a>").arg(current_pack->extraData.discordUrl) + "<br>";
+        }
     }
 
     text += "<hr>";
@@ -271,10 +280,11 @@ void ResourcePage::updateSelectionButton()
         if (current_pack->versionsLoaded && current_pack->versions.empty()) {
             m_ui->resourceSelectionButton->setEnabled(false);
             qWarning() << tr("No version available for the selected pack");
-        } else if (!current_pack->isVersionSelected(m_selectedVersionIndex))
+        } else if (!current_pack->isVersionSelected(m_selectedVersionIndex)) {
             m_ui->resourceSelectionButton->setText(tr("Select %1 for download").arg(resourceString()));
-        else
+        } else {
             m_ui->resourceSelectionButton->setText(tr("Deselect %1 for download").arg(resourceString()));
+        }
     } else {
         qWarning() << "Tried to update the selected button but there is not a pack selected";
     }
@@ -294,8 +304,9 @@ void ResourcePage::versionListUpdated(const QModelIndex& index)
 
             for (int i = 0; i < current_pack->versions.size(); i++) {
                 auto& version = current_pack->versions[i];
-                if (!m_model->checkVersionFilters(version))
+                if (!m_model->checkVersionFilters(version)) {
                     continue;
+                }
 
                 auto versionText = version.version;
                 if (version.version_type.isValid()) {
@@ -316,8 +327,9 @@ void ResourcePage::versionListUpdated(const QModelIndex& index)
         if (m_enableQueue.contains(index.row())) {
             m_enableQueue.remove(index.row());
             onResourceToggle(index);
-        } else
+        } else {
             updateSelectionButton();
+        }
     } else if (m_enableQueue.contains(index.row())) {
         m_enableQueue.remove(index.row());
         onResourceToggle(index);
@@ -342,15 +354,18 @@ void ResourcePage::onSelectionChanged(QModelIndex curr, [[maybe_unused]] QModelI
         versionListUpdated(curr);
     }
 
-    if (current_pack && !current_pack->extraDataLoaded)
+    if (current_pack && !current_pack->extraDataLoaded) {
         request_load = true;
+    }
 
     // we are already requesting this
-    if (m_enableQueue.contains(curr.row()))
+    if (m_enableQueue.contains(curr.row())) {
         request_load = false;
+    }
 
-    if (request_load)
+    if (request_load) {
         m_model->loadEntry(curr);
+    }
 
     updateUi(curr);
 }
@@ -363,7 +378,7 @@ void ResourcePage::onVersionSelectionChanged(int index)
 
 void ResourcePage::addResourceToDialog(ModPlatform::IndexedPack::Ptr pack, ModPlatform::IndexedVersion& version)
 {
-    m_parentDialog->addResource(pack, version);
+    m_parentDialog->addResource(std::move(pack), version);
 }
 
 void ResourcePage::removeResourceFromDialog(const QString& pack_name)
@@ -374,7 +389,7 @@ void ResourcePage::removeResourceFromDialog(const QString& pack_name)
 void ResourcePage::addResourceToPage(ModPlatform::IndexedPack::Ptr pack, ModPlatform::IndexedVersion& ver, ResourceFolderModel* base_model)
 {
     bool is_indexed = !APPLICATION->settings()->get("ModMetadataDisabled").toBool();
-    m_model->addPack(pack, ver, base_model, is_indexed);
+    m_model->addPack(std::move(pack), ver, base_model, is_indexed);
 }
 
 void ResourcePage::modelReset()
@@ -389,19 +404,22 @@ void ResourcePage::removeResourceFromPage(const QString& name)
 
 void ResourcePage::onResourceSelected()
 {
-    if (m_selectedVersionIndex < 0)
+    if (m_selectedVersionIndex < 0) {
         return;
+    }
 
     auto current_pack = getCurrentPack();
-    if (!current_pack || !current_pack->versionsLoaded || current_pack->versions.size() < m_selectedVersionIndex)
+    if (!current_pack || !current_pack->versionsLoaded || current_pack->versions.size() < m_selectedVersionIndex) {
         return;
+    }
 
     auto& version = current_pack->versions[m_selectedVersionIndex];
     Q_ASSERT(!version.downloadUrl.isNull());
-    if (version.is_currently_selected)
+    if (version.is_currently_selected) {
         removeResourceFromDialog(current_pack->name);
-    else
+    } else {
         addResourceToDialog(current_pack, version);
+    }
 
     // Save the modified pack (and prevent warning in release build)
     [[maybe_unused]] bool set = setCurrentPack(current_pack);
@@ -419,9 +437,9 @@ void ResourcePage::onResourceToggle(const QModelIndex& index)
     auto pack = m_model->data(index, Qt::UserRole).value<ModPlatform::IndexedPack::Ptr>();
 
     if (pack->versionsLoaded) {
-        if (pack->isAnyVersionSelected())
+        if (pack->isAnyVersionSelected()) {
             removeResourceFromDialog(pack->name);
-        else {
+        } else {
             auto version = std::find_if(pack->versions.begin(), pack->versions.end(), [this](const ModPlatform::IndexedVersion& version) {
                 return m_model->checkVersionFilters(version);
             });
@@ -433,12 +451,14 @@ void ResourcePage::onResourceToggle(const QModelIndex& index)
                     QMessageBox::Ok, this);
 
                 errorMessage->open();
-            } else
+            } else {
                 addResourceToDialog(pack, *version);
+            }
         }
 
-        if (isSelected)
+        if (isSelected) {
             updateSelectionButton();
+        }
 
         // force update
         QVariant variant;
@@ -450,8 +470,9 @@ void ResourcePage::onResourceToggle(const QModelIndex& index)
 
         // we can't be sure that this hasn't already been requested...
         // but this does the job well enough and there's not much point preventing edgecases
-        if (!isSelected)
+        if (!isSelected) {
             m_model->loadEntry(index);
+        }
     }
 }
 
@@ -509,10 +530,11 @@ void ResourcePage::openUrl(const QUrl& url)
             searchEdit->setText(slug);
             newPage->triggerSearch();
 
-            if (model->hasActiveSearchJob())
+            if (model->hasActiveSearchJob()) {
                 connect(model->activeSearchJob().get(), &Task::finished, jump);
-            else
+            } else {
                 jump();
+            }
 
             return;
         }
@@ -568,9 +590,10 @@ void ResourcePage::openProject(QVariant projectID)
     m_ui->searchEdit->setText("#" + projectID.toString());
     triggerSearch();
 
-    if (m_model->hasActiveSearchJob())
+    if (m_model->hasActiveSearchJob()) {
         connect(m_model->activeSearchJob().get(), &Task::finished, jump);
-    else
+    } else {
         jump();
+    }
 }
 }  // namespace ResourceDownload

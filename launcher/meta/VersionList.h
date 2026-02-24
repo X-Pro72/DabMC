@@ -30,7 +30,7 @@ class VersionList : public BaseVersionList, public BaseEntity {
     Q_PROPERTY(QString name READ name NOTIFY nameChanged)
    public:
     explicit VersionList(const QString& uid, QObject* parent = nullptr);
-    virtual ~VersionList() = default;
+    ~VersionList() override = default;
 
     using Ptr = std::shared_ptr<VersionList>;
 
@@ -59,7 +59,7 @@ class VersionList : public BaseVersionList, public BaseEntity {
     QString humanReadable() const;
 
     Version::Ptr getVersion(const QString& version);
-    bool hasVersion(QString version) const;
+    bool hasVersion(const QString& version) const;
 
     QList<Version::Ptr> versions() const { return m_versions; }
 

@@ -38,7 +38,7 @@ class XmlLogParseTest : public QObject {
 
    private slots:
 
-    void parseXml_data()
+    static void parseXml_data()
     {
         QString source = QFINDTESTDATA("testdata/TestLogs");
 
@@ -96,7 +96,7 @@ class XmlLogParseTest : public QObject {
         QList<MessageLevel> levels = {};
 
         std::transform(entries.cbegin(), entries.cend(), std::back_inserter(levels),
-                       [](std::pair<MessageLevel, QString> entry) { return entry.first; });
+                       [](const std::pair<MessageLevel, QString>& entry) { return entry.first; });
 
         QCOMPARE(levels, entry_levels);
     }

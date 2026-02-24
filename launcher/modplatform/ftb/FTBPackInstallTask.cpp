@@ -38,6 +38,9 @@
 
 #include "FTBPackInstallTask.h"
 
+#include <memory>
+#include <utility>
+
 #include "FileSystem.h"
 #include "Json.h"
 #include "minecraft/MinecraftInstance.h"
@@ -59,15 +62,18 @@ PackInstallTask::PackInstallTask(Modpack pack, QString version, QWidget* parent)
 
 bool PackInstallTask::abort()
 {
-    if (!canAbort())
+    if (!canAbort()) {
         return false;
+    }
 
     bool aborted = true;
 
-    if (m_net_job)
+    if (m_net_job) {
         aborted &= m_net_job->abort();
-    if (m_modIdResolverTask)
+    }
+    if (m_modIdResolverTask) {
         aborted &= m_modIdResolverTask->abort();
+    }
 
     return aborted ? InstanceTask::abort() : false;
 }
@@ -91,7 +97,7 @@ void PackInstallTask::executeTask()
     auto netJob = makeShared<NetJob>("FTB::VersionFetch", APPLICATION->network());
 
     auto searchUrl = QString(BuildConfig.FTB_API_BASE_URL + "/modpack/%1/%2").arg(m_pack.id).arg(version.id);
-    m_response.reset(new QByteArray());
+    m_response = std::make_unique<QByteArray>();
     netJob->addNetAction(Net::Download::makeByteArray(QUrl(searchUrl), m_response.get()));
 
     QObject::connect(netJob.get(), &NetJob::succeeded, this, &PackInstallTask::onManifestDownloadSucceeded);
@@ -176,9 +182,10 @@ void PackInstallTask::onResolveModsSucceeded()
 
     Flame::Manifest results = m_modIdResolverTask->getResults();
     for (int index = 0; index < m_fileIds.size(); index++) {
-        auto const file_id = m_fileIds.at(index);
-        if (file_id < 0)
+        const auto file_id = m_fileIds.at(index);
+        if (file_id < 0) {
             continue;
+        }
 
         Flame::File resultsFile = results.files[file_id];
         VersionFile& localFile = m_version.files[index];
@@ -239,16 +246,17 @@ void PackInstallTask::createInstance()
     auto components = instance.getPackProfile();
     components->buildingFromScratch();
 
-    for (auto target : m_version.targets) {
+    for (const auto& target : m_version.targets) {
         if (target.type == "game" && target.name == "minecraft") {
             components->setComponentVersion("net.minecraft", target.version, true);
             break;
         }
     }
 
-    for (auto target : m_version.targets) {
-        if (target.type != "modloader")
+    for (const auto& target : m_version.targets) {
+        if (target.type != "modloader") {
             continue;
+        }
 
         if (target.name == "forge") {
             components->setComponentVersion("net.minecraftforge", target.version);
@@ -295,9 +303,10 @@ void PackInstallTask::downloadPack()
     setAbortable(false);
 
     auto jobPtr = makeShared<NetJob>(tr("Mod download"), APPLICATION->network());
-    for (auto const& file : m_version.files) {
-        if (file.serverOnly || file.url.isEmpty())
+    for (const auto& file : m_version.files) {
+        if (file.serverOnly || file.url.isEmpty()) {
             continue;
+        }
 
         auto path = FS::PathCombine(m_stagingPath, ".minecraft", file.path, file.name);
         qDebug() << "Will try to download" << file.url << "to" << path;
@@ -335,21 +344,21 @@ void PackInstallTask::onModDownloadSucceeded()
 void PackInstallTask::onManifestDownloadFailed(QString reason)
 {
     m_net_job.reset();
-    emitFailed(reason);
+    emitFailed(std::move(reason));
 }
 void PackInstallTask::onResolveModsFailed(QString reason)
 {
     m_net_job.reset();
-    emitFailed(reason);
+    emitFailed(std::move(reason));
 }
 void PackInstallTask::onCreateInstanceFailed(QString reason)
 {
-    emitFailed(reason);
+    emitFailed(std::move(reason));
 }
 void PackInstallTask::onModDownloadFailed(QString reason)
 {
     m_net_job.reset();
-    emitFailed(reason);
+    emitFailed(std::move(reason));
 }
 
 /// @brief copy the matched blocked mods to the instance staging area

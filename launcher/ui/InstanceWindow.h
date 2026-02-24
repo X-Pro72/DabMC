@@ -53,8 +53,8 @@ class InstanceWindow : public QMainWindow, public BasePageContainer {
     Q_OBJECT
 
    public:
-    explicit InstanceWindow(BaseInstance* proc, QWidget* parent = 0);
-    virtual ~InstanceWindow() = default;
+    explicit InstanceWindow(BaseInstance* proc, QWidget* parent = nullptr);
+    ~InstanceWindow() override = default;
 
     bool selectPage(QString pageId) override;
     BasePage* selectedPage() const override;

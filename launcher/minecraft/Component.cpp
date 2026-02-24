@@ -47,7 +47,8 @@
 #include "minecraft/Component.h"
 #include "minecraft/PackProfile.h"
 
-#include <assert.h>
+#include <cassert>
+#include <utility>
 
 const QMap<QString, ModloaderMapEntry> Component::KNOWN_MODLOADERS = {
     { "net.neoforged", { ModPlatform::NeoForge, { "net.minecraftforge", "net.fabricmc.fabric-loader", "org.quiltmc.quilt-loader" } } },
@@ -70,14 +71,14 @@ Component::Component(PackProfile* parent, const QString& uid, std::shared_ptr<Ve
     assert(parent);
     m_parent = parent;
 
-    m_file = file;
+    m_file = std::move(file);
     m_uid = uid;
     m_cachedVersion = m_file->version;
     m_cachedName = m_file->name;
     m_loaded = true;
 }
 
-std::shared_ptr<Meta::Version> Component::getMeta()
+std::shared_ptr<Meta::Version> Component::getMeta() const
 {
     return m_metaVersion;
 }
@@ -100,9 +101,8 @@ std::shared_ptr<class VersionFile> Component::getVersionFile() const
 {
     if (m_metaVersion) {
         return m_metaVersion->data();
-    } else {
-        return m_file;
     }
+    return m_file;
 }
 
 std::shared_ptr<class Meta::VersionList> Component::getVersionList() const
@@ -114,10 +114,11 @@ std::shared_ptr<class Meta::VersionList> Component::getVersionList() const
     return nullptr;
 }
 
-int Component::getOrder()
+int Component::getOrder() const
 {
-    if (m_orderOverride)
+    if (m_orderOverride) {
         return m_order;
+    }
 
     auto vfile = getVersionFile();
     if (vfile) {
@@ -132,24 +133,25 @@ void Component::setOrder(int order)
     m_order = order;
 }
 
-QString Component::getID()
+QString Component::getID() const
 {
     return m_uid;
 }
 
-QString Component::getName()
+QString Component::getName() const
 {
-    if (!m_cachedName.isEmpty())
+    if (!m_cachedName.isEmpty()) {
         return m_cachedName;
+    }
     return m_uid;
 }
 
-QString Component::getVersion()
+QString Component::getVersion() const
 {
     return m_cachedVersion;
 }
 
-QString Component::getFilename()
+QString Component::getFilename() const
 {
     return m_parent->patchFilePathForUid(m_uid);
 }
@@ -191,7 +193,7 @@ bool Component::setEnabled(bool state)
     return false;
 }
 
-bool Component::isCustom()
+bool Component::isCustom() const
 {
     return m_file != nullptr;
 }
@@ -201,7 +203,7 @@ bool Component::isCustomizable()
     return m_metaVersion && getVersionFile();
 }
 
-bool Component::isRemovable()
+bool Component::isRemovable() const
 {
     return !m_important;
 }
@@ -222,31 +224,31 @@ bool Component::isMoveable()
     return true;
 }
 
-bool Component::isVersionChangeable(bool wait)
+bool Component::isVersionChangeable(bool wait) const
 {
     auto list = getVersionList();
     if (list) {
-        if (wait)
+        if (wait) {
             list->waitToLoad();
+        }
         return list->count() != 0;
     }
     return false;
 }
 
-bool Component::isKnownModloader()
+bool Component::isKnownModloader() const
 {
     auto iter = KNOWN_MODLOADERS.find(m_uid);
     return iter != KNOWN_MODLOADERS.cend();
 }
 
-QStringList Component::knownConflictingComponents()
+QStringList Component::knownConflictingComponents() const
 {
     auto iter = KNOWN_MODLOADERS.find(m_uid);
     if (iter != KNOWN_MODLOADERS.cend()) {
         return (*iter).knownConflictingComponents;
-    } else {
-        return {};
     }
+    return {};
 }
 
 void Component::setImportant(bool state)

@@ -55,22 +55,22 @@ class LaunchTask : public Task {
 
    public: /* methods */
     static std::unique_ptr<LaunchTask> create(MinecraftInstance* inst);
-    virtual ~LaunchTask() = default;
+    ~LaunchTask() override = default;
 
-    void appendStep(shared_qobject_ptr<LaunchStep> step);
-    void prependStep(shared_qobject_ptr<LaunchStep> step);
+    void appendStep(const shared_qobject_ptr<LaunchStep>& step);
+    void prependStep(const shared_qobject_ptr<LaunchStep>& step);
     void setCensorFilter(QMap<QString, QString> filter);
 
     MinecraftInstance* instance() { return m_instance; }
 
     void setPid(qint64 pid) { m_pid = pid; }
 
-    qint64 pid() { return m_pid; }
+    qint64 pid() const { return m_pid; }
 
     /**
      * @brief prepare the process for launch (for multi-stage launch)
      */
-    virtual void executeTask() override;
+    void executeTask() override;
 
     /**
      * @brief launch the armed instance
@@ -91,8 +91,8 @@ class LaunchTask : public Task {
     QString censorPrivateInfo(QString in);
 
    protected: /* methods */
-    virtual void emitFailed(QString reason) override;
-    virtual void emitSucceeded() override;
+    void emitFailed(QString reason) override;
+    void emitSucceeded() override;
 
    signals:
     /**

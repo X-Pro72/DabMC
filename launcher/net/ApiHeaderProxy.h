@@ -27,11 +27,11 @@ namespace Net {
 
 class ApiHeaderProxy : public HeaderProxy {
    public:
-    ApiHeaderProxy() : HeaderProxy() {}
-    virtual ~ApiHeaderProxy() = default;
+    ApiHeaderProxy() {}
+    ~ApiHeaderProxy() override = default;
 
    public:
-    virtual QList<HeaderPair> headers(const QNetworkRequest& request) const override
+    QList<HeaderPair> headers(const QNetworkRequest& request) const override
     {
         QList<HeaderPair> hdrs;
         if (APPLICATION->capabilities() & Application::SupportsFlame && request.url().host() == QUrl(BuildConfig.FLAME_BASE_URL).host()) {
@@ -39,8 +39,9 @@ class ApiHeaderProxy : public HeaderProxy {
         } else if (request.url().host() == QUrl(BuildConfig.MODRINTH_PROD_URL).host() ||
                    request.url().host() == QUrl(BuildConfig.MODRINTH_STAGING_URL).host()) {
             QString token = APPLICATION->getModrinthAPIToken();
-            if (!token.isNull())
+            if (!token.isNull()) {
                 hdrs.append({ "Authorization", token.toUtf8() });
+            }
         }
         return hdrs;
     };

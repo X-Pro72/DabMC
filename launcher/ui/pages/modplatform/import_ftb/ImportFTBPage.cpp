@@ -62,8 +62,9 @@ ImportFTBPage::ImportFTBPage(NewInstanceDialog* dialog, QWidget* parent) : QWidg
     connect(ui->browseButton, &QPushButton::clicked, this, [this] {
         QString dir = QFileDialog::getExistingDirectory(this, tr("Select FTBApp instances directory"), listModel->getUserPath(),
                                                         QFileDialog::ShowDirsOnly);
-        if (!dir.isEmpty())
+        if (!dir.isEmpty()) {
             listModel->setPath(dir);
+        }
     });
 
     ui->modpackList->setItemDelegate(new ProjectItemDelegate(this));
@@ -92,18 +93,18 @@ void ImportFTBPage::retranslate()
 QString saveIconToTempFile(const QIcon& icon)
 {
     if (icon.isNull()) {
-        return QString();
+        return {};
     }
 
     QPixmap pixmap = icon.pixmap(icon.availableSizes().last());
     if (pixmap.isNull()) {
-        return QString();
+        return {};
     }
 
     QTemporaryFile tempFile(QDir::tempPath() + "/iconXXXXXX.png");
     tempFile.setAutoRemove(false);
     if (!tempFile.open()) {
-        return QString();
+        return {};
     }
 
     QString tempPath = tempFile.fileName();
@@ -111,7 +112,7 @@ QString saveIconToTempFile(const QIcon& icon)
 
     if (!pixmap.save(tempPath, "PNG")) {
         QFile::remove(tempPath);
-        return QString();
+        return {};
     }
 
     return tempPath;  // Success
@@ -119,8 +120,9 @@ QString saveIconToTempFile(const QIcon& icon)
 
 void ImportFTBPage::suggestCurrent()
 {
-    if (!isOpened)
+    if (!isOpened) {
         return;
+    }
 
     if (selected.path.isEmpty()) {
         dialog->setSuggestedPack();
@@ -159,11 +161,12 @@ void ImportFTBPage::onPackSelectionChanged(Modpack* pack)
         suggestCurrent();
         return;
     }
-    if (isOpened)
+    if (isOpened) {
         dialog->setSuggestedPack();
+    }
 }
 
-void ImportFTBPage::onSortingSelectionChanged(QString sort)
+void ImportFTBPage::onSortingSelectionChanged(const QString& sort)
 {
     FilterModel::Sorting toSet = currentModel->getAvailableSortings().value(sort);
     currentModel->setSorting(toSet);

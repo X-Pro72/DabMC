@@ -122,7 +122,7 @@ QString GameType::toLogString() const
     return "Undefined";
 }
 
-std::unique_ptr<nbt::tag_compound> parseLevelDat(QByteArray data)
+std::unique_ptr<nbt::tag_compound> parseLevelDat(const QByteArray& data)
 {
     QByteArray output;
     if (!GZip::unzip(data, output)) {
@@ -132,11 +132,13 @@ std::unique_ptr<nbt::tag_compound> parseLevelDat(QByteArray data)
     try {
         auto pair = nbt::io::read_compound(foo);
 
-        if (pair.first != "")
+        if (pair.first != "") {
             return nullptr;
+        }
 
-        if (pair.second == nullptr)
+        if (pair.second == nullptr) {
             return nullptr;
+        }
 
         return std::move(pair.second);
     } catch (const nbt::io::input_error& e) {
@@ -157,7 +159,7 @@ QString getDatFromFS(const QFileInfo& root, QString file)
 {
     QDir worldDir(root.filePath());
     if (!root.isDir() || !worldDir.exists(file)) {
-        return QString();
+        return {};
     }
     return worldDir.absoluteFilePath(file);
 }
@@ -171,11 +173,11 @@ QByteArray getDatDataFromFS(const QFileInfo& root, QString file)
 {
     auto fullFilePath = getDatFromFS(root, file);
     if (fullFilePath.isNull()) {
-        return QByteArray();
+        return {};
     }
     QFile f(fullFilePath);
     if (!f.open(QIODevice::ReadOnly)) {
-        return QByteArray();
+        return {};
     }
     return f.readAll();
 }
@@ -244,7 +246,7 @@ bool World::resetIcon()
     return false;
 }
 
-int64_t loadSeed(QByteArray data);
+int64_t loadSeed(const QByteArray& data);
 
 void World::readFromFS(const QFileInfo& file)
 {
@@ -416,7 +418,7 @@ GameType read_gametype(nbt::value& parent, const char* name)
 
 }  // namespace
 
-int64_t loadSeed(QByteArray data)
+int64_t loadSeed(const QByteArray& data)
 {
     auto levelData = parseLevelDat(data);
     if (!levelData) {
@@ -438,7 +440,7 @@ int64_t loadSeed(QByteArray data)
     return 0;
 }
 
-void World::loadFromLevelDat(QByteArray data)
+void World::loadFromLevelDat(const QByteArray& data)
 {
     auto levelData = parseLevelDat(data);
     if (!levelData) {
@@ -457,8 +459,9 @@ void World::loadFromLevelDat(QByteArray data)
     nbt::value& val = *valPtr;
 
     m_isValid = val.get_type() == nbt::tag_type::Compound;
-    if (!m_isValid)
+    if (!m_isValid) {
         return;
+    }
 
     auto name = read_string(val, "LevelName");
     m_actualName = name ? *name : m_folderName;
@@ -490,8 +493,9 @@ void World::loadFromLevelDat(QByteArray data)
 
 bool World::replace(World& with)
 {
-    if (!destroy())
+    if (!destroy()) {
         return false;
+    }
     bool success = FS::copy(with.m_containerFile.filePath(), m_containerFile.path())();
     if (success) {
         m_folderName = with.m_folderName;
@@ -502,16 +506,19 @@ bool World::replace(World& with)
 
 bool World::destroy()
 {
-    if (!m_isValid)
+    if (!m_isValid) {
         return false;
+    }
 
-    if (FS::trash(m_containerFile.filePath()))
+    if (FS::trash(m_containerFile.filePath())) {
         return true;
+    }
 
     if (m_containerFile.isDir()) {
         QDir d(m_containerFile.filePath());
         return d.removeRecursively();
-    } else if (m_containerFile.isFile()) {
+    }
+    if (m_containerFile.isFile()) {
         QFile file(m_containerFile.absoluteFilePath());
         return file.remove();
     }
@@ -525,8 +532,9 @@ bool World::operator==(const World& other) const
 
 bool World::isSymLinkUnder(const QString& instPath) const
 {
-    if (isSymLink())
+    if (isSymLink()) {
         return true;
+    }
 
     auto instDir = QDir(instPath);
 

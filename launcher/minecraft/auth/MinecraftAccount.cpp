@@ -103,7 +103,7 @@ QPixmap MinecraftAccount::getFace(int width, int height) const
 {
     QPixmap skinTexture;
     if (!skinTexture.loadFromData(data.minecraftProfile.skin.data, "PNG")) {
-        return QPixmap();
+        return {};
     }
     QPixmap skin = QPixmap(8, 8);
     skin.fill(QColorConstants::Transparent);
@@ -152,7 +152,7 @@ void MinecraftAccount::authSucceeded()
     emit activityChanged(false);
 }
 
-void MinecraftAccount::authFailed(QString reason)
+void MinecraftAccount::authFailed(const QString& reason)
 {
     switch (m_currentTask->taskState()) {
         case AccountTaskState::STATE_OFFLINE:
@@ -231,7 +231,7 @@ bool MinecraftAccount::shouldRefresh() const
     return false;
 }
 
-void MinecraftAccount::fillSession(AuthSessionPtr session)
+void MinecraftAccount::fillSession(const AuthSessionPtr& session)
 {
     // volatile auth token
     session->access_token = data.accessToken();
@@ -239,8 +239,9 @@ void MinecraftAccount::fillSession(AuthSessionPtr session)
     session->player_name = data.profileName();
     // profile ID
     session->uuid = data.profileId();
-    if (session->uuid.isEmpty())
+    if (session->uuid.isEmpty()) {
         session->uuid = uuidFromUsername(session->player_name).toString(QUuid::Id128);
+    }
     // 'legacy' or 'mojang', depending on account type
     session->user_type = typeString();
     if (!session->access_token.isEmpty()) {
@@ -271,7 +272,7 @@ void MinecraftAccount::incrementUses()
     }
 }
 
-QUuid MinecraftAccount::uuidFromUsername(QString username)
+QUuid MinecraftAccount::uuidFromUsername(const QString& username)
 {
     auto input = QString("OfflinePlayer:%1").arg(username).toUtf8();
 

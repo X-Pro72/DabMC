@@ -4,6 +4,7 @@
 
 #include <QRegularExpression>
 #include <QString>
+#include <utility>
 
 JavaVersion& JavaVersion::operator=(const QString& javaVersionString)
 {
@@ -69,18 +70,24 @@ bool JavaVersion::operator<(const JavaVersion& rhs) const
         auto major = m_major;
         auto rmajor = rhs.m_major;
 
-        if (major < rmajor)
+        if (major < rmajor) {
             return true;
-        if (major > rmajor)
+        }
+        if (major > rmajor) {
             return false;
-        if (m_minor < rhs.m_minor)
+        }
+        if (m_minor < rhs.m_minor) {
             return true;
-        if (m_minor > rhs.m_minor)
+        }
+        if (m_minor > rhs.m_minor) {
             return false;
-        if (m_security < rhs.m_security)
+        }
+        if (m_security < rhs.m_security) {
             return true;
-        if (m_security > rhs.m_security)
+        }
+        if (m_security > rhs.m_security) {
             return false;
+        }
 
         // everything else being equal, consider prerelease status
         bool thisPre = !m_prerelease.isEmpty();
@@ -88,7 +95,8 @@ bool JavaVersion::operator<(const JavaVersion& rhs) const
         if (thisPre && !rhsPre) {
             // this is a prerelease and the other one isn't -> lesser
             return true;
-        } else if (!thisPre && rhsPre) {
+        }
+        if (!thisPre && rhsPre) {
             // this isn't a prerelease and the other one is -> greater
             return false;
         } else if (thisPre && rhsPre) {
@@ -97,8 +105,8 @@ bool JavaVersion::operator<(const JavaVersion& rhs) const
         }
         // neither is prerelease, so they are the same -> this cannot be less than rhs
         return false;
-    } else
-        return StringUtils::naturalCompare(m_string, rhs.m_string, Qt::CaseSensitive) < 0;
+    }
+    return StringUtils::naturalCompare(m_string, rhs.m_string, Qt::CaseSensitive) < 0;
 }
 
 bool JavaVersion::operator==(const JavaVersion& rhs) const
@@ -115,22 +123,24 @@ bool JavaVersion::operator>(const JavaVersion& rhs) const
 }
 
 JavaVersion::JavaVersion(int major, int minor, int security, int build, QString name)
-    : m_major(major), m_minor(minor), m_security(security), m_name(name), m_parseable(true)
+    : m_major(major), m_minor(minor), m_security(security), m_name(std::move(name)), m_parseable(true)
 {
     QStringList versions;
     if (build != 0) {
         m_prerelease = QString::number(build);
         versions.push_front(m_prerelease);
     }
-    if (m_security != 0)
+    if (m_security != 0) {
         versions.push_front(QString::number(m_security));
-    else if (!versions.isEmpty())
+    } else if (!versions.isEmpty()) {
         versions.push_front("0");
+    }
 
-    if (m_minor != 0)
+    if (m_minor != 0) {
         versions.push_front(QString::number(m_minor));
-    else if (!versions.isEmpty())
+    } else if (!versions.isEmpty()) {
         versions.push_front("0");
+    }
     versions.push_front(QString::number(m_major));
     m_string = versions.join(".");
 }

@@ -2,6 +2,7 @@
 #include <QMap>
 #include <QString>
 #include <memory>
+#include <utility>
 
 struct MojangDownloadInfo {
     // types
@@ -19,14 +20,14 @@ struct MojangDownloadInfo {
 };
 
 struct MojangLibraryDownloadInfo {
-    MojangLibraryDownloadInfo(MojangDownloadInfo::Ptr artifact_) : artifact(artifact_) {}
-    MojangLibraryDownloadInfo() {}
+    MojangLibraryDownloadInfo(MojangDownloadInfo::Ptr artifact_) : artifact(std::move(artifact_)) {}
+    MojangLibraryDownloadInfo() = default;
 
     // types
     using Ptr = std::shared_ptr<MojangLibraryDownloadInfo>;
 
     // methods
-    MojangDownloadInfo* getDownloadInfo(QString classifier)
+    MojangDownloadInfo* getDownloadInfo(const QString& classifier)
     {
         if (classifier.isNull()) {
             return artifact.get();
@@ -45,9 +46,9 @@ struct MojangAssetIndexInfo : public MojangDownloadInfo {
     using Ptr = std::shared_ptr<MojangAssetIndexInfo>;
 
     // methods
-    MojangAssetIndexInfo() {}
+    MojangAssetIndexInfo() = default;
 
-    MojangAssetIndexInfo(QString id_)
+    MojangAssetIndexInfo(const QString& id_)
     {
         this->id = id_;
         // HACK: ignore assets from other version files than Minecraft

@@ -57,8 +57,9 @@ void LaunchProfile::clear()
 
 static void applyString(const QString& from, QString& to)
 {
-    if (from.isEmpty())
+    if (from.isEmpty()) {
         return;
+    }
     to = from;
 }
 
@@ -92,7 +93,7 @@ void LaunchProfile::applyMinecraftVersionType(const QString& type)
     applyString(type, this->m_minecraftVersionType);
 }
 
-void LaunchProfile::applyMinecraftAssets(MojangAssetIndexInfo::Ptr assets)
+void LaunchProfile::applyMinecraftAssets(const MojangAssetIndexInfo::Ptr& assets)
 {
     if (assets) {
         m_minecraftAssets = assets;
@@ -130,8 +131,9 @@ static int findLibraryByName(QList<LibraryPtr>* haystack, const GradleSpecifier&
     for (int i = 0; i < haystack->size(); ++i) {
         if (haystack->at(i)->rawName().matchName(needle)) {
             // only one is allowed.
-            if (retval != -1)
+            if (retval != -1) {
                 return -1;
+            }
             retval = i;
         }
     }
@@ -165,13 +167,14 @@ void LaunchProfile::applyCompatibleJavaMajors(QList<int>& javaMajor)
     m_compatibleJavaMajors.append(javaMajor);
 }
 
-void LaunchProfile::applyCompatibleJavaName(QString javaName)
+void LaunchProfile::applyCompatibleJavaName(const QString& javaName)
 {
-    if (!javaName.isEmpty())
+    if (!javaName.isEmpty()) {
         m_compatibleJavaName = javaName;
+    }
 }
 
-void LaunchProfile::applyLibrary(LibraryPtr library, const RuntimeContext& runtimeContext)
+void LaunchProfile::applyLibrary(const LibraryPtr& library, const RuntimeContext& runtimeContext)
 {
     if (!library->isActive(runtimeContext)) {
         return;
@@ -199,7 +202,7 @@ void LaunchProfile::applyLibrary(LibraryPtr library, const RuntimeContext& runti
     }
 }
 
-void LaunchProfile::applyMavenFile(LibraryPtr mavenFile, const RuntimeContext& runtimeContext)
+void LaunchProfile::applyMavenFile(const LibraryPtr& mavenFile, const RuntimeContext& runtimeContext)
 {
     if (!mavenFile->isActive(runtimeContext)) {
         return;
@@ -213,7 +216,7 @@ void LaunchProfile::applyMavenFile(LibraryPtr mavenFile, const RuntimeContext& r
     m_mavenFiles.append(Library::limitedCopy(mavenFile));
 }
 
-void LaunchProfile::applyAgent(AgentPtr agent, const RuntimeContext& runtimeContext)
+void LaunchProfile::applyAgent(const AgentPtr& agent, const RuntimeContext& runtimeContext)
 {
     auto lib = agent->library();
     if (!lib->isActive(runtimeContext)) {
@@ -232,7 +235,7 @@ const LibraryPtr LaunchProfile::getMainJar() const
     return m_mainJar;
 }
 
-void LaunchProfile::applyMainJar(LibraryPtr jar)
+void LaunchProfile::applyMainJar(const LibraryPtr& jar)
 {
     if (jar) {
         m_mainJar = jar;
@@ -351,10 +354,11 @@ void LaunchProfile::getLibraryFiles(const RuntimeContext& runtimeContext,
                                     const QString& overridePath,
                                     const QString& tempPath) const
 {
-    QStringList native32, native64;
+    QStringList native32;
+    QStringList native64;
     jars.clear();
     nativeJars.clear();
-    for (auto lib : getLibraries()) {
+    for (const auto& lib : getLibraries()) {
         lib->getApplicableFiles(runtimeContext, jars, nativeJars, native32, native64, overridePath);
     }
     // NOTE: order is important here, add main jar last to the lists
@@ -367,7 +371,7 @@ void LaunchProfile::getLibraryFiles(const RuntimeContext& runtimeContext,
             m_mainJar->getApplicableFiles(runtimeContext, jars, nativeJars, native32, native64, overridePath);
         }
     }
-    for (auto lib : getNativeLibraries()) {
+    for (const auto& lib : getNativeLibraries()) {
         lib->getApplicableFiles(runtimeContext, jars, nativeJars, native32, native64, overridePath);
     }
     if (runtimeContext.javaArchitecture == "32") {

@@ -15,7 +15,7 @@ class CheckUpdateTask : public Task {
                     std::vector<Version>& mcVersions,
                     QList<ModPlatform::ModLoaderType> loadersList,
                     ResourceFolderModel* resourceModel)
-        : Task(), m_resources(resources), m_gameVersions(mcVersions), m_loadersList(std::move(loadersList)), m_resourceModel(resourceModel)
+        : m_resources(resources), m_gameVersions(mcVersions), m_loadersList(std::move(loadersList)), m_resourceModel(resourceModel)
     {}
 
     struct Update {
@@ -43,7 +43,7 @@ class CheckUpdateTask : public Task {
             , old_hash(std::move(old_h))
             , old_version(std::move(old_v))
             , new_version(std::move(new_v))
-            , new_version_type(std::move(new_v_type))
+            , new_version_type(new_v_type)
             , changelog(std::move(changelog))
             , provider(p)
             , download(std::move(t))
@@ -61,7 +61,7 @@ class CheckUpdateTask : public Task {
     void executeTask() override = 0;
 
    signals:
-    void checkFailed(Resource* failed, QString reason, QUrl recover_url = {});
+    void checkFailed(Resource* failed, const QString& reason, const QUrl& recover_url = {});
 
    protected:
     QList<Resource*>& m_resources;

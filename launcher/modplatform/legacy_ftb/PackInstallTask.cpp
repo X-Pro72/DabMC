@@ -36,6 +36,7 @@
 #include "PackInstallTask.h"
 
 #include <QtConcurrent>
+#include <utility>
 
 #include "BaseInstance.h"
 #include "FileSystem.h"
@@ -55,7 +56,7 @@ namespace LegacyFTB {
 PackInstallTask::PackInstallTask(QNetworkAccessManager* network, const Modpack& pack, QString version)
 {
     m_pack = pack;
-    m_version = version;
+    m_version = std::move(version);
     m_network = network;
 }
 
@@ -102,8 +103,8 @@ void PackInstallTask::unzip()
 
     QDir extractDir(m_stagingPath);
 
-    m_extractFuture = QtConcurrent::run(QThreadPool::globalInstance(), QOverload<QString, QString>::of(MMCZip::extractDir), archivePath,
-                                        extractDir.absolutePath() + "/unzip");
+    m_extractFuture = QtConcurrent::run(QThreadPool::globalInstance(), QOverload<const QString&, const QString&>::of(MMCZip::extractDir),
+                                        archivePath, extractDir.absolutePath() + "/unzip");
     connect(&m_extractFutureWatcher, &QFutureWatcher<QStringList>::finished, this, &PackInstallTask::onUnzipFinished);
     connect(&m_extractFutureWatcher, &QFutureWatcher<QStringList>::canceled, this, &PackInstallTask::onUnzipCanceled);
     m_extractFutureWatcher.setFuture(m_extractFuture);
@@ -176,7 +177,7 @@ void PackInstallTask::install()
         qDebug() << "Found jarmods, installing...";
 
         QStringList jarmods;
-        for (auto info : jarmodDir.entryInfoList(QDir::NoDotAndDotDot | QDir::Files)) {
+        for (const auto& info : jarmodDir.entryInfoList(QDir::NoDotAndDotDot | QDir::Files)) {
             qDebug() << "Jarmod:" << info.fileName();
             jarmods.push_back(info.absoluteFilePath());
         }

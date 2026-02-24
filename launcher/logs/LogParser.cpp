@@ -146,40 +146,39 @@ std::optional<LogParser::ParsedItem> LogParser::parseNext()
 
     if (isCompleteLog4j) {
         return parseLog4J();
-    } else {
-        if (isPotentialLog4JStart(m_buffer)) {
-            m_partialData = QString(m_buffer);
-            return LogParser::Partial{ QString(m_buffer) };
-        }
-
-        int start = 0;
-        auto bufView = QStringView(m_buffer);
-        while (start < bufView.length()) {
-            if (qsizetype pos = bufView.right(bufView.length() - start).indexOf('<'); pos != -1) {
-                auto slicestart = start + pos;
-                auto slice = bufView.right(bufView.length() - slicestart);
-                if (isPotentialLog4JStart(slice)) {
-                    if (slicestart > 0) {
-                        auto text = m_buffer.left(slicestart);
-                        m_buffer = m_buffer.right(m_buffer.length() - slicestart);
-                        if (!text.trimmed().isEmpty()) {
-                            return LogParser::PlainText{ text };
-                        }
-                    }
-                    m_partialData = QString(m_buffer);
-                    return LogParser::Partial{ QString(m_buffer) };
-                }
-                start = slicestart + 1;
-            } else {
-                break;
-            }
-        }
-
-        // no log4j found, all plain text
-        auto text = QString(m_buffer);
-        m_buffer.clear();
-        return LogParser::PlainText{ text };
     }
+    if (isPotentialLog4JStart(m_buffer)) {
+        m_partialData = QString(m_buffer);
+        return LogParser::Partial{ QString(m_buffer) };
+    }
+
+    int start = 0;
+    auto bufView = QStringView(m_buffer);
+    while (start < bufView.length()) {
+        if (qsizetype pos = bufView.right(bufView.length() - start).indexOf('<'); pos != -1) {
+            auto slicestart = start + pos;
+            auto slice = bufView.right(bufView.length() - slicestart);
+            if (isPotentialLog4JStart(slice)) {
+                if (slicestart > 0) {
+                    auto text = m_buffer.left(slicestart);
+                    m_buffer = m_buffer.right(m_buffer.length() - slicestart);
+                    if (!text.trimmed().isEmpty()) {
+                        return LogParser::PlainText{ text };
+                    }
+                }
+                m_partialData = QString(m_buffer);
+                return LogParser::Partial{ QString(m_buffer) };
+            }
+            start = slicestart + 1;
+        } else {
+            break;
+        }
+    }
+
+    // no log4j found, all plain text
+    auto text = QString(m_buffer);
+    m_buffer.clear();
+    return LogParser::PlainText{ text };
 }
 
 QList<LogParser::ParsedItem> LogParser::parseAvailable()
@@ -195,9 +194,9 @@ QList<LogParser::ParsedItem> LogParser::parseAvailable()
             auto item = item_.value();
             if (std::holds_alternative<LogParser::Partial>(item)) {
                 break;
-            } else {
-                items.push_back(item);
             }
+            items.push_back(item);
+
         } else {
             doNext = false;
         }
@@ -322,7 +321,7 @@ std::optional<LogParser::ParsedItem> LogParser::parseLog4J()
 
 MessageLevel LogParser::guessLevel(const QString& line, MessageLevel previous)
 {
-    static const QRegularExpression LINE_WITH_LEVEL("^\\[(?<timestamp>[0-9:]+)\\] \\[[^/]+/(?<level>[^\\]]+)\\]");
+    static const QRegularExpression LINE_WITH_LEVEL(R"(^\[(?<timestamp>[0-9:]+)\] \[[^/]+/(?<level>[^\]]+)\])");
     auto match = LINE_WITH_LEVEL.match(line);
     if (match.hasMatch()) {
         // New style logs from log4j
@@ -330,30 +329,36 @@ MessageLevel LogParser::guessLevel(const QString& line, MessageLevel previous)
         QString levelStr = match.captured("level");
 
         return MessageLevel::fromName(levelStr);
-    } else {
-        // Old style forge logs
-        if (line.contains("[INFO]") || line.contains("[CONFIG]") || line.contains("[FINE]") || line.contains("[FINER]") ||
-            line.contains("[FINEST]"))
-            return MessageLevel::Info;
-        if (line.contains("[SEVERE]") || line.contains("[STDERR]"))
-            return MessageLevel::Error;
-        if (line.contains("[WARNING]"))
-            return MessageLevel::Warning;
-        if (line.contains("[DEBUG]"))
-            return MessageLevel::Debug;
+    }  // Old style forge logs
+    if (line.contains("[INFO]") || line.contains("[CONFIG]") || line.contains("[FINE]") || line.contains("[FINER]") ||
+        line.contains("[FINEST]")) {
+        return MessageLevel::Info;
+    }
+    if (line.contains("[SEVERE]") || line.contains("[STDERR]")) {
+        return MessageLevel::Error;
+    }
+    if (line.contains("[WARNING]")) {
+        return MessageLevel::Warning;
+    }
+    if (line.contains("[DEBUG]")) {
+        return MessageLevel::Debug;
     }
 
-    if (line.contains("Exception: ") || line.contains("Throwable: "))
+    if (line.contains("Exception: ") || line.contains("Throwable: ")) {
         return MessageLevel::Error;
+    }
 
-    if (line.startsWith("Caused by: ") || line.startsWith("Exception in thread"))
+    if (line.startsWith("Caused by: ") || line.startsWith("Exception in thread")) {
         return MessageLevel::Error;
+    }
 
-    if (line.contains("overwriting existing"))
+    if (line.contains("overwriting existing")) {
         return MessageLevel::Fatal;
+    }
 
-    if (line.startsWith("\t") || line.startsWith(" "))
+    if (line.startsWith("\t") || line.startsWith(" ")) {
         return previous;
+    }
 
     return MessageLevel::Unknown;
 }

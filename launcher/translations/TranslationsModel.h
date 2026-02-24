@@ -24,8 +24,8 @@ struct Language;
 class TranslationsModel : public QAbstractListModel {
     Q_OBJECT
    public:
-    explicit TranslationsModel(QString path, QObject* parent = 0);
-    virtual ~TranslationsModel();
+    explicit TranslationsModel(const QString& path, QObject* parent = nullptr);
+    ~TranslationsModel() override;
 
     QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
     QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
@@ -33,18 +33,18 @@ class TranslationsModel : public QAbstractListModel {
     int columnCount(const QModelIndex& parent) const override;
 
     bool selectLanguage(QString key);
-    void updateLanguage(QString key);
+    void updateLanguage(const QString& key);
     QModelIndex selectedIndex();
     QString selectedLanguage();
 
     void downloadIndex();
-    void setUseSystemLocale(bool useSystemLocale);
+    static void setUseSystemLocale(bool useSystemLocale);
 
    private:
     QList<Language>::Iterator findLanguage(const QString& key);
     std::optional<Language> findLanguageAsOptional(const QString& key);
     void reloadLocalFiles();
-    void downloadTranslation(QString key);
+    void downloadTranslation(const QString& key);
     void downloadNext();
 
     // hide copy constructor
@@ -54,8 +54,8 @@ class TranslationsModel : public QAbstractListModel {
 
    private slots:
     void indexReceived();
-    void indexFailed(QString reason);
-    void dlFailed(QString reason);
+    void indexFailed(const QString& reason);
+    void dlFailed(const QString& reason);
     void dlGood();
     void translationDirChanged(const QString& path);
 

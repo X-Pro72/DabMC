@@ -12,12 +12,13 @@
 
 #include <QtMath>
 #include <memory>
+#include <utility>
 
 namespace Flame {
 
 ListModel::ListModel(QObject* parent) : QAbstractListModel(parent) {}
 
-ListModel::~ListModel() {}
+ListModel::~ListModel() = default;
 
 int ListModel::rowCount(const QModelIndex& parent) const
 {
@@ -71,21 +72,22 @@ QVariant ListModel::data(const QModelIndex& index, int role) const
         default:
             break;
     }
-    return QVariant();
+    return {};
 }
 
 bool ListModel::setData(const QModelIndex& index, const QVariant& value, [[maybe_unused]] int role)
 {
     int pos = index.row();
-    if (pos >= m_modpacks.size() || pos < 0 || !index.isValid())
+    if (pos >= m_modpacks.size() || pos < 0 || !index.isValid()) {
         return false;
+    }
 
     m_modpacks[pos] = value.value<ModPlatform::IndexedPack::Ptr>();
 
     return true;
 }
 
-void ListModel::logoLoaded(QString logo, QIcon out)
+void ListModel::logoLoaded(const QString& logo, const QIcon& out)
 {
     m_loadingLogos.removeAll(logo);
     m_logoMap.insert(logo, out);
@@ -96,13 +98,13 @@ void ListModel::logoLoaded(QString logo, QIcon out)
     }
 }
 
-void ListModel::logoFailed(QString logo)
+void ListModel::logoFailed(const QString& logo)
 {
     m_failedLogos.append(logo);
     m_loadingLogos.removeAll(logo);
 }
 
-void ListModel::requestLogo(QString logo, QString url)
+void ListModel::requestLogo(const QString& logo, const QString& url)
 {
     if (m_loadingLogos.contains(logo) || m_failedLogos.contains(logo)) {
         return;
@@ -132,7 +134,7 @@ void ListModel::requestLogo(QString logo, QString url)
     m_loadingLogos.append(logo);
 }
 
-void ListModel::getLogo(const QString& logo, const QString& logoUrl, LogoCallback callback)
+void ListModel::getLogo(const QString& logo, const QString& logoUrl, const LogoCallback& callback)
 {
     if (m_logoMap.contains(logo)) {
         callback(APPLICATION->metacache()->resolveEntry("FlamePacks", QString("logos/%1").arg(logo))->getFullPath());
@@ -153,8 +155,9 @@ bool ListModel::canFetchMore([[maybe_unused]] const QModelIndex& parent) const
 
 void ListModel::fetchMore(const QModelIndex& parent)
 {
-    if (parent.isValid())
+    if (parent.isValid()) {
         return;
+    }
     if (m_nextSearchOffset == 0) {
         qWarning() << "fetchMore with 0 offset is wrong...";
         return;
@@ -170,7 +173,7 @@ void ListModel::performPaginatedSearch()
         if (!projectId.isEmpty()) {
             ResourceAPI::Callback<ModPlatform::IndexedPack::Ptr> callbacks;
 
-            callbacks.on_fail = [this](QString reason, int) { searchRequestFailed(reason); };
+            callbacks.on_fail = [this](QString reason, int) { searchRequestFailed(std::move(reason)); };
             callbacks.on_succeed = [this](auto& pack) { searchRequestForOneSucceeded(pack); };
             callbacks.on_abort = [this] {
                 qCritical() << "Search task aborted by an unknown reason!";
@@ -191,7 +194,7 @@ void ListModel::performPaginatedSearch()
     ResourceAPI::Callback<QList<ModPlatform::IndexedPack::Ptr>> callbacks{};
 
     callbacks.on_succeed = [this](auto& doc) { searchRequestFinished(doc); };
-    callbacks.on_fail = [this](QString reason, int) { searchRequestFailed(reason); };
+    callbacks.on_fail = [this](QString reason, int) { searchRequestFailed(std::move(reason)); };
     callbacks.on_abort = [this] {
         qCritical() << "Search task aborted by an unknown reason!";
         searchRequestFailed("Aborted");
@@ -212,7 +215,7 @@ void ListModel::searchWithTerm(const QString& term, int sort, std::shared_ptr<Mo
     }
     m_currentSearchTerm = term;
     m_currentSort = sort;
-    m_filter = filter;
+    m_filter = std::move(filter);
     if (hasActiveSearchJob()) {
         m_jobPtr->abort();
         m_searchState = ResetRequested;
@@ -229,8 +232,9 @@ void ListModel::searchWithTerm(const QString& term, int sort, std::shared_ptr<Mo
 
 void Flame::ListModel::searchRequestFinished(QList<ModPlatform::IndexedPack::Ptr>& newList)
 {
-    if (hasActiveSearchJob())
+    if (hasActiveSearchJob()) {
         return;
+    }
 
     if (newList.size() < 25) {
         m_searchState = Finished;
@@ -240,15 +244,16 @@ void Flame::ListModel::searchRequestFinished(QList<ModPlatform::IndexedPack::Ptr
     }
 
     // When you have a Qt build with assertions turned on, proceeding here will abort the application
-    if (newList.size() == 0)
+    if (newList.size() == 0) {
         return;
+    }
 
     beginInsertRows(QModelIndex(), m_modpacks.size(), m_modpacks.size() + newList.size() - 1);
     m_modpacks.append(newList);
     endInsertRows();
 }
 
-void Flame::ListModel::searchRequestForOneSucceeded(ModPlatform::IndexedPack::Ptr pack)
+void Flame::ListModel::searchRequestForOneSucceeded(const ModPlatform::IndexedPack::Ptr& pack)
 {
     m_jobPtr.reset();
 
@@ -257,7 +262,7 @@ void Flame::ListModel::searchRequestForOneSucceeded(ModPlatform::IndexedPack::Pt
     endInsertRows();
 }
 
-void Flame::ListModel::searchRequestFailed(QString reason)
+void Flame::ListModel::searchRequestFailed(const QString& reason)
 {
     m_jobPtr.reset();
 

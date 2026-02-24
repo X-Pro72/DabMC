@@ -23,12 +23,12 @@ class InstancePageProvider : protected QObject, public BasePageProvider {
    public:
     explicit InstancePageProvider(BaseInstance* parent) { inst = parent; }
 
-    virtual ~InstancePageProvider() = default;
-    virtual QList<BasePage*> getPages() override
+    ~InstancePageProvider() override = default;
+    QList<BasePage*> getPages() override
     {
         QList<BasePage*> values;
         values.append(new LogPage(inst));
-        MinecraftInstance* onesix = dynamic_cast<MinecraftInstance*>(inst);
+        auto* onesix = dynamic_cast<MinecraftInstance*>(inst);
         values.append(new VersionPage(onesix));
         values.append(ManagedPackPage::createPage(onesix));
         auto modsPage = new ModFolderPage(onesix, onesix->loaderModList());
@@ -49,7 +49,7 @@ class InstancePageProvider : protected QObject, public BasePageProvider {
         return values;
     }
 
-    virtual QString dialogTitle() override { return tr("Edit Instance (%1)").arg(inst->name()); }
+    QString dialogTitle() override { return tr("Edit Instance (%1)").arg(inst->name()); }
 
    protected:
     BaseInstance* inst;

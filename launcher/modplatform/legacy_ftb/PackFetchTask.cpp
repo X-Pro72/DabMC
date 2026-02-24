@@ -72,7 +72,7 @@ void PackFetchTask::fetchPrivate(const QStringList& toFetch)
 
     for (auto& packCode : toFetch) {
         auto data = std::make_shared<QByteArray>();
-        NetJob* job = new NetJob("Fetching private pack", m_network);
+        auto* job = new NetJob("Fetching private pack", m_network);
         job->addNetAction(Net::ApiDownload::makeByteArray(privatePackBaseUrl.arg(packCode), data.get()));
         job->setAskRetry(false);
 
@@ -89,7 +89,7 @@ void PackFetchTask::fetchPrivate(const QStringList& toFetch)
             data->clear();
         });
 
-        connect(job, &NetJob::failed, this, [this, job, packCode, data](QString reason) {
+        connect(job, &NetJob::failed, this, [this, job, packCode, data](const QString& reason) {
             emit privateFileDownloadFailed(reason, packCode);
             job->deleteLater();
 
@@ -159,7 +159,7 @@ bool PackFetchTask::parseAndAddPacks(QByteArray& data, PackType packType, Modpac
         modpack.bugged = false;
 
         // remove empty if the xml is bugged
-        for (QString curr : modpack.oldVersions) {
+        for (const QString& curr : modpack.oldVersions) {
             if (curr.isNull() || curr.isEmpty()) {
                 modpack.oldVersions.removeAll(curr);
                 modpack.bugged = true;
@@ -190,7 +190,7 @@ bool PackFetchTask::parseAndAddPacks(QByteArray& data, PackType packType, Modpac
     return true;
 }
 
-void PackFetchTask::fileDownloadFailed(QString reason)
+void PackFetchTask::fileDownloadFailed(const QString& reason)
 {
     qWarning() << "Fetching FTBPacks failed:" << reason;
     emit failed(reason);

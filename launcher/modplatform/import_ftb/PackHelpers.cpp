@@ -34,16 +34,16 @@ QIcon loadFTBIcon(const QString& imagePath)
     static const QHash<char, QByteArray> imageTypeMap = { { 0x00, "png" }, { 0x01, "jpg" }, { 0x02, "gif" }, { 0x03, "webp" } };
     QFile file(imagePath);
     if (!file.exists() || !file.open(QIODevice::ReadOnly)) {
-        return QIcon();
+        return {};
     }
     char type;
     if (!file.getChar(&type)) {
         qDebug() << "Missing FTB image type header at" << imagePath;
-        return QIcon();
+        return {};
     }
     if (!imageTypeMap.contains(type)) {
         qDebug().nospace().noquote() << "Don't recognize FTB image type 0x" << QString::number(type, 16);
-        return QIcon();
+        return {};
     }
 
     auto imageType = imageTypeMap[type];
@@ -52,17 +52,18 @@ QIcon loadFTBIcon(const QString& imagePath)
     auto pixmap = QPixmap::fromImageReader(&reader);
     if (pixmap.isNull()) {
         qDebug() << "The FTB image at" << imagePath << "is not valid";
-        return QIcon();
+        return {};
     }
     return QIcon(pixmap);
 }
 
-Modpack parseDirectory(QString path)
+Modpack parseDirectory(const QString& path)
 {
     Modpack modpack{ path };
     auto instanceFile = QFileInfo(FS::PathCombine(path, "instance.json"));
-    if (!instanceFile.exists() || !instanceFile.isFile())
+    if (!instanceFile.exists() || !instanceFile.isFile()) {
         return {};
+    }
     try {
         auto doc = Json::requireDocument(instanceFile.absoluteFilePath(), "FTB_APP instance JSON file");
         const auto root = doc.object();
@@ -109,7 +110,7 @@ Modpack parseDirectory(QString path)
     return modpack;
 }
 
-void legacyInstanceParsing(QString path, std::optional<ModPlatform::ModLoaderType>* loaderType, QString* loaderVersion)
+void legacyInstanceParsing(const QString& path, std::optional<ModPlatform::ModLoaderType>* loaderType, QString* loaderVersion)
 {
     auto versionsFile = QFileInfo(FS::PathCombine(path, ".ftbapp", "version.json"));
     if (!versionsFile.exists() || !versionsFile.isFile()) {
@@ -132,7 +133,8 @@ void legacyInstanceParsing(QString path, std::optional<ModPlatform::ModLoaderTyp
                 *loaderType = ModPlatform::NeoForge;
                 *loaderVersion = version;
                 break;
-            } else if (name == "forge") {
+            }
+            if (name == "forge") {
                 *loaderType = ModPlatform::Forge;
                 *loaderVersion = version;
                 break;

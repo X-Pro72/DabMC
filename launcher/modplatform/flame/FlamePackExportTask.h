@@ -73,8 +73,8 @@ class FlamePackExportTask : public Task {
     FlameAPI api;
 
     QFileInfoList files;
-    QMap<QString, HashInfo> pendingHashes{};
-    QMap<QString, ResolvedFile> resolvedFiles{};
+    QMap<QString, HashInfo> pendingHashes;
+    QMap<QString, ResolvedFile> resolvedFiles;
     Task::Ptr task;
 
     void collectFiles();

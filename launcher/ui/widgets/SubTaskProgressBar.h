@@ -32,12 +32,12 @@ class SubTaskProgressBar : public QWidget {
     static unique_qobject_ptr<SubTaskProgressBar> create(QWidget* parent = nullptr);
 
     SubTaskProgressBar(QWidget* parent = nullptr);
-    ~SubTaskProgressBar();
+    ~SubTaskProgressBar() override;
 
     void setRange(int min, int max);
     void setValue(int value);
-    void setStatus(QString status);
-    void setDetails(QString details);
+    void setStatus(const QString& status);
+    void setDetails(const QString& details);
 
    private:
     Ui::SubTaskProgressBar* ui;

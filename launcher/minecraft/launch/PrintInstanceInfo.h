@@ -16,6 +16,9 @@
 #pragma once
 
 #include <launch/LaunchStep.h>
+
+#include <utility>
+
 #include "minecraft/auth/AuthSession.h"
 #include "minecraft/launch/MinecraftTarget.h"
 
@@ -24,11 +27,11 @@ class PrintInstanceInfo : public LaunchStep {
     Q_OBJECT
    public:
     explicit PrintInstanceInfo(LaunchTask* parent, AuthSessionPtr session, MinecraftTarget::Ptr targetToJoin)
-        : LaunchStep(parent), m_session(session), m_targetToJoin(targetToJoin) {};
-    virtual ~PrintInstanceInfo() = default;
+        : LaunchStep(parent), m_session(std::move(session)), m_targetToJoin(std::move(targetToJoin)) {};
+    ~PrintInstanceInfo() override = default;
 
-    virtual void executeTask();
-    virtual bool canAbort() const { return false; }
+    void executeTask() override;
+    bool canAbort() const override { return false; }
 
    private:
     AuthSessionPtr m_session;

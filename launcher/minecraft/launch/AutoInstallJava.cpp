@@ -129,7 +129,7 @@ void AutoInstallJava::executeTask()
     emit progressReportingRequest();
 }
 
-void AutoInstallJava::setJavaPath(QString path)
+void AutoInstallJava::setJavaPath(const QString& path)
 {
     auto settings = m_instance->settings();
     settings->set("OverrideJavaLocation", true);
@@ -156,13 +156,12 @@ void AutoInstallJava::setJavaPathFromPartial()
                      MessageLevel::Warning);
         emitSucceeded();
     }
-    return;
 }
 
-void AutoInstallJava::downloadJava(Meta::Version::Ptr version, QString javaName)
+void AutoInstallJava::downloadJava(const Meta::Version::Ptr& version, const QString& javaName)
 {
     auto runtimes = version->data()->runtimes;
-    for (auto java : runtimes) {
+    for (const auto& java : runtimes) {
         if (java->runtimeOS == m_supported_arch && java->name() == javaName) {
             QDir javaDir(APPLICATION->javaPath());
             auto final_path = javaDir.absoluteFilePath(java->m_name);
@@ -185,7 +184,7 @@ void AutoInstallJava::downloadJava(Meta::Version::Ptr version, QString javaName)
             seq->addTask(makeShared<Java::SymlinkTask>(final_path));
             m_current_task = seq;
 #endif
-            connect(m_current_task.get(), &Task::failed, this, [this, deletePath](QString reason) {
+            connect(m_current_task.get(), &Task::failed, this, [this, deletePath](const QString& reason) {
                 deletePath();
                 emitFailed(reason);
             });
@@ -205,8 +204,9 @@ void AutoInstallJava::downloadJava(Meta::Version::Ptr version, QString javaName)
 
 void AutoInstallJava::tryNextMajorJava()
 {
-    if (!isRunning())
+    if (!isRunning()) {
         return;
+    }
     auto versionList = APPLICATION->metadataIndex()->get("net.minecraft.java");
     auto packProfile = m_instance->getPackProfile();
     auto wantedJavaName = packProfile->getProfile()->getCompatibleJavaName();

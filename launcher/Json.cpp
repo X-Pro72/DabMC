@@ -73,14 +73,13 @@ QJsonDocument requireDocument(const QByteArray& data, const QString& what)
     if (isBinaryJson(data)) {
         // FIXME: Is this needed?
         throw JsonException(what + ": Invalid JSON. Binary JSON unsupported");
-    } else {
-        QJsonParseError error;
-        QJsonDocument doc = QJsonDocument::fromJson(data, &error);
-        if (error.error != QJsonParseError::NoError) {
-            throw JsonException(what + ": Error parsing JSON: " + error.errorString());
-        }
-        return doc;
     }
+    QJsonParseError error;
+    QJsonDocument doc = QJsonDocument::fromJson(data, &error);
+    if (error.error != QJsonParseError::NoError) {
+        throw JsonException(what + ": Error parsing JSON: " + error.errorString());
+    }
+    return doc;
 }
 QJsonDocument requireDocument(const QString& filename, const QString& what)
 {
@@ -109,8 +108,9 @@ QJsonDocument parseUntilGarbage(const QByteArray& json, QJsonParseError* error, 
         QByteArray validJson = json.left(offset);
         doc = QJsonDocument::fromJson(validJson, error);
 
-        if (garbage)
+        if (garbage) {
             *garbage = json.right(json.size() - offset);
+        }
     }
 
     return doc;
@@ -127,7 +127,7 @@ void writeStringList(QJsonObject& to, const QString& key, const QStringList& val
 {
     if (!values.isEmpty()) {
         QJsonArray array;
-        for (auto value : values) {
+        for (const auto& value : values) {
             array.append(value);
         }
         to.insert(key, array);
@@ -238,7 +238,7 @@ QUrl requireIsType<QUrl>(const QJsonValue& value, const QString& what)
 {
     const QString string = value.toString(what);
     if (string.isEmpty()) {
-        return QUrl();
+        return {};
     }
     const QUrl url = QUrl(string, QUrl::StrictMode);
     if (!url.isValid()) {
@@ -299,8 +299,9 @@ QStringList toStringList(const QString& jsonString)
     QJsonParseError parseError;
     QJsonDocument doc = QJsonDocument::fromJson(jsonString.toUtf8(), &parseError);
 
-    if (parseError.error != QJsonParseError::NoError || !doc.isArray())
+    if (parseError.error != QJsonParseError::NoError || !doc.isArray()) {
         return {};
+    }
     try {
         return requireIsArrayOf<QString>(doc);
     } catch (Json::JsonException& e) {
@@ -324,8 +325,9 @@ QVariantMap toMap(const QString& jsonString)
     QJsonParseError parseError;
     QJsonDocument doc = QJsonDocument::fromJson(jsonString.toUtf8(), &parseError);
 
-    if (parseError.error != QJsonParseError::NoError || !doc.isObject())
+    if (parseError.error != QJsonParseError::NoError || !doc.isObject()) {
         return {};
+    }
 
     QJsonObject obj = doc.object();
     return obj.toVariantMap();

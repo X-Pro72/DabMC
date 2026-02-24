@@ -28,6 +28,7 @@
 #include <algorithm>
 #include <iterator>
 #include <memory>
+#include <utility>
 #include "Application.h"
 #include "Json.h"
 #include "minecraft/PackProfile.h"
@@ -93,13 +94,14 @@ void FlamePackExportTask::collectHashes()
         // require sensible file types
         if (!std::any_of(FILE_EXTENSIONS.begin(), FILE_EXTENSIONS.end(), [&relative](const QString& extension) {
                 return relative.endsWith('.' + extension) || relative.endsWith('.' + extension + ".disabled");
-            }))
+            })) {
             continue;
+        }
 
         if (relative.startsWith("resourcepacks/") &&
             (relative.endsWith(".zip") || relative.endsWith(".zip.disabled"))) {  // is resourcepack
             auto hashTask = Hashing::createHasher(file.absoluteFilePath(), ModPlatform::ResourceProvider::FLAME);
-            connect(hashTask.get(), &Hashing::Hasher::resultsReady, [this, relative, file](QString hash) {
+            connect(hashTask.get(), &Hashing::Hasher::resultsReady, [this, relative, file](const QString& hash) {
                 if (m_state == Task::State::Running) {
                     pendingHashes.insert(hash, { relative, file.absoluteFilePath(), relative.endsWith(".zip") });
                 }
@@ -123,7 +125,7 @@ void FlamePackExportTask::collectHashes()
             }
 
             auto hashTask = Hashing::createHasher(mod->fileinfo().absoluteFilePath(), ModPlatform::ResourceProvider::FLAME);
-            connect(hashTask.get(), &Hashing::Hasher::resultsReady, [this, mod](QString hash) {
+            connect(hashTask.get(), &Hashing::Hasher::resultsReady, [this, mod](const QString& hash) {
                 if (m_state == Task::State::Running) {
                     pendingHashes.insert(hash, { mod->name(), mod->fileinfo().absoluteFilePath(), mod->enabled(), true });
                 }
@@ -142,7 +144,7 @@ void FlamePackExportTask::collectHashes()
     connect(hashingTask.get(), &Task::failed, this, [this, progressStep](QString reason) {
         progressStep->state = TaskStepState::Failed;
         stepProgress(*progressStep);
-        emitFailed(reason);
+        emitFailed(std::move(reason));
     });
     connect(hashingTask.get(), &Task::stepProgress, this, &FlamePackExportTask::propagateStepProgress);
 
@@ -151,7 +153,7 @@ void FlamePackExportTask::collectHashes()
         stepProgress(*progressStep);
     });
     connect(hashingTask.get(), &Task::status, this, [this, progressStep](QString status) {
-        progressStep->status = status;
+        progressStep->status = std::move(status);
         stepProgress(*progressStep);
     });
     connect(hashingTask.get(), &Task::aborted, this, &FlamePackExportTask::emitAborted);
@@ -174,7 +176,7 @@ void FlamePackExportTask::makeApiRequest()
         fingerprints.push_back(murmur.toUInt());
     }
 
-    task.reset(api.matchFingerprints(fingerprints, response.get()));
+    task.reset(FlameAPI::matchFingerprints(fingerprints, response.get()));
 
     connect(task.get(), &Task::succeeded, this, [this, response] {
         QJsonParseError parseError{};
@@ -217,9 +219,10 @@ void FlamePackExportTask::makeApiRequest()
                 }
 
                 setStatus(tr("Parsing API response from CurseForge for '%1'...").arg(mod->name));
-                if (fileObj["isAvailable"].toBool())
+                if (fileObj["isAvailable"].toBool()) {
                     resolvedFiles.insert(mod->path, { Json::requireInteger(fileObj, "modId"), Json::requireInteger(fileObj, "id"),
                                                       mod->enabled, mod->isMod });
+                }
             }
 
         } catch (Json::JsonException& e) {
@@ -251,7 +254,8 @@ void FlamePackExportTask::getProjectsInfo()
     if (addonIds.isEmpty()) {
         buildZip();
         return;
-    } else if (addonIds.size() == 1) {
+    }
+    if (addonIds.size() == 1) {
         projTask = api.getProject(*addonIds.begin(), response.get());
     } else {
         projTask = api.getProjects(addonIds, response.get());
@@ -270,10 +274,11 @@ void FlamePackExportTask::getProjectsInfo()
 
         try {
             QJsonArray entries;
-            if (addonIds.size() == 1)
+            if (addonIds.size() == 1) {
                 entries = { Json::requireObject(Json::requireObject(doc), "data") };
-            else
+            } else {
                 entries = Json::requireArray(Json::requireObject(doc), "data");
+            }
 
             for (auto entry : entries) {
                 auto entryObj = Json::requireObject(entry);
@@ -283,14 +288,15 @@ void FlamePackExportTask::getProjectsInfo()
 
                     ModPlatform::IndexedPack pack;
                     FlameMod::loadIndexedPack(pack, entryObj);
-                    for (auto key : resolvedFiles.keys()) {
+                    for (const auto& key : resolvedFiles.keys()) {
                         auto val = resolvedFiles.value(key);
                         if (val.addonId == pack.addonId) {
                             val.name = pack.name;
                             val.slug = pack.slug;
                             QStringList authors;
-                            for (auto author : pack.authors)
+                            for (const auto& author : pack.authors) {
                                 authors << author.name;
+                            }
 
                             val.authors = authors.join(", ");
                             resolvedFiles[key] = val;
@@ -325,7 +331,7 @@ void FlamePackExportTask::buildZip()
 
     QStringList exclude;
     std::transform(resolvedFiles.keyBegin(), resolvedFiles.keyEnd(), std::back_insert_iterator(exclude),
-                   [this](QString file) { return m_gameRoot.relativeFilePath(file); });
+                   [this](const QString& file) { return m_gameRoot.relativeFilePath(file); });
     zipTask->setExcludeFiles(exclude);
 
     auto progressStep = std::make_shared<TaskStepProgress>();
@@ -339,7 +345,7 @@ void FlamePackExportTask::buildZip()
     connect(zipTask.get(), &Task::failed, this, [this, progressStep](QString reason) {
         progressStep->state = TaskStepState::Failed;
         stepProgress(*progressStep);
-        emitFailed(reason);
+        emitFailed(std::move(reason));
     });
     connect(zipTask.get(), &Task::stepProgress, this, &FlamePackExportTask::propagateStepProgress);
 
@@ -348,7 +354,7 @@ void FlamePackExportTask::buildZip()
         stepProgress(*progressStep);
     });
     connect(zipTask.get(), &Task::status, this, [this, progressStep](QString status) {
-        progressStep->status = status;
+        progressStep->status = std::move(status);
         stepProgress(*progressStep);
     });
     task.reset(zipTask);
@@ -376,19 +382,21 @@ QByteArray FlamePackExportTask::generateIndex()
     const ComponentPtr neoforge = profile->getComponent("net.neoforged");
 
     // convert all available components to mrpack dependencies
-    if (minecraft != nullptr)
+    if (minecraft != nullptr) {
         version["version"] = minecraft->m_version;
+    }
     QString id;
-    if (quilt != nullptr)
+    if (quilt != nullptr) {
         id = "quilt-" + quilt->m_version;
-    else if (fabric != nullptr)
+    } else if (fabric != nullptr) {
         id = "fabric-" + fabric->m_version;
-    else if (forge != nullptr)
+    } else if (forge != nullptr) {
         id = "forge-" + forge->m_version;
-    else if (neoforge != nullptr) {
+    } else if (neoforge != nullptr) {
         id = "neoforge-";
-        if (minecraft->m_version == "1.20.1")
+        if (minecraft->m_version == "1.20.1") {
             id += "1.20.1-";
+        }
         id += neoforge->m_version;
     }
     version["modLoaders"] = QJsonArray();
@@ -399,13 +407,14 @@ QByteArray FlamePackExportTask::generateIndex()
         version["modLoaders"] = QJsonArray({ loader });
     }
 
-    if (m_options.recommendedRAM > 0)
+    if (m_options.recommendedRAM > 0) {
         version["recommendedRam"] = m_options.recommendedRAM;
+    }
 
     obj["minecraft"] = version;
 
     QJsonArray files;
-    for (auto mod : resolvedFiles) {
+    for (const auto& mod : resolvedFiles) {
         QJsonObject file;
         file["projectID"] = mod.addonId;
         file["fileID"] = mod.version;
@@ -420,7 +429,7 @@ QByteArray FlamePackExportTask::generateIndex()
 QByteArray FlamePackExportTask::generateHTML()
 {
     QString content = "";
-    for (auto mod : resolvedFiles) {
+    for (const auto& mod : resolvedFiles) {
         if (mod.isMod) {
             content += QString(TEMPLATE)
                            .replace("{name}", mod.name.toHtmlEscaped())

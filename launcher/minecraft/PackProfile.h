@@ -76,14 +76,14 @@ class PackProfile : public QAbstractListModel {
     };
 
     explicit PackProfile(MinecraftInstance* instance);
-    virtual ~PackProfile();
+    ~PackProfile() override;
 
-    virtual QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
-    virtual bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole) override;
-    virtual QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
-    virtual int rowCount(const QModelIndex& parent = QModelIndex()) const override;
-    virtual int columnCount(const QModelIndex& parent) const override;
-    virtual Qt::ItemFlags flags(const QModelIndex& index) const override;
+    QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
+    bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole) override;
+    QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
+    int rowCount(const QModelIndex& parent = QModelIndex()) const override;
+    int columnCount(const QModelIndex& parent) const override;
+    Qt::ItemFlags flags(const QModelIndex& index) const override;
 
     /// call this to explicitly mark the component list as loaded - this is used to build a new component list from scratch.
     void buildingFromScratch();
@@ -95,7 +95,7 @@ class PackProfile : public QAbstractListModel {
     void installCustomJar(QString selectedFile);
 
     /// install MMC/Prism component files
-    bool installComponents(QStringList selectedFiles);
+    bool installComponents(const QStringList& selectedFiles);
 
     /// install Java agent files
     void installAgents(QStringList selectedFiles);
@@ -169,7 +169,7 @@ class PackProfile : public QAbstractListModel {
     bool saveIsScheduled() const;
 
     /// insert component so that its index is ideally the specified one (returns real index)
-    void insertComponent(size_t index, ComponentPtr component);
+    void insertComponent(size_t index, const ComponentPtr& component);
 
     QString componentsFilePath() const;
     QString patchesPattern() const;
@@ -183,10 +183,10 @@ class PackProfile : public QAbstractListModel {
 
    private:
     Result load();
-    bool installJarMods_internal(QStringList filepaths);
-    bool installCustomJar_internal(QString filepath);
-    bool installAgents_internal(QStringList filepaths);
-    bool removeComponent_internal(ComponentPtr patch);
+    bool installJarMods_internal(const QStringList& filepaths);
+    bool installCustomJar_internal(const QString& filepath);
+    bool installAgents_internal(const QStringList& filepaths);
+    bool removeComponent_internal(const ComponentPtr& patch);
 
    private: /* data */
     std::unique_ptr<PackProfileData> d;

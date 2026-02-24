@@ -21,6 +21,7 @@
 #include <QDateTime>
 #include <QStringList>
 #include <memory>
+#include <utility>
 
 struct archive;
 struct archive_entry;
@@ -28,7 +29,7 @@ namespace MMCZip {
 class ArchiveReader {
    public:
     using ArchivePtr = std::unique_ptr<struct archive, int (*)(struct archive*)>;
-    ArchiveReader(QString fileName) : m_archivePath(fileName) {}
+    ArchiveReader(QString fileName) : m_archivePath(std::move(fileName)) {}
     virtual ~ArchiveReader() = default;
 
     QStringList getFiles();
@@ -48,7 +49,7 @@ class ArchiveReader {
 
         QByteArray readAll(int* outStatus = nullptr);
         bool skip();
-        bool writeFile(archive* out, QString targetFileName = "", bool notBlock = false);
+        bool writeFile(archive* out, const QString& targetFileName = "", bool notBlock = false);
 
        private:
         int readNextHeader();
@@ -59,14 +60,14 @@ class ArchiveReader {
         archive_entry* m_entry;
     };
 
-    std::unique_ptr<File> goToFile(QString filename);
-    bool parse(std::function<bool(File*)>);
-    bool parse(std::function<bool(File*, bool&)>);
+    std::unique_ptr<File> goToFile(const QString& filename);
+    bool parse(const std::function<bool(File*)>&);
+    bool parse(const std::function<bool(File*, bool&)>&);
 
    private:
     QString m_archivePath;
     size_t m_blockSize = 10240;
 
-    QStringList m_fileNames = {};
+    QStringList m_fileNames;
 };
 }  // namespace MMCZip

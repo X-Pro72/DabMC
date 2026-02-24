@@ -56,20 +56,20 @@ class ScreenshotsPage : public QMainWindow, public BasePage {
     Q_OBJECT
 
    public:
-    explicit ScreenshotsPage(QString path, QWidget* parent = 0);
-    virtual ~ScreenshotsPage();
+    explicit ScreenshotsPage(QString path, QWidget* parent = nullptr);
+    ~ScreenshotsPage() override;
 
     void openedImpl() override;
     void closedImpl() override;
 
     enum { NothingDone = 0x42 };
 
-    virtual bool eventFilter(QObject*, QEvent*) override;
-    virtual QString displayName() const override { return tr("Screenshots"); }
-    virtual QIcon icon() const override { return QIcon::fromTheme("screenshots"); }
-    virtual QString id() const override { return "screenshots"; }
-    virtual QString helpPage() const override { return "Screenshots-management"; }
-    virtual bool apply() override { return !m_uploadActive; }
+    bool eventFilter(QObject*, QEvent*) override;
+    QString displayName() const override { return tr("Screenshots"); }
+    QIcon icon() const override { return QIcon::fromTheme("screenshots"); }
+    QString id() const override { return "screenshots"; }
+    QString helpPage() const override { return "Screenshots-management"; }
+    bool apply() override { return !m_uploadActive; }
     void retranslate() override;
 
    protected:

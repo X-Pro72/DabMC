@@ -19,20 +19,24 @@
 #include <launch/LaunchStep.h>
 #include <minecraft/auth/AuthSession.h>
 
+#include <utility>
+
+#include <utility>
+
 #include "MinecraftTarget.h"
 
 class LauncherPartLaunch : public LaunchStep {
     Q_OBJECT
    public:
     explicit LauncherPartLaunch(LaunchTask* parent);
-    virtual ~LauncherPartLaunch() = default;
+    ~LauncherPartLaunch() override = default;
 
-    virtual void executeTask();
-    virtual bool abort();
-    virtual void proceed();
-    virtual bool canAbort() const { return true; }
+    void executeTask() override;
+    bool abort() override;
+    void proceed() override;
+    bool canAbort() const override { return true; }
     void setWorkingDirectory(const QString& wd);
-    void setAuthSession(AuthSessionPtr session) { m_session = session; }
+    void setAuthSession(AuthSessionPtr session) { m_session = std::move(session); }
 
     void setTargetToJoin(MinecraftTarget::Ptr targetToJoin) { m_targetToJoin = std::move(targetToJoin); }
 

@@ -42,6 +42,8 @@
 #include <net/ApiDownload.h>
 #include <net/ChecksumValidator.h>
 
+#include <utility>
+
 /**
  * @brief Collect applicable files for the library.
  *
@@ -115,7 +117,7 @@ QList<Net::NetRequest::Ptr> Library::getDownloads(const RuntimeContext& runtimeC
     bool local = isLocal();
 
     // Lambda function to check if a local file exists
-    auto check_local_file = [overridePath, &failedLocalFiles](QString storage) {
+    auto check_local_file = [overridePath, &failedLocalFiles](const QString& storage) {
         QFileInfo fileinfo(storage);
         QString fileName = fileinfo.fileName();
         auto fullPath = FS::PathCombine(overridePath, fileName);
@@ -128,7 +130,8 @@ QList<Net::NetRequest::Ptr> Library::getDownloads(const RuntimeContext& runtimeC
     };
 
     // Lambda function to add a download request
-    auto add_download = [this, local, check_local_file, cache, stale, &out](QString storage, QString url, QString sha1) {
+    auto add_download = [this, local, check_local_file, cache, stale, &out](const QString& storage, const QString& url,
+                                                                            const QString& sha1) {
         if (local) {
             return check_local_file(storage);
         }
@@ -136,8 +139,9 @@ QList<Net::NetRequest::Ptr> Library::getDownloads(const RuntimeContext& runtimeC
         if (stale) {
             entry->setStale(true);
         }
-        if (!entry->isStale())
+        if (!entry->isStale()) {
             return true;
+        }
         Net::Download::Options options;
         if (stale) {
             options |= Net::Download::Option::AcceptLocalFiles;
@@ -209,9 +213,8 @@ QList<Net::NetRequest::Ptr> Library::getDownloads(const RuntimeContext& runtimeC
 
             if (m_repositoryURL.endsWith('/')) {
                 return m_repositoryURL + raw_storage;
-            } else {
-                return m_repositoryURL + QChar('/') + raw_storage;
             }
+            return m_repositoryURL + QChar('/') + raw_storage;
         }();
         if (raw_storage.contains("${arch}")) {
             QString cooked_storage = raw_storage;
@@ -245,8 +248,9 @@ bool Library::isActive(const RuntimeContext& runtimeContext) const
         Rule::Action ruleResult = Rule::Disallow;
         for (auto rule : m_rules) {
             Rule::Action temp = rule.apply(runtimeContext);
-            if (temp != Rule::Defer)
+            if (temp != Rule::Defer) {
                 ruleResult = temp;
+            }
         }
         result = result && (ruleResult == Rule::Allow);
     }
@@ -290,11 +294,13 @@ QString Library::getCompatibleNative(const RuntimeContext& runtimeContext) const
     // try to match precise classifier "[os]-[arch]"
     auto entry = m_nativeClassifiers.constFind(runtimeContext.getClassifier());
     // try to match imprecise classifier on legacy architectures "[os]"
-    if (entry == m_nativeClassifiers.constEnd() && runtimeContext.isLegacyArch())
+    if (entry == m_nativeClassifiers.constEnd() && runtimeContext.isLegacyArch()) {
         entry = m_nativeClassifiers.constFind(runtimeContext.system);
+    }
 
-    if (entry == m_nativeClassifiers.constEnd())
-        return QString();
+    if (entry == m_nativeClassifiers.constEnd()) {
+        return {};
+    }
 
     return entry.value();
 }
@@ -306,7 +312,7 @@ QString Library::getCompatibleNative(const RuntimeContext& runtimeContext) const
  */
 void Library::setStoragePrefix(QString prefix)
 {
-    m_storagePrefix = prefix;
+    m_storagePrefix = std::move(prefix);
 }
 
 /**
@@ -373,8 +379,9 @@ QString Library::filename(const RuntimeContext& runtimeContext) const
  */
 QString Library::displayName(const RuntimeContext& runtimeContext) const
 {
-    if (!m_displayname.isEmpty())
+    if (!m_displayname.isEmpty()) {
         return m_displayname;
+    }
     return filename(runtimeContext);
 }
 

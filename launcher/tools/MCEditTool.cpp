@@ -43,7 +43,7 @@ bool MCEditTool::check(const QString& toolPath, QString& error)
     return true;
 }
 
-QString MCEditTool::getProgramPath()
+QString MCEditTool::getProgramPath() const
 {
 #ifdef Q_OS_MACOS
     return path();
@@ -53,10 +53,11 @@ QString MCEditTool::getProgramPath()
 #if defined(Q_OS_LINUX) || defined(Q_OS_FREEBSD) || defined(Q_OS_OPENBSD)
     if (mceditDir.exists("mcedit.sh")) {
         return mceditDir.absoluteFilePath("mcedit.sh");
-    } else if (mceditDir.exists("mcedit.py")) {
+    }
+    if (mceditDir.exists("mcedit.py")) {
         return mceditDir.absoluteFilePath("mcedit.py");
     }
-    return QString();
+    return {};
 #elif defined(Q_OS_WIN32)
     if (mceditDir.exists("mcedit.exe")) {
         return mceditDir.absoluteFilePath("mcedit.exe");

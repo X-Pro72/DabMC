@@ -153,8 +153,9 @@ void JavaWizardWidget::setupUi()
         m_veriticalJavaLayout->addWidget(m_autodownloadCheckBox);
         connect(m_autodetectJavaCheckBox, &QCheckBox::stateChanged, this, [this] {
             m_autodownloadCheckBox->setEnabled(m_autodetectJavaCheckBox->isChecked());
-            if (!m_autodetectJavaCheckBox->isChecked())
+            if (!m_autodetectJavaCheckBox->isChecked()) {
                 m_autodownloadCheckBox->setChecked(false);
+            }
         });
 
         connect(m_autodownloadCheckBox, &QCheckBox::stateChanged, this, [this] {
@@ -285,8 +286,9 @@ int JavaWizardWidget::maxHeapSize() const
 {
     auto min = m_minMemSpinBox->value();
     auto max = m_maxMemSpinBox->value();
-    if (max < min)
+    if (max < min) {
         max = min;
+    }
     return max;
 }
 
@@ -294,8 +296,9 @@ int JavaWizardWidget::minHeapSize() const
 {
     auto min = m_minMemSpinBox->value();
     auto max = m_maxMemSpinBox->value();
-    if (min > max)
+    if (min > max) {
         min = max;
+    }
     return min;
 }
 
@@ -333,7 +336,7 @@ void JavaWizardWidget::memoryValueChanged()
     }
 }
 
-void JavaWizardWidget::javaVersionSelected(BaseVersion::Ptr version)
+void JavaWizardWidget::javaVersionSelected(const BaseVersion::Ptr& version)
 {
     auto java = std::dynamic_pointer_cast<JavaInstall>(version);
     if (!java) {

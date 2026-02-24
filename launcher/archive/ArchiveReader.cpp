@@ -34,8 +34,9 @@ QStringList ArchiveReader::getFiles()
 bool ArchiveReader::collectFiles(bool onlyFiles)
 {
     return parse([this, onlyFiles](File* f) {
-        if (!onlyFiles || f->isFile())
+        if (!onlyFiles || f->isFile()) {
             m_fileNames << f->filename();
+        }
         return f->skip();
     });
 }
@@ -78,7 +79,7 @@ int ArchiveReader::File::readNextHeader()
     return archive_read_next_header(m_archive.get(), &m_entry);
 }
 
-auto ArchiveReader::goToFile(QString filename) -> std::unique_ptr<File>
+auto ArchiveReader::goToFile(const QString& filename) -> std::unique_ptr<File>
 {
     auto f = std::make_unique<File>();
     auto a = f->m_archive.get();
@@ -110,8 +111,9 @@ static int copy_data(struct archive* ar, struct archive* aw, bool notBlock = fal
 
     for (;;) {
         r = archive_read_data_block(ar, &buff, &size, &offset);
-        if (r == ARCHIVE_EOF)
+        if (r == ARCHIVE_EOF) {
             return (ARCHIVE_OK);
+        }
         if (r < ARCHIVE_OK) {
             qCritical() << "Failed reading data block:" << archive_error_string(ar);
             return (r);
@@ -128,7 +130,7 @@ static int copy_data(struct archive* ar, struct archive* aw, bool notBlock = fal
     }
 }
 
-bool ArchiveReader::File::writeFile(archive* out, QString targetFileName, bool notBlock)
+bool ArchiveReader::File::writeFile(archive* out, const QString& targetFileName, bool notBlock)
 {
     auto entry = m_entry;
     std::unique_ptr<archive_entry, decltype(&archive_entry_free)> entryClone(nullptr, &archive_entry_free);
@@ -141,20 +143,24 @@ bool ArchiveReader::File::writeFile(archive* out, QString targetFileName, bool n
     if (archive_write_header(out, entry) < ARCHIVE_OK) {
         qCritical() << "Failed to write header to entry:" << filename() << "-" << archive_error_string(out);
         return false;
-    } else if (archive_entry_size(m_entry) > 0) {
+    }
+    if (archive_entry_size(m_entry) > 0) {
         auto r = copy_data(m_archive.get(), out, notBlock);
-        if (r < ARCHIVE_OK)
+        if (r < ARCHIVE_OK) {
             qCritical() << "Failed reading data block:" << archive_error_string(out);
-        if (r < ARCHIVE_WARN)
+        }
+        if (r < ARCHIVE_WARN) {
             return false;
+        }
     }
     auto r = archive_write_finish_entry(out);
-    if (r < ARCHIVE_OK)
+    if (r < ARCHIVE_OK) {
         qCritical() << "Failed to finish writing entry:" << archive_error_string(out);
+    }
     return (r >= ARCHIVE_WARN);
 }
 
-bool ArchiveReader::parse(std::function<bool(File*, bool&)> doStuff)
+bool ArchiveReader::parse(const std::function<bool(File*, bool&)>& doStuff)
 {
     auto f = std::make_unique<File>();
     auto a = f->m_archive.get();
@@ -181,7 +187,7 @@ bool ArchiveReader::parse(std::function<bool(File*, bool&)> doStuff)
     return true;
 }
 
-bool ArchiveReader::parse(std::function<bool(File*)> doStuff)
+bool ArchiveReader::parse(const std::function<bool(File*)>& doStuff)
 {
     return parse([doStuff](File* f, bool&) { return doStuff(f); });
 }
@@ -205,26 +211,32 @@ QString ArchiveReader::getZipName()
 
 bool ArchiveReader::exists(const QString& filePath) const
 {
-    if (filePath == QLatin1String("/") || filePath.isEmpty())
+    if (filePath == QLatin1String("/") || filePath.isEmpty()) {
         return true;
+    }
     // Normalize input path (remove trailing slash, if any)
     QString normalizedPath = QDir::cleanPath(filePath);
-    if (normalizedPath.startsWith('/'))
+    if (normalizedPath.startsWith('/')) {
         normalizedPath.remove(0, 1);
-    if (normalizedPath == QLatin1String("."))
+    }
+    if (normalizedPath == QLatin1String(".")) {
         return true;
-    if (normalizedPath == QLatin1String(".."))
+    }
+    if (normalizedPath == QLatin1String("..")) {
         return false;  // root only
+    }
 
     // Check for exact file match
-    if (m_fileNames.contains(normalizedPath, Qt::CaseInsensitive))
+    if (m_fileNames.contains(normalizedPath, Qt::CaseInsensitive)) {
         return true;
+    }
 
     // Check for directory existence by seeing if any file starts with that path
     QString dirPath = normalizedPath + QLatin1Char('/');
     for (const QString& f : m_fileNames) {
-        if (f.startsWith(dirPath, Qt::CaseInsensitive))
+        if (f.startsWith(dirPath, Qt::CaseInsensitive)) {
             return true;
+        }
     }
 
     return false;

@@ -55,13 +55,14 @@ class VersionPage : public QMainWindow, public BasePage {
     Q_OBJECT
 
    public:
-    explicit VersionPage(MinecraftInstance* inst, QWidget* parent = 0);
-    virtual ~VersionPage();
-    virtual QString displayName() const override { return tr("Version"); }
-    virtual QIcon icon() const override;
-    virtual QString id() const override { return "version"; }
-    virtual QString helpPage() const override { return "Instance-Version"; }
-    virtual bool shouldDisplay() const override;
+    explicit VersionPage(MinecraftInstance* inst, QWidget* parent = nullptr);
+
+    ~VersionPage() override;
+    QString displayName() const override { return tr("Version"); }
+    QIcon icon() const override;
+    QString id() const override { return "version"; }
+    QString helpPage() const override { return "Instance-Version"; }
+    bool shouldDisplay() const override;
     void retranslate() override;
 
     void openedImpl() override;
@@ -115,7 +116,7 @@ class VersionPage : public QMainWindow, public BasePage {
     void versionCurrent(const QModelIndex& current, const QModelIndex& previous);
 
    private slots:
-    void onGameUpdateError(QString error);
+    void onGameUpdateError(const QString& error);
     void packageCurrent(const QModelIndex& current, const QModelIndex& previous);
     void showContextMenu(const QPoint& pos);
     void onFilterTextChanged(const QString& newContents);

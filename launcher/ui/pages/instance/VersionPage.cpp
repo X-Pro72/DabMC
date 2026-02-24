@@ -83,7 +83,7 @@ class IconProxy : public QIdentityProxyModel {
         m_parentWidget = parentWidget;
     }
 
-    virtual QVariant data(const QModelIndex& proxyIndex, int role = Qt::DisplayRole) const override
+    QVariant data(const QModelIndex& proxyIndex, int role = Qt::DisplayRole) const override
     {
         QVariant var = QIdentityProxyModel::data(proxyIndex, role);
         int column = proxyIndex.column();
@@ -92,7 +92,8 @@ class IconProxy : public QIdentityProxyModel {
                 auto string = var.toString();
                 if (string == "warning") {
                     return QIcon::fromTheme("status-yellow");
-                } else if (string == "error") {
+                }
+                if (string == "error") {
                     return QIcon::fromTheme("status-bad");
                 }
             }
@@ -234,12 +235,13 @@ void VersionPage::updateVersionControls()
 
 void VersionPage::updateButtons(int row)
 {
-    if (row == -1)
+    if (row == -1) {
         row = currentRow();
+    }
     auto patch = m_profile->getComponent(row);
     ui->actionRemove->setEnabled(patch && patch->isRemovable());
-    ui->actionMove_down->setEnabled(patch && patch->isMoveable());
-    ui->actionMove_up->setEnabled(patch && patch->isMoveable());
+    ui->actionMove_down->setEnabled(patch && Component::isMoveable());
+    ui->actionMove_up->setEnabled(patch && Component::isMoveable());
     ui->actionChange_version->setEnabled(patch && patch->isVersionChangeable(false));
     ui->actionEdit->setEnabled(patch && patch->isCustom());
     ui->actionCustomize->setEnabled(patch && patch->isCustomizable());
@@ -285,8 +287,9 @@ void VersionPage::on_actionRemove_triggered()
                                                      QMessageBox::Warning, QMessageBox::Yes | QMessageBox::No, QMessageBox::No)
                             ->exec();
 
-        if (response != QMessageBox::Yes)
+        if (response != QMessageBox::Yes) {
             return;
+        }
     }
     // FIXME: use actual model, not reloading.
     if (!m_profile->remove(index)) {
@@ -337,8 +340,9 @@ void VersionPage::on_actionAdd_Agents_triggered()
     QStringList list = GuiUtil::BrowseForFiles("agent", tr("Select agents"), tr("Java agents") + " (*.jar)",
                                                APPLICATION->settings()->get("CentralModsDir").toString(), this->parentWidget());
 
-    if (!list.isEmpty())
+    if (!list.isEmpty()) {
         m_profile->installAgents(list);
+    }
 
     updateButtons();
 }
@@ -402,8 +406,9 @@ void VersionPage::on_actionChange_version_triggered()
     if (!currentVersion.isEmpty()) {
         vselect.setCurrentVersion(currentVersion);
     }
-    if (!vselect.exec() || !vselect.selectedVersion())
+    if (!vselect.exec() || !vselect.selectedVersion()) {
         return;
+    }
 
     qDebug() << "Change" << uid << "to" << vselect.selectedVersion()->descriptor();
     bool important = false;
@@ -436,7 +441,7 @@ void VersionPage::on_actionDownload_All_triggered()
         return;
     }
     auto task = makeShared<SequentialTask>();
-    for (auto t : updateTasks) {
+    for (const auto& t : updateTasks) {
         task->addTask(t);
     }
     ProgressDialog tDialog(this);
@@ -502,7 +507,7 @@ void VersionPage::preselect(int row)
     updateButtons(row);
 }
 
-void VersionPage::onGameUpdateError(QString error)
+void VersionPage::onGameUpdateError(const QString& error)
 {
     CustomMessageBox::selectable(this, tr("Error updating instance"), error, QMessageBox::Warning)->show();
 }
@@ -572,8 +577,9 @@ void VersionPage::on_actionRevert_triggered()
                                                  QMessageBox::Warning, QMessageBox::Yes | QMessageBox::No, QMessageBox::No)
                         ->exec();
 
-    if (response != QMessageBox::Yes)
+    if (response != QMessageBox::Yes) {
         return;
+    }
 
     if (!m_profile->revertToBase(version)) {
         // TODO: some error box here

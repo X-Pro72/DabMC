@@ -44,26 +44,30 @@
 
 QString askToUpdateInstanceDirName(BaseInstance* instance, const QString& oldName, const QString& newName, QWidget* parent)
 {
-    if (oldName == newName)
-        return QString();
+    if (oldName == newName) {
+        return {};
+    }
 
     QString renamingMode = APPLICATION->settings()->get("InstRenamingMode").toString();
-    if (renamingMode == "MetadataOnly")
-        return QString();
+    if (renamingMode == "MetadataOnly") {
+        return {};
+    }
 
     auto oldRoot = instance->instanceRoot();
     auto newDirName = FS::DirNameFromString(newName, QFileInfo(oldRoot).dir().absolutePath());
     auto newRoot = FS::PathCombine(QFileInfo(oldRoot).dir().absolutePath(), newDirName);
-    if (oldRoot == newRoot)
-        return QString();
-    if (oldRoot == FS::PathCombine(QFileInfo(oldRoot).dir().absolutePath(), newName))
-        return QString();
+    if (oldRoot == newRoot) {
+        return {};
+    }
+    if (oldRoot == FS::PathCombine(QFileInfo(oldRoot).dir().absolutePath(), newName)) {
+        return {};
+    }
 
     // Check for conflict
     if (QDir(newRoot).exists()) {
         QMessageBox::warning(parent, QObject::tr("Cannot rename instance"),
                              QObject::tr("New instance root (%1) already exists. <br />Only the metadata will be renamed.").arg(newRoot));
-        return QString();
+        return {};
     }
 
     // Ask if we should rename
@@ -79,18 +83,21 @@ QString askToUpdateInstanceDirName(BaseInstance* instance, const QString& oldNam
 
         auto res = dialog->exec();
         if (checkBox->isChecked()) {
-            if (res == QMessageBox::Yes)
+            if (res == QMessageBox::Yes) {
                 APPLICATION->settings()->set("InstRenamingMode", "PhysicalDir");
-            else
+            } else {
                 APPLICATION->settings()->set("InstRenamingMode", "MetadataOnly");
+            }
         }
-        if (res == QMessageBox::No)
-            return QString();
+        if (res == QMessageBox::No) {
+            return {};
+        }
     }
 
     // Check for linked instances
-    if (!checkLinkedInstances(instance->id(), parent, QObject::tr("Renaming")))
-        return QString();
+    if (!checkLinkedInstances(instance->id(), parent, QObject::tr("Renaming"))) {
+        return {};
+    }
 
     // Now we can confirm that a renaming is happening
     if (!instance->syncInstanceDirName(newRoot)) {
@@ -100,7 +107,7 @@ QString askToUpdateInstanceDirName(BaseInstance* instance, const QString& oldNam
                                          " - New instance root: %2<br/>"
                                          "Only the metadata is renamed.")
                                  .arg(oldRoot, newRoot));
-        return QString();
+        return {};
     }
     return newRoot;
 }
@@ -119,8 +126,9 @@ bool checkLinkedInstances(const QString& id, QWidget* parent, const QString& ver
                                                          .arg(verb),
                                                      QMessageBox::Warning, QMessageBox::Yes | QMessageBox::No, QMessageBox::No)
                             ->exec();
-        if (response != QMessageBox::Yes)
+        if (response != QMessageBox::Yes) {
             return false;
+        }
     }
     return true;
 }

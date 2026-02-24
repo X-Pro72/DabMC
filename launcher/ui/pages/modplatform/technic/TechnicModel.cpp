@@ -35,9 +35,9 @@
 
 #include "TechnicModel.h"
 #include "Application.h"
-#include "settings/SettingsObject.h"
 #include "BuildConfig.h"
 #include "Json.h"
+#include "settings/SettingsObject.h"
 
 #include "net/ApiDownload.h"
 #include "ui/widgets/ProjectItem.h"
@@ -48,7 +48,7 @@
 
 Technic::ListModel::ListModel(QObject* parent) : QAbstractListModel(parent) {}
 
-Technic::ListModel::~ListModel() {}
+Technic::ListModel::~ListModel() = default;
 
 QVariant Technic::ListModel::data(const QModelIndex& index, int role) const
 {
@@ -131,8 +131,9 @@ void Technic::ListModel::searchWithTerm(const QString& term)
 
 void Technic::ListModel::performSearch()
 {
-    if (hasActiveSearchJob())
+    if (hasActiveSearchJob()) {
         return;
+    }
 
     auto netJob = makeShared<NetJob>("Technic::Search", APPLICATION->network());
     QString searchUrl = "";
@@ -171,8 +172,7 @@ void Technic::ListModel::searchRequestFinished()
     QJsonParseError parse_error;
     QJsonDocument doc = QJsonDocument::fromJson(*response, &parse_error);
     if (parse_error.error != QJsonParseError::NoError) {
-        qWarning() << "Error while parsing JSON response from Technic at" << parse_error.offset
-                   << "reason:" << parse_error.errorString();
+        qWarning() << "Error while parsing JSON response from Technic at" << parse_error.offset << "reason:" << parse_error.errorString();
         qWarning() << *response;
         return;
     }
@@ -189,8 +189,9 @@ void Technic::ListModel::searchRequestFinished()
                     auto technicPackObject = Json::requireObject(technicPack);
                     pack.name = Json::requireString(technicPackObject, "name");
                     pack.slug = Json::requireString(technicPackObject, "slug");
-                    if (pack.slug == "vanilla")
+                    if (pack.slug == "vanilla") {
                         continue;
+                    }
 
                     auto rawURL = technicPackObject["iconUrl"].toString("null");
                     if (rawURL == "null") {
@@ -238,15 +239,16 @@ void Technic::ListModel::searchRequestFinished()
     searchState = Finished;
 
     // When you have a Qt build with assertions turned on, proceeding here will abort the application
-    if (newList.size() == 0)
+    if (newList.size() == 0) {
         return;
+    }
 
     beginInsertRows(QModelIndex(), modpacks.size(), modpacks.size() + newList.size() - 1);
     modpacks.append(newList);
     endInsertRows();
 }
 
-void Technic::ListModel::getLogo(const QString& logo, const QString& logoUrl, Technic::LogoCallback callback)
+void Technic::ListModel::getLogo(const QString& logo, const QString& logoUrl, const Technic::LogoCallback& callback)
 {
     if (m_logoMap.contains(logo)) {
         callback(APPLICATION->metacache()->resolveEntry("TechnicPacks", QString("logos/%1").arg(logo))->getFullPath());
@@ -270,7 +272,7 @@ void Technic::ListModel::searchRequestFailed()
     }
 }
 
-void Technic::ListModel::logoLoaded(QString logo, QString out)
+void Technic::ListModel::logoLoaded(const QString& logo, const QString& out)
 {
     m_loadingLogos.removeAll(logo);
     m_logoMap.insert(logo, QIcon(out));
@@ -281,13 +283,13 @@ void Technic::ListModel::logoLoaded(QString logo, QString out)
     }
 }
 
-void Technic::ListModel::logoFailed(QString logo)
+void Technic::ListModel::logoFailed(const QString& logo)
 {
     m_failedLogos.append(logo);
     m_loadingLogos.removeAll(logo);
 }
 
-void Technic::ListModel::requestLogo(QString logo, QString url)
+void Technic::ListModel::requestLogo(const QString& logo, const QString& url)
 {
     if (m_loadingLogos.contains(logo) || m_failedLogos.contains(logo) || logo == "null") {
         return;

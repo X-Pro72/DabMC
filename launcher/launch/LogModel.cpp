@@ -7,16 +7,18 @@ LogModel::LogModel(QObject* parent) : QAbstractListModel(parent)
 
 int LogModel::rowCount(const QModelIndex& parent) const
 {
-    if (parent.isValid())
+    if (parent.isValid()) {
         return 0;
+    }
 
     return m_numLines;
 }
 
 QVariant LogModel::data(const QModelIndex& index, int role) const
 {
-    if (index.row() < 0 || index.row() >= m_numLines)
-        return QVariant();
+    if (index.row() < 0 || index.row() >= m_numLines) {
+        return {};
+    }
 
     auto row = index.row();
     auto realRow = (row + m_firstLine) % m_maxLines;
@@ -27,7 +29,7 @@ QVariant LogModel::data(const QModelIndex& index, int role) const
         return static_cast<int>(m_content[realRow].level);
     }
 
-    return QVariant();
+    return {};
 }
 
 void LogModel::append(MessageLevel level, QString line)
@@ -62,7 +64,7 @@ void LogModel::suspend(bool suspend)
     m_suspended = suspend;
 }
 
-bool LogModel::suspended()
+bool LogModel::suspended() const
 {
     return m_suspended;
 }
@@ -123,7 +125,7 @@ void LogModel::setMaxLines(int maxLines)
     m_maxLines = maxLines;
 }
 
-int LogModel::getMaxLines()
+int LogModel::getMaxLines() const
 {
     return m_maxLines;
 }
@@ -162,7 +164,7 @@ bool LogModel::colorLines() const
     return m_colorLines;
 }
 
-bool LogModel::isOverFlow()
+bool LogModel::isOverFlow() const
 {
     return m_numLines >= m_maxLines && m_stopOnOverflow;
 }

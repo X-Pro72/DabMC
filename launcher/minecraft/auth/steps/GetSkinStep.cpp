@@ -2,6 +2,7 @@
 #include "GetSkinStep.h"
 
 #include <QNetworkRequest>
+#include <memory>
 
 #include "Application.h"
 
@@ -16,7 +17,7 @@ void GetSkinStep::perform()
 {
     QUrl url(m_data->minecraftProfile.skin.url);
 
-    m_response.reset(new QByteArray());
+    m_response = std::make_unique<QByteArray>();
     m_request = Net::Download::makeByteArray(url, m_response.get());
     m_request->enableAutoRetry(true);
 
@@ -31,7 +32,8 @@ void GetSkinStep::perform()
 
 void GetSkinStep::onRequestDone()
 {
-    if (m_request->error() == QNetworkReply::NoError)
+    if (m_request->error() == QNetworkReply::NoError) {
         m_data->minecraftProfile.skin.data = *m_response;
+    }
     emit finished(AccountTaskState::STATE_WORKING, tr("Got skin"));
 }

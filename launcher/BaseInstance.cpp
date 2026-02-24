@@ -71,7 +71,7 @@ bool shouldStopOnConsoleOverflow(SettingsObject* settings)
     return settings->get("ConsoleOverflowStop").toBool();
 }
 
-BaseInstance::BaseInstance(SettingsObject* globalSettings, std::unique_ptr<SettingsObject> settings, const QString& rootDir) : QObject()
+BaseInstance::BaseInstance(SettingsObject* globalSettings, std::unique_ptr<SettingsObject> settings, const QString& rootDir)
 {
     m_settings = std::move(settings);
     m_global_settings = globalSettings;
@@ -83,8 +83,9 @@ BaseInstance::BaseInstance(SettingsObject* globalSettings, std::unique_ptr<Setti
 
     m_settings->registerSetting("lastLaunchTime", 0);
     m_settings->registerSetting("totalTimePlayed", 0);
-    if (m_settings->get("totalTimePlayed").toLongLong() < 0)
+    if (m_settings->get("totalTimePlayed").toLongLong() < 0) {
         m_settings->reset("totalTimePlayed");
+    }
     m_settings->registerSetting("lastTimePlayed", 0);
 
     m_settings->registerSetting("linkedInstances", "[]");
@@ -97,8 +98,9 @@ BaseInstance::BaseInstance(SettingsObject* globalSettings, std::unique_ptr<Setti
 
     // NOTE: Sometimees InstanceType is already registered, as it was used to identify the type of
     // a locally stored instance
-    if (!m_settings->getSetting("InstanceType"))
+    if (!m_settings->getSetting("InstanceType")) {
         m_settings->registerSetting("InstanceType", "");
+    }
 
     // Custom Commands
     auto commandSetting = m_settings->registerSetting({ "OverrideCommands", "OverrideLaunchCmd" }, false);
@@ -128,7 +130,7 @@ BaseInstance::BaseInstance(SettingsObject* globalSettings, std::unique_ptr<Setti
     m_settings->registerSetting("Profiler", "");
 }
 
-BaseInstance::~BaseInstance() {}
+BaseInstance::~BaseInstance() = default;
 
 QString BaseInstance::getPreLaunchCommand()
 {
@@ -237,7 +239,7 @@ bool BaseInstance::isLinkedToInstanceId(const QString& id) const
     return linkedInstances.contains(id);
 }
 
-void BaseInstance::iconUpdated(QString key)
+void BaseInstance::iconUpdated(const QString& key)
 {
     if (iconKey() == key) {
         emit propertiesChanged(this);
@@ -276,8 +278,9 @@ bool BaseInstance::isRunning() const
 
 void BaseInstance::setRunning(bool running)
 {
-    if (running == m_isRunning)
+    if (running == m_isRunning) {
         return;
+    }
 
     m_isRunning = running;
 
@@ -368,7 +371,7 @@ void BaseInstance::setLastLaunch(qint64 val)
     emit propertiesChanged(this);
 }
 
-void BaseInstance::setNotes(QString val)
+void BaseInstance::setNotes(const QString& val)
 {
     // FIXME: if no change, do not set. setting involves saving a file.
     m_settings->set("notes", val);
@@ -379,7 +382,7 @@ QString BaseInstance::notes() const
     return m_settings->get("notes").toString();
 }
 
-void BaseInstance::setIconKey(QString val)
+void BaseInstance::setIconKey(const QString& val)
 {
     // FIXME: if no change, do not set. setting involves saving a file.
     m_settings->set("iconKey", val);
@@ -391,7 +394,7 @@ QString BaseInstance::iconKey() const
     return m_settings->get("iconKey").toString();
 }
 
-void BaseInstance::setName(QString val)
+void BaseInstance::setName(const QString& val)
 {
     // FIXME: if no change, do not set. setting involves saving a file.
     m_settings->set("name", val);
@@ -430,19 +433,23 @@ QList<ShortcutData> BaseInstance::shortcuts() const
     auto data = m_settings->get("shortcuts").toString().toUtf8();
     QJsonParseError parseError;
     auto document = QJsonDocument::fromJson(data, &parseError);
-    if (parseError.error != QJsonParseError::NoError || !document.isArray())
+    if (parseError.error != QJsonParseError::NoError || !document.isArray()) {
         return {};
+    }
 
     QList<ShortcutData> results;
     for (const auto& elem : document.array()) {
-        if (!elem.isObject())
+        if (!elem.isObject()) {
             continue;
+        }
         auto dict = elem.toObject();
-        if (!dict.contains("name") || !dict.contains("filePath") || !dict.contains("target"))
+        if (!dict.contains("name") || !dict.contains("filePath") || !dict.contains("target")) {
             continue;
+        }
         int value = dict["target"].toInt(-1);
-        if (!dict["name"].isString() || !dict["filePath"].isString() || value < 0 || value >= 3)
+        if (!dict["name"].isString() || !dict["filePath"].isString() || value < 0 || value >= 3) {
             continue;
+        }
 
         QString shortcutName = dict["name"].toString();
         QString filePath = dict["filePath"].toString();
@@ -481,7 +488,7 @@ void BaseInstance::updateRuntimeContext()
     // NOOP
 }
 
-bool BaseInstance::isLegacy()
+bool BaseInstance::isLegacy() const
 {
     return traits().contains("legacyLaunch") || traits().contains("alphaLaunch");
 }

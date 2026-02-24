@@ -41,6 +41,7 @@
 #include <settings/Setting.h>
 
 #include <QDebug>
+#include <utility>
 #include "Application.h"
 #include "FileSystem.h"
 #include "java/JavaInstallList.h"
@@ -48,9 +49,9 @@
 
 #define IBUS "@im=ibus"
 
-JavaUtils::JavaUtils() {}
+JavaUtils::JavaUtils() = default;
 
-QString stripVariableEntries(QString name, QString target, QString remove)
+QString stripVariableEntries(const QString& name, const QString& target, const QString& remove)
 {
     char delimiter = ':';
 #ifdef Q_OS_WIN32
@@ -60,10 +61,11 @@ QString stripVariableEntries(QString name, QString target, QString remove)
     auto targetItems = target.split(delimiter);
     auto toRemove = remove.split(delimiter);
 
-    for (QString item : toRemove) {
+    for (const QString& item : toRemove) {
         bool removed = targetItems.removeOne(item);
-        if (!removed)
+        if (!removed) {
             qWarning() << "Entry" << item << "could not be stripped from variable" << name;
+        }
     }
     return targetItems.join(delimiter);
 }
@@ -83,7 +85,7 @@ QProcessEnvironment CleanEnviroment()
 #endif
         "QT_PLUGIN_PATH", "QT_FONTPATH"
     };
-    for (auto key : rawenv.keys()) {
+    for (const auto& key : rawenv.keys()) {
         auto value = rawenv.value(key);
         // filter out dangerous java crap
         if (ignored.contains(key)) {
@@ -127,13 +129,13 @@ QProcessEnvironment CleanEnviroment()
     return env;
 }
 
-JavaInstallPtr JavaUtils::MakeJavaPtr(QString path, QString id, QString arch)
+JavaInstallPtr JavaUtils::MakeJavaPtr(QString path, const QString& id, QString arch)
 {
     JavaInstallPtr javaVersion(new JavaInstall());
 
     javaVersion->id = id;
-    javaVersion->arch = arch;
-    javaVersion->path = path;
+    javaVersion->arch = std::move(arch);
+    javaVersion->path = std::move(path);
 
     return javaVersion;
 }
@@ -167,7 +169,7 @@ QStringList addJavasFromEnv(QList<QString> javas)
 #else
     QList<QString> javaPaths = env.split(QLatin1String(":"));
 #endif
-    for (QString i : javaPaths) {
+    for (const QString& i : javaPaths) {
         javas.append(i);
     };
     return javas;
@@ -413,17 +415,19 @@ QList<QString> JavaUtils::FindJavaPaths()
 QList<QString> JavaUtils::FindJavaPaths()
 {
     QList<QString> javas;
-    javas.append(this->GetDefaultJava()->path);
+    javas.append(JavaUtils::GetDefaultJava()->path);
     auto scanJavaDir = [&javas](
                            const QString& dirPath,
                            const std::function<bool(const QFileInfo&)>& filter = [](const QFileInfo&) { return true; }) {
         QDir dir(dirPath);
-        if (!dir.exists())
+        if (!dir.exists()) {
             return;
+        }
         auto entries = dir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
         for (auto& entry : entries) {
-            if (!filter(entry))
+            if (!filter(entry)) {
                 continue;
+            }
 
             QString prefix;
             prefix = entry.canonicalFilePath();
@@ -536,8 +540,9 @@ QStringList getMinecraftJavaBundle()
     while (!processpaths.isEmpty()) {
         auto dirPath = processpaths.takeFirst();
         QDir dir(dirPath);
-        if (!dir.exists())
+        if (!dir.exists()) {
             continue;
+        }
         auto entries = dir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
         auto binFound = false;
         for (auto& entry : entries) {
@@ -566,15 +571,16 @@ QStringList getPrismJavaBundle()
 {
     QList<QString> javas;
 
-    auto scanDir = [&javas](QString prefix) {
+    auto scanDir = [&javas](const QString& prefix) {
         javas.append(FS::PathCombine(prefix, "jre", "bin", JavaUtils::javaExecutable));
         javas.append(FS::PathCombine(prefix, "bin", JavaUtils::javaExecutable));
         javas.append(FS::PathCombine(prefix, JavaUtils::javaExecutable));
     };
     auto scanJavaDir = [scanDir](const QString& dirPath) {
         QDir dir(dirPath);
-        if (!dir.exists())
+        if (!dir.exists()) {
             return;
+        }
         auto entries = dir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
         for (auto& entry : entries) {
             scanDir(entry.canonicalFilePath());

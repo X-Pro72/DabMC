@@ -56,8 +56,8 @@ class QGridLayout;
 class PageContainer : public QWidget, public BasePageContainer {
     Q_OBJECT
    public:
-    explicit PageContainer(BasePageProvider* pageProvider, QString defaultId = QString(), QWidget* parent = 0);
-    virtual ~PageContainer() {}
+    explicit PageContainer(BasePageProvider* pageProvider, QString defaultId = QString(), QWidget* parent = nullptr);
+    ~PageContainer() override = default;
 
     void addButtons(QWidget* buttons);
     void addButtons(QLayout* buttons);
@@ -109,7 +109,7 @@ class PageContainer : public QWidget, public BasePageContainer {
 
    private:
     BasePageContainer* m_container = nullptr;
-    BasePage* m_currentPage = 0;
+    BasePage* m_currentPage = nullptr;
     QSortFilterProxyModel* m_proxyModel;
     PageModel* m_model;
     QStackedLayout* m_pageStack;

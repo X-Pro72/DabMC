@@ -45,7 +45,7 @@ class MSADeviceCodeStep : public AuthStep {
     Q_OBJECT
    public:
     explicit MSADeviceCodeStep(AccountData* data);
-    virtual ~MSADeviceCodeStep() noexcept = default;
+    ~MSADeviceCodeStep() noexcept override = default;
 
     void perform() override;
 
@@ -55,7 +55,7 @@ class MSADeviceCodeStep : public AuthStep {
     void abort() override;
 
    signals:
-    void authorizeWithBrowser(QString url, QString code, int expiresIn);
+    void authorizeWithBrowser(const QString& url, const QString& code, int expiresIn);
 
    private slots:
     void deviceAuthorizationFinished();

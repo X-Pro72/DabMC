@@ -5,11 +5,11 @@
 
 #include "ui_NewsDialog.h"
 
-NewsDialog::NewsDialog(QList<NewsEntryPtr> entries, QWidget* parent) : QDialog(parent), ui(new Ui::NewsDialog())
+NewsDialog::NewsDialog(const QList<NewsEntryPtr>& entries, QWidget* parent) : QDialog(parent), ui(new Ui::NewsDialog())
 {
     ui->setupUi(this);
 
-    for (auto entry : entries) {
+    for (const auto& entry : entries) {
         ui->articleListWidget->addItem(entry->title);
         m_entries.insert(entry->title, entry);
     }
@@ -28,9 +28,8 @@ NewsDialog::NewsDialog(QList<NewsEntryPtr> entries, QWidget* parent) : QDialog(p
     ui->currentArticleContentBrowser->setText(article_entry->content);
     ui->currentArticleContentBrowser->flush();
 
-    connect(this, &QDialog::finished, this, [this] {
-        APPLICATION->settings()->set("NewsGeometry", QString::fromUtf8(saveGeometry().toBase64()));
-    });
+    connect(this, &QDialog::finished, this,
+            [this] { APPLICATION->settings()->set("NewsGeometry", QString::fromUtf8(saveGeometry().toBase64())); });
     const QByteArray base64Geometry = APPLICATION->settings()->get("NewsGeometry").toString().toUtf8();
     restoreGeometry(QByteArray::fromBase64(base64Geometry));
 }
@@ -56,8 +55,9 @@ void NewsDialog::toggleArticleList()
 
     ui->articleListWidget->setHidden(m_article_list_hidden);
 
-    if (m_article_list_hidden)
+    if (m_article_list_hidden) {
         ui->toggleListButton->setText(tr("Show article list"));
-    else
+    } else {
         ui->toggleListButton->setText(tr("Hide article list"));
+    }
 }

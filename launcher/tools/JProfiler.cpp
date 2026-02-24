@@ -9,14 +9,14 @@
 class JProfiler : public BaseProfiler {
     Q_OBJECT
    public:
-    JProfiler(SettingsObject* settings, BaseInstance* instance, QObject* parent = 0);
+    JProfiler(SettingsObject* settings, BaseInstance* instance, QObject* parent = nullptr);
 
    private slots:
     void profilerStarted();
     void profilerFinished(int exit, QProcess::ExitStatus status);
 
    protected:
-    void beginProfilingImpl(LaunchTask* process);
+    void beginProfilingImpl(LaunchTask* process) override;
 
    private:
     int listeningPort = 0;
@@ -36,14 +36,14 @@ void JProfiler::profilerFinished([[maybe_unused]] int exit, QProcess::ExitStatus
     }
     if (m_profilerProcess) {
         m_profilerProcess->deleteLater();
-        m_profilerProcess = 0;
+        m_profilerProcess = nullptr;
     }
 }
 
 void JProfiler::beginProfilingImpl(LaunchTask* process)
 {
     listeningPort = globalSettings->get("JProfilerPort").toInt();
-    QProcess* profiler = new QProcess(this);
+    auto* profiler = new QProcess(this);
     QStringList profilerArgs = { "-d", QString::number(process->pid()), "--gui", "-p", QString::number(listeningPort) };
     auto basePath = globalSettings->get("JProfilerPath").toString();
 

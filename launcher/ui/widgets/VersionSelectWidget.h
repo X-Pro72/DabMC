@@ -51,7 +51,7 @@ class VersionSelectWidget : public QWidget {
     Q_OBJECT
    public:
     explicit VersionSelectWidget(QWidget* parent);
-    ~VersionSelectWidget();
+    ~VersionSelectWidget() override;
 
     //! loads the list if needed.
     void initialize(BaseVersionList* vlist, bool forceLoad = false);
@@ -79,10 +79,10 @@ class VersionSelectWidget : public QWidget {
     bool eventFilter(QObject* watched, QEvent* event) override;
 
    signals:
-    void selectedVersionChanged(BaseVersion::Ptr version);
+    void selectedVersionChanged(const BaseVersion::Ptr& version);
 
    protected:
-    virtual void closeEvent(QCloseEvent*) override;
+    void closeEvent(QCloseEvent*) override;
 
    private slots:
     void onTaskSucceeded();

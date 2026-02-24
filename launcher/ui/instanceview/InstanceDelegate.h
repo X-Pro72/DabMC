@@ -22,8 +22,8 @@ class ListViewDelegate : public QStyledItemDelegate {
     Q_OBJECT
 
    public:
-    explicit ListViewDelegate(QObject* parent = 0);
-    virtual ~ListViewDelegate() {}
+    explicit ListViewDelegate(QObject* parent = nullptr);
+    ~ListViewDelegate() override = default;
 
     void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
     QSize sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index) const override;
@@ -34,7 +34,7 @@ class ListViewDelegate : public QStyledItemDelegate {
     void setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const override;
 
    signals:
-    void textChanged(QString before, QString after) const;
+    void textChanged(const QString& before, const QString& after) const;
 
    private slots:
     void editingDone();

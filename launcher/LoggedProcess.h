@@ -50,7 +50,7 @@ class LoggedProcess : public QProcess {
 
    public:
     explicit LoggedProcess(QStringConverter::Encoding outputEncoding = QStringConverter::System, QObject* parent = nullptr);
-    virtual ~LoggedProcess();
+    ~LoggedProcess() override;
 
     State state() const;
     int exitCode() const;
@@ -58,7 +58,7 @@ class LoggedProcess : public QProcess {
     void setDetachable(bool detachable);
 
    signals:
-    void log(QStringList lines, MessageLevel level);
+    void log(const QStringList& lines, MessageLevel level);
     void stateChanged(LoggedProcess::State state);
 
    public slots:

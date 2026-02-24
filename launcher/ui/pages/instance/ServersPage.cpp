@@ -91,7 +91,7 @@ struct Server {
         }
     }
 
-    void serialize(nbt::tag_compound& server)
+    void serialize(nbt::tag_compound& server) const
     {
         server.insert("name", m_name.trimmed().toUtf8().toStdString());
         server.insert("ip", m_address.trimmed().toUtf8().toStdString());
@@ -122,11 +122,13 @@ static std::unique_ptr<nbt::tag_compound> parseServersDat(const QString& filenam
         std::istringstream foo(std::string(input.constData(), input.size()));
         auto pair = nbt::io::read_compound(foo);
 
-        if (pair.first != "")
+        if (pair.first != "") {
             return nullptr;
+        }
 
-        if (pair.second == nullptr)
+        if (pair.second == nullptr) {
             return nullptr;
+        }
 
         return std::move(pair.second);
     } catch (...) {
@@ -156,7 +158,7 @@ class ServersModel : public QAbstractListModel {
     enum Roles {
         ServerPtrRole = Qt::UserRole,
     };
-    explicit ServersModel(const QString& path, QObject* parent = 0) : QAbstractListModel(parent)
+    explicit ServersModel(const QString& path, QObject* parent = nullptr) : QAbstractListModel(parent)
     {
         m_path = path;
         m_watcher = new QFileSystemWatcher(this);
@@ -166,7 +168,7 @@ class ServersModel : public QAbstractListModel {
         m_saveTimer.setInterval(5000);
         connect(&m_saveTimer, &QTimer::timeout, this, &ServersModel::save_internal);
     }
-    virtual ~ServersModel() = default;
+    ~ServersModel() override = default;
 
     void observe()
     {
@@ -276,8 +278,9 @@ class ServersModel : public QAbstractListModel {
 
     QVariant headerData(int section, Qt::Orientation orientation, int role) const override
     {
-        if (section < 0 || section >= COLUMN_COUNT)
-            return QVariant();
+        if (section < 0 || section >= COLUMN_COUNT) {
+            return {};
+        }
 
         if (role == Qt::DisplayRole) {
             switch (section) {
@@ -293,18 +296,21 @@ class ServersModel : public QAbstractListModel {
         return QAbstractListModel::headerData(section, orientation, role);
     }
 
-    virtual QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override
+    QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override
     {
-        if (!index.isValid())
-            return QVariant();
+        if (!index.isValid()) {
+            return {};
+        }
 
         int row = index.row();
         int column = index.column();
-        if (column < 0 || column >= COLUMN_COUNT)
-            return QVariant();
+        if (column < 0 || column >= COLUMN_COUNT) {
+            return {};
+        }
 
-        if (row < 0 || row >= m_servers.size())
-            return QVariant();
+        if (row < 0 || row >= m_servers.size()) {
+            return {};
+        }
 
         switch (role) {
             case Qt::DecorationRole: {
@@ -312,13 +318,13 @@ class ServersModel : public QAbstractListModel {
                     auto& bytes = m_servers[row].m_icon;
                     if (bytes.size()) {
                         QPixmap px;
-                        if (px.loadFromData(bytes))
+                        if (px.loadFromData(bytes)) {
                             return QIcon(px);
+                        }
                     }
                     return QIcon::fromTheme("unknown_server");
-                } else {
-                    return QVariant();
                 }
+                return {};
             }
             case Qt::DisplayRole:
                 switch (column) {
@@ -333,19 +339,20 @@ class ServersModel : public QAbstractListModel {
                             return "...";
                         }
                     default:
-                        return QVariant();
+                        return {};
                 }
             case ServerPtrRole:
-                if (column == 0)
+                if (column == 0) {
                     return QVariant::fromValue<void*>((void*)&m_servers[row]);
-                else
-                    return QVariant();
+                } else {
+                    return {};
+                }
             default:
-                return QVariant();
+                return {};
         }
     }
 
-    virtual int rowCount(const QModelIndex& parent = QModelIndex()) const override { return parent.isValid() ? 0 : m_servers.size(); }
+    int rowCount(const QModelIndex& parent = QModelIndex()) const override { return parent.isValid() ? 0 : m_servers.size(); }
     int columnCount(const QModelIndex& parent) const override { return parent.isValid() ? 0 : COLUMN_COUNT; }
 
     Server* at(int index)
@@ -406,8 +413,8 @@ class ServersModel : public QAbstractListModel {
         auto serversDat = parseServersDat(serversPath());
         if (serversDat) {
             auto& serversList = serversDat->at("servers").as<nbt::tag_list>();
-            for (auto iter = serversList.begin(); iter != serversList.end(); iter++) {
-                auto& serverTag = (*iter).as<nbt::tag_compound>();
+            for (auto& iter : serversList) {
+                auto& serverTag = iter.as<nbt::tag_compound>();
                 Server s(serverTag);
                 servers.append(s);
             }
@@ -464,7 +471,7 @@ class ServersModel : public QAbstractListModel {
         qDebug() << "Changed:" << path;
         load();
     }
-    void fileChanged(const QString& path) { qDebug() << "Changed:" << path; }
+    static void fileChanged(const QString& path) { qDebug() << "Changed:" << path; }
 
    private slots:
     void save_internal()
@@ -639,7 +646,8 @@ void ServersPage::rowsRemoved([[maybe_unused]] const QModelIndex& parent, int fi
     if (currentServer < first) {
         // current was before the removal
         return;
-    } else if (currentServer >= first && currentServer <= last) {
+    }
+    if (currentServer >= first && currentServer <= last) {
         // current got removed...
         return;
     } else {
@@ -734,8 +742,9 @@ void ServersPage::on_actionRemove_triggered()
                                      QMessageBox::Warning, QMessageBox::Yes | QMessageBox::No, QMessageBox::No)
             ->exec();
 
-    if (response != QMessageBox::Yes)
+    if (response != QMessageBox::Yes) {
         return;
+    }
 
     m_model->removeRow(currentServer);
 }

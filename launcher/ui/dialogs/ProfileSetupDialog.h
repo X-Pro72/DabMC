@@ -32,8 +32,8 @@ class ProfileSetupDialog;
 class ProfileSetupDialog : public QDialog {
     Q_OBJECT
    public:
-    explicit ProfileSetupDialog(MinecraftAccountPtr accountToSetup, QWidget* parent = 0);
-    ~ProfileSetupDialog();
+    explicit ProfileSetupDialog(MinecraftAccountPtr accountToSetup, QWidget* parent = nullptr);
+    ~ProfileSetupDialog() override;
 
     enum class NameStatus { NotSet, Pending, Available, Exists, Error } nameStatus = NameStatus::NotSet;
 
@@ -50,7 +50,7 @@ class ProfileSetupDialog : public QDialog {
    protected:
     void scheduleCheck(const QString& name);
     void checkName(const QString& name);
-    void setNameStatus(NameStatus status, QString errorString);
+    void setNameStatus(NameStatus status, const QString& errorString);
 
     void setupProfile(const QString& profileName);
 

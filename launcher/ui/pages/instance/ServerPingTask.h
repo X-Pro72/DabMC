@@ -2,13 +2,14 @@
 
 #include <QObject>
 #include <QString>
+#include <utility>
 
 #include <tasks/Task.h>
 
 class ServerPingTask : public Task {
     Q_OBJECT
    public:
-    explicit ServerPingTask(QString domain, int port) : Task(), m_domain(domain), m_port(port) {}
+    explicit ServerPingTask(QString domain, int port) : m_domain(std::move(domain)), m_port(port) {}
     ~ServerPingTask() override = default;
     int m_outputOnlinePlayers = -1;
 
@@ -17,5 +18,5 @@ class ServerPingTask : public Task {
     int m_port;
 
    protected:
-    virtual void executeTask() override;
+    void executeTask() override;
 };

@@ -72,12 +72,13 @@ bool FilterModel::filterAcceptsRow(int sourceRow, const QModelIndex& sourceParen
 
 bool FilterModel::lessThan(const QModelIndex& left, const QModelIndex& right) const
 {
-    FTB::Modpack leftPack = sourceModel()->data(left, Qt::UserRole).value<FTB::Modpack>();
-    FTB::Modpack rightPack = sourceModel()->data(right, Qt::UserRole).value<FTB::Modpack>();
+    auto leftPack = sourceModel()->data(left, Qt::UserRole).value<FTB::Modpack>();
+    auto rightPack = sourceModel()->data(right, Qt::UserRole).value<FTB::Modpack>();
 
     if (m_currentSorting == ByPlays) {
         return leftPack.plays < rightPack.plays;
-    } else if (m_currentSorting == ByInstalls) {
+    }
+    if (m_currentSorting == ByInstalls) {
         return leftPack.installs < rightPack.installs;
     } else if (m_currentSorting == ByName) {
         return StringUtils::naturalCompare(leftPack.name, rightPack.name, Qt::CaseSensitive) >= 0;

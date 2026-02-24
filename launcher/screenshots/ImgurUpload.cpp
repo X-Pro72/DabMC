@@ -46,6 +46,7 @@
 #include <QJsonObject>
 #include <QNetworkRequest>
 #include <QUrl>
+#include <memory>
 
 QNetworkReply* ImgurUpload::getReply(QNetworkRequest& request)
 {
@@ -56,12 +57,12 @@ QNetworkReply* ImgurUpload::getReply(QNetworkRequest& request)
         return nullptr;
     }
 
-    QHttpMultiPart* multipart = new QHttpMultiPart(QHttpMultiPart::FormDataType, this);
+    auto* multipart = new QHttpMultiPart(QHttpMultiPart::FormDataType, this);
     file->setParent(multipart);
     QHttpPart filePart;
     filePart.setBodyDevice(file);
     filePart.setHeader(QNetworkRequest::ContentTypeHeader, "image/png");
-    filePart.setHeader(QNetworkRequest::ContentDispositionHeader, "form-data; name=\"image\"; filename=\"" + file->fileName() + "\"");
+    filePart.setHeader(QNetworkRequest::ContentDispositionHeader, R"(form-data; name="image"; filename=")" + file->fileName() + "\"");
     multipart->append(filePart);
     QHttpPart typePart;
     typePart.setHeader(QNetworkRequest::ContentDispositionHeader, "form-data; name=\"type\"");
@@ -115,11 +116,11 @@ auto ImgurUpload::Sink::finalize(QNetworkReply&) -> Task::State
     return Task::State::Succeeded;
 }
 
-Net::NetRequest::Ptr ImgurUpload::make(ScreenShot::Ptr m_shot)
+Net::NetRequest::Ptr ImgurUpload::make(const ScreenShot::Ptr& m_shot)
 {
     auto up = makeShared<ImgurUpload>(m_shot->m_file);
-    up->m_url = std::move(BuildConfig.IMGUR_BASE_URL + "image");
-    up->m_sink.reset(new Sink(m_shot));
+    up->m_url = BuildConfig.IMGUR_BASE_URL + "image";
+    up->m_sink = std::make_unique<Sink>(m_shot);
     up->addHeaderProxy(std::make_unique<Net::RawHeaderProxy>(QList<Net::HeaderPair>{
         { "Authorization", QString("Client-ID %1").arg(BuildConfig.IMGUR_CLIENT_ID).toUtf8() }, { "Accept", "application/json" } }));
     return up;

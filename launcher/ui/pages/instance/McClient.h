@@ -34,20 +34,20 @@ class McClient : public QObject {
     void readRawResponse();
     void parseResponse();
 
-    void writeVarInt(QByteArray& data, int value);
+    static void writeVarInt(QByteArray& data, int value);
     int readVarInt(QByteArray& data);
-    char readByte(QByteArray& data);
+    static char readByte(QByteArray& data);
     //! write number with specified size in big endian format
-    void writeFixedInt(QByteArray& data, int value, int size);
-    void writeString(QByteArray& data, const std::string& value);
+    static void writeFixedInt(QByteArray& data, int value, int size);
+    static void writeString(QByteArray& data, const std::string& value);
 
     void writePacketToSocket(QByteArray& data);
 
-    void emitFail(QString error);
+    void emitFail(const QString& error);
     void emitSucceed(QJsonObject data);
 
    signals:
-    void succeeded(QJsonObject data);
-    void failed(QString error);
+    void succeeded(const QJsonObject& data);
+    void failed(const QString& error);
     void finished();
 };

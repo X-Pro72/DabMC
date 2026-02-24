@@ -66,7 +66,7 @@ class ResourceFolderModelTest : public QObject {
 
    private slots:
     // test for GH-1178 - install a folder with files to a mod list
-    void test_1178()
+    static void test_1178()
     {
         // source
         QString source = QFINDTESTDATA("testdata/ResourceFolderModel/test_folder");
@@ -74,7 +74,7 @@ class ResourceFolderModelTest : public QObject {
         // sanity check
         QVERIFY(!source.endsWith('/'));
 
-        auto verify = [](QString path) {
+        auto verify = [](const QString& path) {
             QDir target_dir(FS::PathCombine(path, "test_folder"));
             QVERIFY(target_dir.entryList().contains("pack.mcmeta"));
             QVERIFY(target_dir.entryList().contains("assets"));
@@ -131,7 +131,7 @@ class ResourceFolderModelTest : public QObject {
         }
     }
 
-    void test_addFromWatch()
+    static void test_addFromWatch()
     {
         QString source = QFINDTESTDATA("testdata/ResourceFolderModel");
         ModFolderModel model(source, nullptr, false, true);
@@ -140,15 +140,16 @@ class ResourceFolderModelTest : public QObject {
 
         EXEC_UPDATE_TASK(model.startWatching(), )
 
-        for (auto mod : model.allMods())
+        for (auto mod : model.allMods()) {
             qDebug() << mod->name();
+        }
 
         QCOMPARE(model.size(), 4);
 
         model.stopWatching();
     }
 
-    void test_removeResource()
+    static void test_removeResource()
     {
         QString folder_resource = QFINDTESTDATA("testdata/ResourceFolderModel/test_folder");
         QString file_mod = QFINDTESTDATA("testdata/ResourceFolderModel/supercoolmod.jar");
@@ -193,7 +194,7 @@ class ResourceFolderModelTest : public QObject {
         model.stopWatching();
     }
 
-    void test_enable_disable()
+    static void test_enable_disable()
     {
         QString folder_resource = QFINDTESTDATA("testdata/ResourceFolderModel/test_folder");
         QString file_mod = QFINDTESTDATA("testdata/ResourceFolderModel/supercoolmod.jar");
@@ -210,8 +211,9 @@ class ResourceFolderModelTest : public QObject {
             EXEC_UPDATE_TASK(model.installResource(file_mod), QVERIFY)
         }
 
-        for (auto res : model.allResources())
+        for (auto res : model.allResources()) {
             qDebug() << res->name();
+        }
 
         QCOMPARE(model.size(), 2);
 

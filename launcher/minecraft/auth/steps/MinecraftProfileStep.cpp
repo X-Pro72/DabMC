@@ -1,6 +1,7 @@
 #include "MinecraftProfileStep.h"
 
 #include <QNetworkRequest>
+#include <memory>
 
 #include "Application.h"
 #include "minecraft/auth/Parsers.h"
@@ -21,7 +22,7 @@ void MinecraftProfileStep::perform()
                                            { "Accept", "application/json" },
                                            { "Authorization", QString("Bearer %1").arg(m_data->yggdrasilToken.token).toUtf8() } };
 
-    m_response.reset(new QByteArray());
+    m_response = std::make_unique<QByteArray>();
     m_request = Net::Download::makeByteArray(url, m_response.get());
     m_request->addHeaderProxy(std::make_unique<Net::RawHeaderProxy>(headers));
     m_request->enableAutoRetry(true);

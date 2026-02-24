@@ -15,7 +15,7 @@ namespace Murmur2 {
 const uint32_t m = 0x5bd1e995;
 const int r = 24;
 
-uint32_t hash(Reader* file_stream, std::size_t buffer_size, std::function<bool(char)> filter_out)
+uint32_t hash(Reader* file_stream, std::size_t buffer_size, const std::function<bool(char)>& filter_out)
 {
     auto* buffer = new char[buffer_size];
     char data[4];
@@ -28,8 +28,9 @@ uint32_t hash(Reader* file_stream, std::size_t buffer_size, std::function<bool(c
     do {
         read = file_stream->read(buffer, buffer_size);
         for (int i = 0; i < read; i++) {
-            if (!filter_out(buffer[i]))
+            if (!filter_out(buffer[i])) {
                 size += 1;
+            }
         }
     } while (!file_stream->eof());
 
@@ -44,15 +45,17 @@ uint32_t hash(Reader* file_stream, std::size_t buffer_size, std::function<bool(c
         for (int i = 0; i < read; i++) {
             char c = buffer[i];
 
-            if (filter_out(c))
+            if (filter_out(c)) {
                 continue;
+            }
 
             data[index] = c;
             index = (index + 1) % 4;
 
             // Mix 4 bytes at a time into the hash
-            if (index == 0)
+            if (index == 0) {
                 FourBytes_MurmurHash2(reinterpret_cast<unsigned char*>(&data), info);
+            }
         }
     } while (!file_stream->eof());
 

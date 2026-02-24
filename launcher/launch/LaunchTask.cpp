@@ -36,12 +36,13 @@
  */
 
 #include "launch/LaunchTask.h"
-#include <assert.h>
 #include <QAnyStringView>
 #include <QCoreApplication>
 #include <QDebug>
 #include <QDir>
 #include <QStandardPaths>
+#include <cassert>
+#include <utility>
 #include <variant>
 #include "MessageLevel.h"
 #include "tasks/Task.h"
@@ -60,12 +61,12 @@ std::unique_ptr<LaunchTask> LaunchTask::create(MinecraftInstance* inst)
 
 LaunchTask::LaunchTask(MinecraftInstance* instance) : m_instance(instance) {}
 
-void LaunchTask::appendStep(shared_qobject_ptr<LaunchStep> step)
+void LaunchTask::appendStep(const shared_qobject_ptr<LaunchStep>& step)
 {
     m_steps.append(step);
 }
 
-void LaunchTask::prependStep(shared_qobject_ptr<LaunchStep> step)
+void LaunchTask::prependStep(const shared_qobject_ptr<LaunchStep>& step)
 {
     m_steps.prepend(step);
 }
@@ -132,7 +133,7 @@ void LaunchTask::onProgressReportingRequested()
 
 void LaunchTask::setCensorFilter(QMap<QString, QString> filter)
 {
-    m_censorFilter = filter;
+    m_censorFilter = std::move(filter);
 }
 
 QString LaunchTask::censorPrivateInfo(QString in)
@@ -237,8 +238,9 @@ bool LaunchTask::parseXmlLogs(QString const& line, MessageLevel level)
         return false;
     }
 
-    if (items.isEmpty())
+    if (items.isEmpty()) {
         return true;
+    }
 
     auto model = getLogModel();
     for (auto const& item : items) {
@@ -257,8 +259,9 @@ bool LaunchTask::parseXmlLogs(QString const& line, MessageLevel level)
 
             MessageLevel newLevel = MessageLevel::takeFromLine(msg);
 
-            if (newLevel == MessageLevel::Unknown)
+            if (newLevel == MessageLevel::Unknown) {
                 newLevel = LogParser::guessLevel(line, model->previousLevel());
+            }
 
             msg = censorPrivateInfo(msg);
 
@@ -301,7 +304,7 @@ void LaunchTask::emitFailed(QString reason)
     Task::emitFailed(reason);
 }
 
-QString expandVariables(const QString& input, QProcessEnvironment dict)
+QString expandVariables(const QString& input, const QProcessEnvironment& dict)
 {
     QString result = input;
 
@@ -311,8 +314,9 @@ QString expandVariables(const QString& input, QProcessEnvironment dict)
         QChar c = result.at(i++);
         switch (state) {
             case base:
-                if (c == '$')
+                if (c == '$') {
                     state = maybeBrace;
+                }
                 break;
             case maybeBrace:
                 if (c == '{') {
@@ -348,8 +352,9 @@ QString expandVariables(const QString& input, QProcessEnvironment dict)
         }
     }
     if (state == variable) {
-        if (const auto res = dict.value(result.mid(startIdx), ""); !res.isEmpty())
+        if (const auto res = dict.value(result.mid(startIdx), ""); !res.isEmpty()) {
             result.replace(startIdx - 1, result.length() - startIdx + 1, res);
+        }
     }
     return result;
 }

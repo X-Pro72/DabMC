@@ -35,11 +35,13 @@ void SetupWizard::retranslate()
 
 BaseWizardPage* SetupWizard::getBasePage(int id)
 {
-    if (id == -1)
+    if (id == -1) {
         return nullptr;
+    }
     auto pagePtr = page(id);
-    if (!pagePtr)
+    if (!pagePtr) {
         return nullptr;
+    }
     return dynamic_cast<BaseWizardPage*>(pagePtr);
 }
 
@@ -76,4 +78,4 @@ void SetupWizard::changeEvent(QEvent* event)
     QWizard::changeEvent(event);
 }
 
-SetupWizard::~SetupWizard() {}
+SetupWizard::~SetupWizard() = default;

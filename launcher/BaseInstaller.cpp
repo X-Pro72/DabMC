@@ -19,7 +19,7 @@
 #include "FileSystem.h"
 #include "minecraft/MinecraftInstance.h"
 
-BaseInstaller::BaseInstaller() {}
+BaseInstaller::BaseInstaller() = default;
 
 bool BaseInstaller::isApplied(MinecraftInstance* on)
 {
@@ -50,7 +50,7 @@ QString BaseInstaller::filename(const QString& root) const
 {
     return patchesDir(root).absoluteFilePath(id() + ".json");
 }
-QDir BaseInstaller::patchesDir(const QString& root) const
+QDir BaseInstaller::patchesDir(const QString& root)
 {
     return QDir(root + "/patches/");
 }

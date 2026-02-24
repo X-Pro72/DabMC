@@ -8,6 +8,7 @@
 #include <QJsonValue>
 #include <QRegularExpression>
 #include <QString>
+#include <utility>
 
 #include "FileSystem.h"
 #include "Json.h"
@@ -24,9 +25,9 @@ namespace ModUtils {
 
 // OLD format:
 // https://github.com/MinecraftForge/FML/wiki/FML-mod-information-file/5bf6a2d05145ec79387acc0d45c958642fb049fc
-ModDetails ReadMCModInfo(QByteArray contents)
+ModDetails ReadMCModInfo(const QByteArray& contents)
 {
-    auto getInfoFromArray = [](QJsonArray arr) -> ModDetails {
+    auto getInfoFromArray = [](const QJsonArray& arr) -> ModDetails {
         if (!arr.at(0).isObject()) {
             return {};
         }
@@ -67,8 +68,9 @@ ModDetails ReadMCModInfo(QByteArray contents)
         }
 
         auto addDep = [&details](QString dep) {
-            if (dep == "mod_MinecraftForge" || dep == "Forge")
+            if (dep == "mod_MinecraftForge" || dep == "Forge") {
                 return;
+            }
             if (dep.contains(":")) {
                 dep = dep.section(":", 1);
             }
@@ -98,7 +100,8 @@ ModDetails ReadMCModInfo(QByteArray contents)
     // this is the very old format that had just the array
     if (jsonDoc.isArray()) {
         return getInfoFromArray(jsonDoc.array());
-    } else if (jsonDoc.isObject()) {
+    }
+    if (jsonDoc.isObject()) {
         auto val = jsonDoc.object().value("modinfoversion");
         if (val.isUndefined()) {
             val = jsonDoc.object().value("modListVersion");
@@ -107,8 +110,9 @@ ModDetails ReadMCModInfo(QByteArray contents)
         int version = val.toInt(-1);
 
         // Some mods set the number with "", so it's a String instead
-        if (version < 0)
+        if (version < 0) {
             version = val.toString("").toInt();
+        }
 
         if (version != 2) {
             qWarning() << QString(R"(The value of 'modListVersion' is "%1" (expected "2")! The file may be corrupted.)").arg(version);
@@ -128,7 +132,7 @@ ModDetails ReadMCModInfo(QByteArray contents)
 }
 
 // https://github.com/MinecraftForge/Documentation/blob/5ab4ba6cf9abc0ac4c0abd96ad187461aefd72af/docs/gettingstarted/structuring.md
-ModDetails ReadMCModTOML(QByteArray contents)
+ModDetails ReadMCModTOML(const QByteArray& contents)
 {
     ModDetails details;
 
@@ -217,8 +221,9 @@ ModDetails ReadMCModTOML(QByteArray contents)
     } else if (auto licenseDatumMods = (*modsTable)["license"].as_string()) {
         license = QString::fromStdString(licenseDatumMods->get());
     }
-    if (!license.isEmpty())
+    if (!license.isEmpty()) {
         details.licenses.append(ModLicense(license));
+    }
 
     QString logoFile = "";
     if (auto logoFileDatum = tomlData["logoFile"].as_string()) {
@@ -278,7 +283,7 @@ ModDetails ReadMCModTOML(QByteArray contents)
 }
 
 // https://fabricmc.net/wiki/documentation:fabric_mod_json
-ModDetails ReadFabricModInfo(QByteArray contents)
+ModDetails ReadFabricModInfo(const QByteArray& contents)
 {
     QJsonParseError jsonError;
     QJsonDocument jsonDoc = QJsonDocument::fromJson(contents, &jsonError);
@@ -341,7 +346,7 @@ ModDetails ReadFabricModInfo(QByteArray contents)
                 auto obj = icon.toObject();
                 // take the largest icon
                 int largest = 0;
-                for (auto key : obj.keys()) {
+                for (const auto& key : obj.keys()) {
                     auto size = key.split('x').first().toInt();
                     if (size > largest) {
                         largest = size;
@@ -366,7 +371,7 @@ ModDetails ReadFabricModInfo(QByteArray contents)
             auto depends = object.value("depends");
             if (depends.isObject()) {
                 auto obj = depends.toObject();
-                for (auto key : obj.keys()) {
+                for (const auto& key : obj.keys()) {
                     if (key != "fabricloader" && key != "minecraft" && !key.startsWith("fabric-")) {
                         details.dependencies.append(key);
                     }
@@ -378,7 +383,7 @@ ModDetails ReadFabricModInfo(QByteArray contents)
 }
 
 // https://github.com/QuiltMC/rfcs/blob/master/specification/0002-quilt.mod.json.md
-ModDetails ReadQuiltModInfo(QByteArray contents)
+ModDetails ReadQuiltModInfo(const QByteArray& contents)
 {
     ModDetails details;
     try {
@@ -440,7 +445,7 @@ ModDetails ReadQuiltModInfo(QByteArray contents)
                     auto obj = icon.toObject();
                     // take the largest icon
                     int largest = 0;
-                    for (auto key : obj.keys()) {
+                    for (const auto& key : obj.keys()) {
                         auto size = key.split('x').first().toInt();
                         if (size > largest) {
                             largest = size;
@@ -499,8 +504,9 @@ ModDetails ReadForgeInfo(QByteArray contents)
     details.mod_id = "Forge";
     details.homeurl = "http://www.minecraftforge.net/forum/";
     INIFile ini;
-    if (!ini.loadFile(contents))
+    if (!ini.loadFile(std::move(contents))) {
         return details;
+    }
 
     QString major = ini.get("forge.major.number", "0").toString();
     QString minor = ini.get("forge.minor.number", "0").toString();
@@ -511,7 +517,7 @@ ModDetails ReadForgeInfo(QByteArray contents)
     return details;
 }
 
-ModDetails ReadLiteModInfo(QByteArray contents)
+ModDetails ReadLiteModInfo(const QByteArray& contents)
 {
     ModDetails details;
     QJsonParseError jsonError;
@@ -536,7 +542,7 @@ ModDetails ReadLiteModInfo(QByteArray contents)
 }
 
 // https://git.sleeping.town/unascribed/NilLoader/src/commit/d7fc87b255fc31019ff90f80d45894927fac6efc/src/main/java/nilloader/api/NilMetadata.java#L64
-ModDetails ReadNilModInfo(QByteArray contents, QString fname)
+ModDetails ReadNilModInfo(const QByteArray& contents, QString fname)
 {
     ModDetails details;
 
@@ -687,11 +693,13 @@ bool processFolder(Mod& mod, [[maybe_unused]] ProcessingLevel level)
     QFileInfo mcmod_info(FS::PathCombine(mod.fileinfo().filePath(), "mcmod.info"));
     if (mcmod_info.exists() && mcmod_info.isFile()) {
         QFile mcmod(mcmod_info.filePath());
-        if (!mcmod.open(QIODevice::ReadOnly))
+        if (!mcmod.open(QIODevice::ReadOnly)) {
             return false;
+        }
         auto data = mcmod.readAll();
-        if (data.isEmpty() || data.isNull())
+        if (data.isEmpty() || data.isNull()) {
             return false;
+        }
         details = ReadMCModInfo(data);
 
         mod.setDetails(details);
@@ -718,7 +726,7 @@ bool processLitemod(Mod& mod, [[maybe_unused]] ProcessingLevel level)
 }
 
 /** Checks whether a file is valid as a mod or not. */
-bool validate(QFileInfo file)
+bool validate(const QFileInfo& file)
 {
     Mod mod{ file };
     return ModUtils::process(mod, ProcessingLevel::BasicInfoOnly) && mod.valid();
@@ -812,8 +820,9 @@ void LocalModParseTask::executeTask()
 
     m_result->details = mod.details();
 
-    if (m_aborted)
+    if (m_aborted) {
         emitAborted();
-    else
+    } else {
         emitSucceeded();
+    }
 }

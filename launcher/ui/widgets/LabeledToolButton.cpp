@@ -40,6 +40,7 @@
 #include <QResizeEvent>
 #include <QStyleOption>
 #include <QVBoxLayout>
+#include <utility>
 
 /*
  *
@@ -70,7 +71,7 @@ void LabeledToolButton::setText(const QString& text)
 
 void LabeledToolButton::setIcon(QIcon icon)
 {
-    m_icon = icon;
+    m_icon = std::move(icon);
     resetIcon();
 }
 
@@ -86,7 +87,8 @@ QSize LabeledToolButton::sizeHint() const
     */
     ensurePolished();
 
-    int w = 0, h = 0;
+    int w = 0;
+    int h = 0;
     QStyleOptionToolButton opt;
     initStyleOption(&opt);
     QSize sz = m_label->sizeHint();
@@ -94,8 +96,9 @@ QSize LabeledToolButton::sizeHint() const
     h = sz.height();
 
     opt.rect.setSize(QSize(w, h));  // PM_MenuButtonIndicator depends on the height
-    if (popupMode() == MenuButtonPopup)
+    if (popupMode() == MenuButtonPopup) {
         w += style()->pixelMetric(QStyle::PM_MenuButtonIndicator, &opt, this);
+    }
 
     return style()->sizeFromContents(QStyle::CT_ToolButton, &opt, QSize(w, h), this);
 }
@@ -117,8 +120,9 @@ void LabeledToolButton::resetIcon()
     float ar = w / h;
     // FIXME: hardcoded max size of 160x80
     int newW = 80 * ar;
-    if (newW > 160)
+    if (newW > 160) {
         newW = 160;
+    }
     QSize newSz(newW, 80);
     auto pixmap = m_icon.pixmap(newSz);
     m_label->setPixmap(pixmap);

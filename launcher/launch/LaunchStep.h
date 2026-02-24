@@ -25,11 +25,11 @@ class LaunchStep : public Task {
     Q_OBJECT
    public: /* methods */
     explicit LaunchStep(LaunchTask* parent);
-    virtual ~LaunchStep() = default;
+    ~LaunchStep() override = default;
 
    signals:
-    void logLines(QStringList lines, MessageLevel level);
-    void logLine(QString line, MessageLevel level);
+    void logLines(const QStringList& lines, MessageLevel level);
+    void logLine(const QString& line, MessageLevel level);
     void readyForLaunch();
     void progressReportingRequest();
 

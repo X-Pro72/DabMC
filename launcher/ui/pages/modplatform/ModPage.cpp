@@ -63,14 +63,14 @@ ModPage::ModPage(ModDownloadDialog* dialog, BaseInstance& instance) : ResourcePa
 
 void ModPage::setFilterWidget(std::unique_ptr<ModFilterWidget>& widget)
 {
-    if (m_filter_widget)
+    if (m_filter_widget) {
         disconnect(m_filter_widget.get(), nullptr, nullptr, nullptr);
+    }
 
     auto old = m_ui->splitter->replaceWidget(0, widget.get());
     // because we replaced the widget we also need to delete it
-    if (old) {
-        delete old;
-    }
+
+    delete old;
 
     m_filter_widget.swap(widget);
 
@@ -104,9 +104,9 @@ void ModPage::triggerSearch()
 QMap<QString, QString> ModPage::urlHandlers() const
 {
     QMap<QString, QString> map;
-    map.insert(QRegularExpression::anchoredPattern("(?:www\\.)?modrinth\\.com\\/mod\\/([^\\/]+)\\/?"), "modrinth");
-    map.insert(QRegularExpression::anchoredPattern("(?:www\\.)?curseforge\\.com\\/minecraft\\/mc-mods\\/([^\\/]+)\\/?"), "curseforge");
-    map.insert(QRegularExpression::anchoredPattern("minecraft\\.curseforge\\.com\\/projects\\/([^\\/]+)\\/?"), "curseforge");
+    map.insert(QRegularExpression::anchoredPattern(R"((?:www\.)?modrinth\.com\/mod\/([^\/]+)\/?)"), "modrinth");
+    map.insert(QRegularExpression::anchoredPattern(R"((?:www\.)?curseforge\.com\/minecraft\/mc-mods\/([^\/]+)\/?)"), "curseforge");
+    map.insert(QRegularExpression::anchoredPattern(R"(minecraft\.curseforge\.com\/projects\/([^\/]+)\/?)"), "curseforge");
     return map;
 }
 

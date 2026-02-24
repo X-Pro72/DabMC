@@ -14,7 +14,7 @@ void LibrariesTask::executeTask()
 {
     setStatus(tr("Downloading required library files..."));
     qDebug() << m_inst->name() << ": downloading libraries";
-    MinecraftInstance* inst = (MinecraftInstance*)m_inst;
+    auto* inst = (MinecraftInstance*)m_inst;
 
     // Build a list of URLs that will need to be downloaded.
     auto components = inst->getPackProfile();
@@ -26,13 +26,13 @@ void LibrariesTask::executeTask()
     auto metacache = APPLICATION->metacache();
 
     auto processArtifactPool = [this, inst, metacache](const QList<LibraryPtr>& pool, QStringList& errors, const QString& localPath) {
-        for (auto lib : pool) {
+        for (const auto& lib : pool) {
             if (!lib) {
                 emitFailed(tr("Null jar is specified in the metadata, aborting."));
                 return false;
             }
             auto dls = lib->getDownloads(inst->runtimeContext(), metacache, errors, localPath);
-            for (auto dl : dls) {
+            for (const auto& dl : dls) {
                 downloadJob->addNetAction(dl);
             }
         }
@@ -44,7 +44,7 @@ void LibrariesTask::executeTask()
     libArtifactPool.append(profile->getLibraries());
     libArtifactPool.append(profile->getNativeLibraries());
     libArtifactPool.append(profile->getMavenFiles());
-    for (auto agent : profile->getAgents()) {
+    for (const auto& agent : profile->getAgents()) {
         libArtifactPool.append(agent->library());
     }
     libArtifactPool.append(profile->getMainJar());
@@ -76,7 +76,7 @@ bool LibrariesTask::canAbort() const
     return true;
 }
 
-void LibrariesTask::jarlibFailed(QString reason)
+void LibrariesTask::jarlibFailed(const QString& reason)
 {
     emitFailed(tr("Game update failed: it was impossible to fetch the required libraries.\nReason:\n%1").arg(reason));
 }
@@ -85,8 +85,8 @@ bool LibrariesTask::abort()
 {
     if (downloadJob) {
         return downloadJob->abort();
-    } else {
-        qWarning() << "Prematurely aborted LibrariesTask";
     }
+    qWarning() << "Prematurely aborted LibrariesTask";
+
     return true;
 }

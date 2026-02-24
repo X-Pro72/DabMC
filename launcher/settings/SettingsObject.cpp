@@ -34,7 +34,7 @@ SettingsObject::~SettingsObject()
     m_settings.clear();
 }
 
-std::shared_ptr<Setting> SettingsObject::registerOverride(std::shared_ptr<Setting> original, std::shared_ptr<Setting> gate)
+std::shared_ptr<Setting> SettingsObject::registerOverride(const std::shared_ptr<Setting>& original, const std::shared_ptr<Setting>& gate)
 {
     if (contains(original->id())) {
         qCritical() << QString("Failed to register setting %1. ID already exists.").arg(original->id());
@@ -47,7 +47,7 @@ std::shared_ptr<Setting> SettingsObject::registerOverride(std::shared_ptr<Settin
     return override;
 }
 
-std::shared_ptr<Setting> SettingsObject::registerPassthrough(std::shared_ptr<Setting> original, std::shared_ptr<Setting> gate)
+std::shared_ptr<Setting> SettingsObject::registerPassthrough(const std::shared_ptr<Setting>& original, const std::shared_ptr<Setting>& gate)
 {
     if (contains(original->id())) {
         qCritical() << QString("Failed to register setting %1. ID already exists.").arg(original->id());
@@ -60,10 +60,11 @@ std::shared_ptr<Setting> SettingsObject::registerPassthrough(std::shared_ptr<Set
     return passthrough;
 }
 
-std::shared_ptr<Setting> SettingsObject::registerSetting(QStringList synonyms, QVariant defVal)
+std::shared_ptr<Setting> SettingsObject::registerSetting(QStringList synonyms, const QVariant& defVal)
 {
-    if (synonyms.empty())
+    if (synonyms.empty()) {
         return nullptr;
+    }
     if (contains(synonyms.first())) {
         qCritical() << QString("Failed to register setting %1. ID already exists.").arg(synonyms.first());
         return nullptr;  // Fail
@@ -78,13 +79,14 @@ std::shared_ptr<Setting> SettingsObject::registerSetting(QStringList synonyms, Q
 std::shared_ptr<Setting> SettingsObject::getSetting(const QString& id) const
 {
     // Make sure there is a setting with the given ID.
-    if (!m_settings.contains(id))
-        return NULL;
+    if (!m_settings.contains(id)) {
+        return nullptr;
+    }
 
     return m_settings[id];
 }
 
-QVariant SettingsObject::get(const QString& id)
+QVariant SettingsObject::get(const QString& id) const
 {
     auto setting = getSetting(id);
 
@@ -98,7 +100,7 @@ QVariant SettingsObject::get(const QString& id)
     return (setting ? setting->get() : QVariant());
 }
 
-bool SettingsObject::set(const QString& id, QVariant value)
+bool SettingsObject::set(const QString& id, QVariant value) const
 {
     auto setting = getSetting(id);
     if (!setting) {
@@ -118,7 +120,7 @@ bool SettingsObject::set(const QString& id, QVariant value)
 }
 
 #ifdef Q_OS_MACOS
-QString SettingsObject::getPathFromBookmark(const QString& id)
+QString SettingsObject::getPathFromBookmark(const QString& id) const
 {
     auto setting = getSetting(id);
     if (!setting) {
@@ -208,8 +210,9 @@ bool SettingsObject::setPathWithBookmark(const QString& id, const QString& path)
 void SettingsObject::reset(const QString& id) const
 {
     auto setting = getSetting(id);
-    if (setting)
+    if (setting) {
         setting->reset();
+    }
 }
 
 bool SettingsObject::contains(const QString& id)
@@ -219,13 +222,13 @@ bool SettingsObject::contains(const QString& id)
 
 bool SettingsObject::reload()
 {
-    for (auto setting : m_settings.values()) {
+    for (const auto& setting : m_settings.values()) {
         setting->set(setting->get());
     }
     return true;
 }
 
-void SettingsObject::connectSignals(const Setting& setting)
+void SettingsObject::connectSignals(const Setting& setting) const
 {
     connect(&setting, &Setting::SettingChanged, this, &SettingsObject::changeSetting);
     connect(&setting, &Setting::SettingChanged, this, &SettingsObject::SettingChanged);
@@ -236,5 +239,5 @@ void SettingsObject::connectSignals(const Setting& setting)
 
 std::shared_ptr<Setting> SettingsObject::getOrRegisterSetting(const QString& id, QVariant defVal)
 {
-    return contains(id) ? getSetting(id) : registerSetting(id, defVal);
+    return contains(id) ? getSetting(id) : registerSetting(id, std::move(defVal));
 }

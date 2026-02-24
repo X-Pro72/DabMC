@@ -15,6 +15,8 @@
 
 #include "BaseEntity.h"
 
+#include <utility>
+
 #include "Exception.h"
 #include "FileSystem.h"
 #include "Json.h"
@@ -26,8 +28,8 @@
 #include "net/NetJob.h"
 
 #include "Application.h"
-#include "settings/SettingsObject.h"
 #include "BuildConfig.h"
+#include "settings/SettingsObject.h"
 #include "tasks/Task.h"
 
 namespace Meta {
@@ -35,7 +37,7 @@ namespace Meta {
 class ParsingValidator : public Net::Validator {
    public: /* con/des */
     ParsingValidator(BaseEntity* entity) : m_entity(entity) {};
-    virtual ~ParsingValidator() = default;
+    ~ParsingValidator() override = default;
 
    public: /* methods */
     bool init(QNetworkRequest&) override
@@ -99,7 +101,7 @@ bool BaseEntity::isLoaded() const
 
 void BaseEntity::setSha256(QString sha256)
 {
-    m_sha256 = sha256;
+    m_sha256 = std::move(sha256);
 }
 
 BaseEntity::LoadStatus BaseEntity::status() const
@@ -162,8 +164,9 @@ void BaseEntityLoadTask::executeTask()
      * The validator parses the file and loads it into the object.
      * If that fails, the file is not written to storage.
      */
-    if (!m_entity->m_sha256.isEmpty())
+    if (!m_entity->m_sha256.isEmpty()) {
         dl->addValidator(new Net::ChecksumValidator(QCryptographicHash::Algorithm::Sha256, m_entity->m_sha256));
+    }
     dl->addValidator(new ParsingValidator(m_entity));
     m_task->addNetAction(dl);
     m_task->setAskRetry(false);

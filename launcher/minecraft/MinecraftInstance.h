@@ -57,8 +57,8 @@ class MinecraftInstance : public BaseInstance {
     Q_OBJECT
    public:
     MinecraftInstance(SettingsObject* globalSettings, std::unique_ptr<SettingsObject> settings, const QString& rootDir);
-    virtual ~MinecraftInstance();
-    virtual void saveNow() override;
+    ~MinecraftInstance() override;
+    void saveNow() override;
 
     void loadSpecificSettings() override;
 
@@ -87,8 +87,8 @@ class MinecraftInstance : public BaseInstance {
     QString worldDir() const;
     QString resourcesDir() const;
     QDir jarmodsPath() const;
-    QDir librariesPath() const;
-    QDir versionsPath() const;
+    static QDir librariesPath();
+    static QDir versionsPath();
     QString instanceConfigFolder() const override;
 
     // Path to the instance's minecraft directory.
@@ -128,7 +128,7 @@ class MinecraftInstance : public BaseInstance {
     QStringList extraArguments() override;
     QStringList verboseDescription(AuthSessionPtr session, MinecraftTarget::Ptr targetToJoin) override;
     QList<Mod*> getJarMods() const;
-    QString createLaunchScript(AuthSessionPtr session, MinecraftTarget::Ptr targetToJoin);
+    QString createLaunchScript(const AuthSessionPtr& session, const MinecraftTarget::Ptr& targetToJoin);
     /// get arguments passed to java
     QStringList javaArguments();
     QString getLauncher();
@@ -158,8 +158,8 @@ class MinecraftInstance : public BaseInstance {
     virtual JavaVersion getJavaVersion();
 
    protected:
-    QMap<QString, QString> createCensorFilterFromSession(AuthSessionPtr session);
-    QMap<QString, QString> makeProfileVarMapping(std::shared_ptr<LaunchProfile> profile) const;
+    static QMap<QString, QString> createCensorFilterFromSession(const AuthSessionPtr& session);
+    QMap<QString, QString> makeProfileVarMapping(const std::shared_ptr<LaunchProfile>& profile) const;
 
    protected:  // data
     std::unique_ptr<PackProfile> m_components;

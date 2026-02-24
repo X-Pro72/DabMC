@@ -48,16 +48,16 @@ class Download : public NetRequest {
     Q_OBJECT
    public:
     using Ptr = shared_qobject_ptr<class Download>;
-    explicit Download() : NetRequest() { logCat = taskDownloadLogC; }
+    explicit Download() { logCat = taskDownloadLogC; }
 
 #if defined(LAUNCHER_APPLICATION)
-    static auto makeCached(QUrl url, MetaEntryPtr entry, Options options = Option::NoOptions) -> Download::Ptr;
+    static auto makeCached(const QUrl& url, MetaEntryPtr entry, Options options = Option::NoOptions) -> Download::Ptr;
 #endif
 
-    static auto makeByteArray(QUrl url, QByteArray* output, Options options = Option::NoOptions) -> Download::Ptr;
-    static auto makeFile(QUrl url, QString path, Options options = Option::NoOptions) -> Download::Ptr;
+    static auto makeByteArray(const QUrl& url, QByteArray* output, Options options = Option::NoOptions) -> Download::Ptr;
+    static auto makeFile(const QUrl& url, const QString& path, Options options = Option::NoOptions) -> Download::Ptr;
 
    protected:
-    virtual QNetworkReply* getReply(QNetworkRequest&) override;
+    QNetworkReply* getReply(QNetworkRequest&) override;
 };
 }  // namespace Net

@@ -28,6 +28,7 @@
 #include <QDir>
 #include <QFileInfo>
 #include <tuple>
+#include <utility>
 
 namespace WorldSaveUtils {
 
@@ -52,7 +53,7 @@ bool process(WorldSave& pack, ProcessingLevel level)
 ///             QString <name of folder containing level.dat>,
 ///             bool <saves folder found>
 ///         )
-static std::tuple<bool, QString, bool> contains_level_dat(QDir dir, bool saves = false)
+static std::tuple<bool, QString, bool> contains_level_dat(const QDir& dir, bool saves = false)
 {
     for (auto const& entry : dir.entryInfoList()) {
         if (!entry.isDir()) {
@@ -105,7 +106,7 @@ bool processFolder(WorldSave& save, ProcessingLevel level)
 ///         )
 static std::tuple<bool, QString, bool> contains_level_dat(QString fileName)
 {
-    MMCZip::ArchiveReader zip(fileName);
+    MMCZip::ArchiveReader zip(std::move(fileName));
     if (!zip.collectFiles()) {
         return std::make_tuple(false, "", false);
     }
@@ -114,19 +115,22 @@ static std::tuple<bool, QString, bool> contains_level_dat(QString fileName)
         saves = true;
     }
 
-    for (auto file : zip.getFiles()) {
+    for (const auto& file : zip.getFiles()) {
         QString relativePath = file;
         if (saves) {
-            if (!relativePath.startsWith("saves/", Qt::CaseInsensitive))
+            if (!relativePath.startsWith("saves/", Qt::CaseInsensitive)) {
                 continue;
+            }
             relativePath = relativePath.mid(QString("saves/").length());
         }
-        if (!relativePath.endsWith("/level.dat", Qt::CaseInsensitive))
+        if (!relativePath.endsWith("/level.dat", Qt::CaseInsensitive)) {
             continue;
+        }
 
         int slashIndex = relativePath.indexOf('/');
-        if (slashIndex == -1)
+        if (slashIndex == -1) {
             continue;  // malformed: no slash between saves/ and level.dat
+        }
 
         QString worldName = relativePath.left(slashIndex);
         QString remaining = relativePath.mid(slashIndex + 1);
@@ -170,7 +174,7 @@ bool processZIP(WorldSave& save, ProcessingLevel level)
     return true;
 }
 
-bool validate(QFileInfo file)
+bool validate(const QFileInfo& file)
 {
     WorldSave sp{ file };
     return WorldSaveUtils::process(sp, ProcessingLevel::BasicInfoOnly) && sp.valid();
@@ -193,8 +197,9 @@ void LocalWorldSaveParseTask::executeTask()
         return;
     }
 
-    if (m_aborted)
+    if (m_aborted) {
         emitAborted();
-    else
+    } else {
         emitSucceeded();
+    }
 }

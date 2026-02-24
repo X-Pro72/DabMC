@@ -24,7 +24,7 @@ class JavaWizardWidget : public QWidget {
 
    public:
     explicit JavaWizardWidget(QWidget* parent);
-    virtual ~JavaWizardWidget();
+    ~JavaWizardWidget() override;
 
     enum class JavaStatus { NotSet, Pending, Good, DoesNotExist, DoesNotStart, ReturnedInvalidData } javaStatus = JavaStatus::NotSet;
 
@@ -49,7 +49,7 @@ class JavaWizardWidget : public QWidget {
     void onSpinBoxValueChanged(int);
     void memoryValueChanged();
     void javaPathEdited(const QString& path);
-    void javaVersionSelected(BaseVersion::Ptr version);
+    void javaVersionSelected(const BaseVersion::Ptr& version);
     void on_javaBrowseBtn_clicked();
     void on_javaStatusBtn_clicked();
     void javaDownloadBtn_clicked();
