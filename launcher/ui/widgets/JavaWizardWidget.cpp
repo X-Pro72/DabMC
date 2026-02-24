@@ -333,7 +333,7 @@ void JavaWizardWidget::memoryValueChanged()
     }
 }
 
-void JavaWizardWidget::javaVersionSelected(BaseVersion::Ptr version)
+void JavaWizardWidget::javaVersionSelected(const BaseVersion::Ptr& version)
 {
     auto java = std::dynamic_pointer_cast<JavaInstall>(version);
     if (!java) {

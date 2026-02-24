@@ -38,6 +38,7 @@
 
 #include <QtConcurrent>
 #include <algorithm>
+#include <utility>
 
 #include "FileSystem.h"
 #include "Json.h"
@@ -69,7 +70,7 @@ PackInstallTask::PackInstallTask(UserInteractionSupport* support, QString packNa
     m_pack_name = packName;
     static const QRegularExpression s_regex("[^A-Za-z0-9]");
     m_pack_safe_name = packName.replace(s_regex, "");
-    m_version_name = version;
+    m_version_name = std::move(version);
     m_install_mode = installMode;
 }
 
@@ -168,7 +169,7 @@ void PackInstallTask::onDownloadFailed(QString reason)
 {
     qDebug() << "PackInstallTask::onDownloadFailed:" << QThread::currentThreadId();
     jobPtr.reset();
-    emitFailed(reason);
+    emitFailed(std::move(reason));
 }
 
 void PackInstallTask::onDownloadAborted()
@@ -285,7 +286,7 @@ void PackInstallTask::deleteExistingFiles()
     }
 }
 
-QString PackInstallTask::getDirForModType(ModType type, QString raw)
+QString PackInstallTask::getDirForModType(ModType type, const QString& raw)
 {
     switch (type) {
         // Mod types that can either be ignored at this stage, or ignored
@@ -333,7 +334,7 @@ QString PackInstallTask::getDirForModType(ModType type, QString raw)
     return Q_NULLPTR;
 }
 
-QString PackInstallTask::getVersionForLoader(QString uid)
+QString PackInstallTask::getVersionForLoader(const QString& uid)
 {
     if (m_version.loader.recommended || m_version.loader.latest || m_version.loader.choose) {
         auto vlist = APPLICATION->metadataIndex()->get(uid);
@@ -423,7 +424,7 @@ QString PackInstallTask::detectLibrary(const VersionLibrary& library)
     return "org.multimc.atlauncher:" + library.md5 + ":1";
 }
 
-bool PackInstallTask::createLibrariesComponent(QString instanceRoot, PackProfile* profile)
+bool PackInstallTask::createLibrariesComponent(const QString& instanceRoot, PackProfile* profile)
 {
     if (m_version.libraries.isEmpty()) {
         return true;
@@ -535,7 +536,7 @@ bool PackInstallTask::createLibrariesComponent(QString instanceRoot, PackProfile
     return true;
 }
 
-bool PackInstallTask::createPackComponent(QString instanceRoot, PackProfile* profile)
+bool PackInstallTask::createPackComponent(const QString& instanceRoot, PackProfile* profile)
 {
     if (m_version.mainClass.mainClass.isEmpty() && m_version.extraArguments.arguments.isEmpty()) {
         return true;
@@ -649,7 +650,7 @@ void PackInstallTask::installConfigs()
     connect(jobPtr.get(), &NetJob::failed, [this](QString reason) {
         abortable = false;
         jobPtr.reset();
-        emitFailed(reason);
+        emitFailed(std::move(reason));
     });
     connect(jobPtr.get(), &NetJob::progress, [this](qint64 current, qint64 total) {
         abortable = true;

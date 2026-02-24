@@ -89,7 +89,7 @@ void PackFetchTask::fetchPrivate(const QStringList& toFetch)
             data->clear();
         });
 
-        connect(job, &NetJob::failed, this, [this, job, packCode, data](QString reason) {
+        connect(job, &NetJob::failed, this, [this, job, packCode, data](const QString& reason) {
             emit privateFileDownloadFailed(reason, packCode);
             job->deleteLater();
 
@@ -190,7 +190,7 @@ bool PackFetchTask::parseAndAddPacks(QByteArray& data, PackType packType, Modpac
     return true;
 }
 
-void PackFetchTask::fileDownloadFailed(QString reason)
+void PackFetchTask::fileDownloadFailed(const QString& reason)
 {
     qWarning() << "Fetching FTBPacks failed:" << reason;
     emit failed(reason);

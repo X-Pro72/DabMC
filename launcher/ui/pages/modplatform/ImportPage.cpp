@@ -137,7 +137,7 @@ void ImportPage::updateState()
             auto job = api.getFile(addonId, fileId, array.get());
 
             connect(job.get(), &NetJob::failed, this,
-                    [this](QString reason) { CustomMessageBox::selectable(this, tr("Error"), reason, QMessageBox::Critical)->show(); });
+                    [this](const QString& reason) { CustomMessageBox::selectable(this, tr("Error"), reason, QMessageBox::Critical)->show(); });
             connect(job.get(), &NetJob::succeeded, this, [this, array, addonId, fileId] {
                 qDebug() << "Returned CFURL Json:\n" << array->toStdString().c_str();
                 auto doc = Json::requireDocument(*array);

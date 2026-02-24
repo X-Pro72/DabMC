@@ -234,7 +234,7 @@ bool FlameCreationTask::updateInstance()
                 }
             }
         });
-        connect(job.get(), &Task::failed, this, [](QString reason) { qCritical() << "Failed to get files:" << reason; });
+        connect(job.get(), &Task::failed, this, [](const QString& reason) { qCritical() << "Failed to get files:" << reason; });
         connect(job.get(), &Task::finished, &loop, &QEventLoop::quit);
 
         m_processUpdateFileInfoJob = job;
@@ -265,7 +265,7 @@ bool FlameCreationTask::updateInstance()
     return false;
 }
 
-QString FlameCreationTask::getVersionForLoader(QString uid, QString loaderType, QString loaderVersion, QString mcVersion)
+QString FlameCreationTask::getVersionForLoader(const QString& uid, const QString& loaderType, QString loaderVersion, const QString& mcVersion)
 {
     if (loaderVersion == "recommended") {
         auto vlist = APPLICATION->metadataIndex()->get(uid);
@@ -463,7 +463,7 @@ std::unique_ptr<MinecraftInstance> FlameCreationTask::createInstance()
 
     m_modIdResolver.reset(new Flame::FileResolvingTask(m_pack));
     connect(m_modIdResolver.get(), &Flame::FileResolvingTask::succeeded, this, [this, &loop] { idResolverSucceeded(loop); });
-    connect(m_modIdResolver.get(), &Flame::FileResolvingTask::failed, [this, &loop](QString reason) {
+    connect(m_modIdResolver.get(), &Flame::FileResolvingTask::failed, [this, &loop](const QString& reason) {
         m_modIdResolver.reset();
         setError(tr("Unable to resolve mod IDs:\n") + reason);
         loop.quit();
@@ -594,7 +594,7 @@ void FlameCreationTask::setupDownloadJob(QEventLoop& loop)
         m_filesJob.reset();
         validateOtherResources(loop);
     });
-    connect(m_filesJob.get(), &NetJob::failed, [this](QString reason) {
+    connect(m_filesJob.get(), &NetJob::failed, [this](const QString& reason) {
         m_filesJob.reset();
         setError(reason);
     });
@@ -658,7 +658,7 @@ void FlameCreationTask::validateOtherResources(QEventLoop& loop)
 
         /// @brief check the target and move the the file
         /// @return path where file can now be found
-        auto validatePath = [&localPath, this](QString fileName, QString targetFolder, QString realTarget) {
+        auto validatePath = [&localPath, this](const QString& fileName, const QString& targetFolder, const QString& realTarget) {
             if (targetFolder != realTarget) {
                 qDebug() << "Target folder of" << fileName << "is incorrect, it belongs in" << realTarget;
                 auto destPath = FS::PathCombine(m_stagingPath, "minecraft", realTarget, fileName);
@@ -672,7 +672,7 @@ void FlameCreationTask::validateOtherResources(QEventLoop& loop)
             return localPath;
         };
 
-        auto installWorld = [this](QString worldPath) {
+        auto installWorld = [this](const QString& worldPath) {
             qDebug() << "Installing World from" << worldPath;
             QFileInfo worldFileInfo(worldPath);
             World w(worldFileInfo);

@@ -36,6 +36,7 @@
 #include "PackInstallTask.h"
 
 #include <QtConcurrent>
+#include <utility>
 
 #include "BaseInstance.h"
 #include "FileSystem.h"
@@ -55,7 +56,7 @@ namespace LegacyFTB {
 PackInstallTask::PackInstallTask(QNetworkAccessManager* network, const Modpack& pack, QString version)
 {
     m_pack = pack;
-    m_version = version;
+    m_version = std::move(version);
     m_network = network;
 }
 

@@ -261,7 +261,7 @@ void ModFolderModel::onParseSucceeded(int ticket, QString mod_id)
     emit dataChanged(index(row, RequiresColumn), index(row, RequiredByColumn));
 }
 
-Mod* findById(QSet<Mod*> mods, QString modId)
+Mod* findById(QSet<Mod*> mods, const QString& modId)
 {
     auto found = std::find_if(mods.begin(), mods.end(), [modId](Mod* m) { return m->mod_id() == modId; });
     return found != mods.end() ? *found : nullptr;
@@ -278,7 +278,7 @@ void ModFolderModel::onParseFinished()
     m_requires.clear();
     m_requiredBy.clear();
 
-    auto findByProjectID = [mods](QVariant modId, ModPlatform::ResourceProvider provider) -> Mod* {
+    auto findByProjectID = [mods](const QVariant& modId, ModPlatform::ResourceProvider provider) -> Mod* {
         auto found = std::find_if(mods.begin(), mods.end(), [modId, provider](Mod* m) {
             return m->metadata() && m->metadata()->provider == provider && m->metadata()->project_id == modId;
         });
@@ -316,7 +316,7 @@ void ModFolderModel::onParseFinished()
     }
 }
 
-QSet<Mod*> collectMods(QSet<Mod*> mods, QHash<QString, QSet<Mod*>> relation, std::set<QString>& seen, bool shouldBeEnabled)
+QSet<Mod*> collectMods(const QSet<Mod*>& mods, QHash<QString, QSet<Mod*>> relation, std::set<QString>& seen, bool shouldBeEnabled)
 {
     QSet<Mod*> affectedList = {};
     QSet<Mod*> needToCheck = {};
@@ -412,7 +412,7 @@ bool ModFolderModel::setResourceEnabled(const QModelIndexList& indexes, EnableAc
     auto requiredToDisable = collectMods(toDisable, m_requiredBy, seen, false);
 
     toDisable.removeIf([toEnable](Mod* m) { return toEnable.contains(m); });
-    auto toList = [this](QSet<Mod*> mods) {
+    auto toList = [this](const QSet<Mod*>& mods) {
         QModelIndexList list;
         for (auto mod : mods) {
             auto row = m_resources_index[mod->internal_id()];
@@ -467,7 +467,7 @@ bool ModFolderModel::setResourceEnabled(const QModelIndexList& indexes, EnableAc
     return disableStatus && enableStatus;
 }
 
-QStringList reqToList(QSet<Mod*> l)
+QStringList reqToList(const QSet<Mod*>& l)
 {
     QStringList req;
     for (auto m : l) {
@@ -476,12 +476,12 @@ QStringList reqToList(QSet<Mod*> l)
     return req;
 }
 
-QStringList ModFolderModel::requiresList(QString id)
+QStringList ModFolderModel::requiresList(const QString& id)
 {
     return reqToList(m_requires[id]);
 }
 
-QStringList ModFolderModel::requiredByList(QString id)
+QStringList ModFolderModel::requiredByList(const QString& id)
 {
     return reqToList(m_requiredBy[id]);
 }

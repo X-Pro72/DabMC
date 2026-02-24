@@ -42,6 +42,7 @@
 #include <QDateTime>
 #include <QFileInfo>
 #include <memory>
+#include <utility>
 
 #include "ByteArraySink.h"
 #include "ChecksumValidator.h"
@@ -50,20 +51,20 @@
 namespace Net {
 
 #if defined(LAUNCHER_APPLICATION)
-auto Download::makeCached(QUrl url, MetaEntryPtr entry, Options options) -> Download::Ptr
+auto Download::makeCached(const QUrl& url, MetaEntryPtr entry, Options options) -> Download::Ptr
 {
     auto dl = makeShared<Download>();
     dl->m_url = url;
     dl->setObjectName(QString("CACHE:") + url.toString());
     dl->m_options = options;
     auto md5Node = new ChecksumValidator(QCryptographicHash::Md5);
-    auto cachedNode = new MetaCacheSink(entry, md5Node, options.testFlag(Option::MakeEternal));
+    auto cachedNode = new MetaCacheSink(std::move(entry), md5Node, options.testFlag(Option::MakeEternal));
     dl->m_sink.reset(cachedNode);
     return dl;
 }
 #endif
 
-auto Download::makeByteArray(QUrl url, QByteArray* output, Options options) -> Download::Ptr
+auto Download::makeByteArray(const QUrl& url, QByteArray* output, Options options) -> Download::Ptr
 {
     auto dl = makeShared<Download>();
     dl->m_url = url;
@@ -73,7 +74,7 @@ auto Download::makeByteArray(QUrl url, QByteArray* output, Options options) -> D
     return dl;
 }
 
-auto Download::makeFile(QUrl url, QString path, Options options) -> Download::Ptr
+auto Download::makeFile(const QUrl& url, const QString& path, Options options) -> Download::Ptr
 {
     auto dl = makeShared<Download>();
     dl->m_url = url;

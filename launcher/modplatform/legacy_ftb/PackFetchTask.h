@@ -32,16 +32,16 @@ class PackFetchTask : public QObject {
 
    protected slots:
     void fileDownloadFinished();
-    void fileDownloadFailed(QString reason);
+    void fileDownloadFailed(const QString& reason);
     void fileDownloadAborted();
 
    signals:
-    void finished(ModpackList publicPacks, ModpackList thirdPartyPacks);
-    void failed(QString reason);
+    void finished(const ModpackList& publicPacks, const ModpackList& thirdPartyPacks);
+    void failed(const QString& reason);
     void aborted();
 
     void privateFileDownloadFinished(const Modpack& modpack);
-    void privateFileDownloadFailed(QString reason, QString packCode);
+    void privateFileDownloadFailed(const QString& reason, const QString& packCode);
 };
 
 }  // namespace LegacyFTB
