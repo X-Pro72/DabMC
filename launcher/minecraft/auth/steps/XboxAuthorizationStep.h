@@ -11,7 +11,7 @@ class XboxAuthorizationStep : public AuthStep {
 
    public:
     explicit XboxAuthorizationStep(AccountData* data, Token* token, QString relyingParty, QString authorizationKind);
-    virtual ~XboxAuthorizationStep() noexcept = default;
+    ~XboxAuthorizationStep() noexcept override = default;
 
     void perform() override;
 

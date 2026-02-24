@@ -47,7 +47,7 @@ class ByteArraySink : public Sink {
    public:
     ByteArraySink(QByteArray* output) : m_output(output) {}
 
-    virtual ~ByteArraySink() = default;
+    ~ByteArraySink() override = default;
 
    public:
     auto init(QNetworkRequest& request) -> Task::State override

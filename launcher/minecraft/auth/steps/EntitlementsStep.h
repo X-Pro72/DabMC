@@ -11,7 +11,7 @@ class EntitlementsStep : public AuthStep {
 
    public:
     explicit EntitlementsStep(AccountData* data);
-    virtual ~EntitlementsStep() noexcept = default;
+    ~EntitlementsStep() noexcept override = default;
 
     void perform() override;
 
