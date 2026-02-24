@@ -158,8 +158,9 @@ void ListModel::requestPack()
 
 void ListModel::packRequestFinished()
 {
-    if (!m_jobPtr || m_aborted)
+    if (!m_jobPtr || m_aborted) {
         return;
+    }
 
     m_jobPtr.reset();
     m_remainingPacks.removeOne(m_currentPack);

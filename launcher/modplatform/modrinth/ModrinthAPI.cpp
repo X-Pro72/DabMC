@@ -48,8 +48,9 @@ Task::Ptr ModrinthAPI::latestVersion(const QString& hash,
 
     QJsonObject body_obj;
 
-    if (loaders.has_value())
+    if (loaders.has_value()) {
         Json::writeStringList(body_obj, "loaders", getModLoaderStrings(loaders.value()));
+    }
 
     if (mcVersions.has_value()) {
         QStringList game_versions;
@@ -81,8 +82,9 @@ Task::Ptr ModrinthAPI::latestVersions(const QStringList& hashes,
     Json::writeStringList(body_obj, "hashes", hashes);
     Json::writeString(body_obj, "algorithm", hash_format);
 
-    if (loaders.has_value())
+    if (loaders.has_value()) {
         Json::writeStringList(body_obj, "loaders", getModLoaderStrings(loaders.value()));
+    }
 
     if (mcVersions.has_value()) {
         QStringList game_versions;
@@ -147,8 +149,9 @@ QList<ModPlatform::Category> ModrinthAPI::loadCategories(QByteArray* response, c
         for (auto val : arr) {
             auto cat = Json::requireObject(val);
             auto name = Json::requireString(cat, "name");
-            if (cat["project_type"].toString() == projectType)
+            if (cat["project_type"].toString() == projectType) {
                 categories.push_back({ name, name });
+            }
         }
 
     } catch (Json::JsonException& e) {

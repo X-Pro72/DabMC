@@ -162,8 +162,9 @@ void ProfileSetupDialog::checkName(const QString& name)
                                            { "Authorization", QString("Bearer %1").arg(m_accountToSetup->accessToken()).toUtf8() } };
 
     m_check_response = std::make_unique<QByteArray>();
-    if (m_check_task)
+    if (m_check_task) {
         disconnect(m_check_task.get(), nullptr, this, nullptr);
+    }
     m_check_task = Net::Download::makeByteArray(url, m_check_response.get());
     m_check_task->addHeaderProxy(std::make_unique<Net::RawHeaderProxy>(headers));
 

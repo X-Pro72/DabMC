@@ -136,14 +136,17 @@ void ListModel::requestFinished()
         }
 
         // ignore packs without a published version
-        if (pack.versions.length() == 0)
+        if (pack.versions.length() == 0) {
             continue;
+        }
         // only display public packs (for now)
-        if (pack.type != ATLauncher::PackType::Public)
+        if (pack.type != ATLauncher::PackType::Public) {
             continue;
+        }
         // ignore "system" packs (Vanilla, Vanilla with Forge, etc)
-        if (pack.system)
+        if (pack.system) {
             continue;
+        }
 
         newList.append(pack);
     }
