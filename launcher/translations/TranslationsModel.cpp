@@ -425,8 +425,9 @@ QList<Language>::Iterator TranslationsModel::findLanguage(const QString& key)
 std::optional<Language> TranslationsModel::findLanguageAsOptional(const QString& key)
 {
     auto found = findLanguage(key);
-    if (found != d->m_languages.end())
+    if (found != d->m_languages.end()) {
         return *found;
+    }
     return {};
 }
 

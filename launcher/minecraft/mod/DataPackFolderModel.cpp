@@ -67,11 +67,9 @@ QVariant DataPackFolderModel::data(const QModelIndex& index, int role) const
         case Qt::BackgroundRole:
             return rowBackground(row);
         case Qt::DisplayRole:
-            switch (column) {
-                case PackFormatColumn: {
-                    const auto& resource = at(row);
-                    return resource.packFormatStr();
-                }
+            if (column == PackFormatColumn) {
+                const auto& resource = at(row);
+                return resource.packFormatStr();
             }
             break;
         case Qt::DecorationRole: {
@@ -92,6 +90,8 @@ QVariant DataPackFolderModel::data(const QModelIndex& index, int role) const
                 return QSize(32, 32);
             }
             break;
+        default:
+            break;
     }
 
     // map the columns to the base equivilents
@@ -109,7 +109,9 @@ QVariant DataPackFolderModel::data(const QModelIndex& index, int role) const
         case ProviderColumn:
             mappedIndex = index.siblingAtColumn(ResourceFolderModel::ProviderColumn);
             break;
-            // FIXME: there is no size column due to an oversight
+        // FIXME: there is no size column due to an oversight
+        default:
+            break;
     }
 
     if (mappedIndex.isValid()) {

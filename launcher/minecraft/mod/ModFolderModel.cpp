@@ -120,6 +120,8 @@ QVariant ModFolderModel::data(const QModelIndex& index, int role) const
                 case RequiresColumn: {
                     return at(row).requiresCount();
                 }
+                default:
+                    break;
             }
             break;
         case Qt::DecorationRole: {
@@ -154,6 +156,8 @@ QVariant ModFolderModel::data(const QModelIndex& index, int role) const
             break;
         case SizeColumn:
             mappedIndex = index.siblingAtColumn(ResourceFolderModel::SizeColumn);
+            break;
+        default:
             break;
     }
 
@@ -255,7 +259,6 @@ void ModFolderModel::onParseSucceeded(int ticket, QString mod_id)
     if (result && resource) {
         auto* mod = static_cast<Mod*>(resource.get());
         mod->finishResolvingWithDetails(std::move(result->details));
-
     }
     emit dataChanged(index(row, RequiresColumn), index(row, RequiredByColumn));
 }

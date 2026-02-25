@@ -92,6 +92,8 @@ QVariant ResourcePackFolderModel::data(const QModelIndex& index, int role) const
                 return QSize(32, 32);
             }
             break;
+        default:
+            break;
     }
 
     // map the columns to the base equivilents
@@ -111,6 +113,8 @@ QVariant ResourcePackFolderModel::data(const QModelIndex& index, int role) const
             break;
         case SizeColumn:
             mappedIndex = index.siblingAtColumn(ResourceFolderModel::SizeColumn);
+            break;
+        default:
             break;
     }
 
