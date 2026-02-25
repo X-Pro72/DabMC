@@ -49,6 +49,7 @@
 #include <QStackedLayout>
 #include <QStyledItemDelegate>
 #include <QUrl>
+#include <utility>
 
 #include "settings/SettingsObject.h"
 
@@ -108,7 +109,7 @@ PageContainer::PageContainer(BasePageProvider* pageProvider, QString defaultId, 
     connect(m_pageList->selectionModel(), &QItemSelectionModel::currentRowChanged, this, &PageContainer::currentChanged);
     m_pageStack->setStackingMode(QStackedLayout::StackOne);
     m_pageList->setFocus();
-    selectPage(defaultId);
+    selectPage(std::move(defaultId));
 }
 
 bool PageContainer::selectPage(QString pageId)
