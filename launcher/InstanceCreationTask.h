@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QDir>
 #include "settings/SettingsObject.h"
 #include "tasks/Task.h"
 
