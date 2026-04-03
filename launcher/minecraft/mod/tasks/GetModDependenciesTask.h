@@ -21,7 +21,6 @@
 #include <QDir>
 #include <QList>
 #include <QVariant>
-#include <functional>
 #include <memory>
 #include <utility>
 
@@ -49,13 +48,13 @@ class GetModDependenciesTask : public SequentialTask {
     };
 
     struct PackDependencyExtraInfo {
-        bool maybe_installed{};
-        QStringList required_by;
+        bool maybeInstalled{};
+        QStringList requiredBy;
     };
 
     explicit GetModDependenciesTask(BaseInstance* instance, ModFolderModel* folder, QList<std::shared_ptr<PackDependency>> selected);
 
-    auto getDependecies() const -> QList<std::shared_ptr<PackDependency>> { return m_pack_dependencies; }
+    auto getDependecies() const -> QList<std::shared_ptr<PackDependency>> { return m_packDependencies; }
     QHash<QString, PackDependencyExtraInfo> getExtraInfo();
 
    private:
@@ -80,10 +79,10 @@ class GetModDependenciesTask : public SequentialTask {
     bool maybeInstalled(std::shared_ptr<PackDependency> pDep);
 
    private:
-    QList<std::shared_ptr<PackDependency>> m_pack_dependencies;
+    QList<std::shared_ptr<PackDependency>> m_packDependencies;
     QList<std::shared_ptr<Metadata::ModStruct>> m_mods;
     QList<std::shared_ptr<PackDependency>> m_selected;
-    QStringList m_mods_file_names;
+    QStringList m_modsFileNames;
 
     Version m_version;
     ModPlatform::ModLoaderTypes m_loaderType;

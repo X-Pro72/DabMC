@@ -29,10 +29,12 @@
 
 #include <optional>
 
-static std::vector<Version> mcVersions(BaseInstance* inst)
+namespace {
+std::vector<Version> mcVersions(BaseInstance* inst)
 {
     return { static_cast<MinecraftInstance*>(inst)->getPackProfile()->getComponent("net.minecraft")->getVersion() };
 }
+}  // namespace
 
 ResourceUpdateDialog::ResourceUpdateDialog(QWidget* parent,
                                            BaseInstance* instance,
@@ -58,8 +60,8 @@ ResourceUpdateDialog::ResourceUpdateDialog(QWidget* parent,
 void ResourceUpdateDialog::checkCandidates()
 {
     // Ensure mods have valid metadata
-    auto went_well = ensureMetadata();
-    if (!went_well) {
+    auto wentWell = ensureMetadata();
+    if (!wentWell) {
         m_aborted = true;
         return;
     }
@@ -73,12 +75,12 @@ void ResourceUpdateDialog::checkCandidates()
             text += tr("Mod name: %1<br>File name: %2<br>Reason: %3<br><br>").arg(mod->name(), mod->fileinfo().fileName(), reason);
         }
 
-        ScrollMessageBox message_dialog(m_parent, tr("Metadata generation failed"),
-                                        tr("Could not generate metadata for the following resources:<br>"
-                                           "Do you wish to proceed without those resources?"),
-                                        text);
-        message_dialog.setModal(true);
-        if (message_dialog.exec() == QDialog::Rejected) {
+        ScrollMessageBox messageDialog(m_parent, tr("Metadata generation failed"),
+                                       tr("Could not generate metadata for the following resources:<br>"
+                                          "Do you wish to proceed without those resources?"),
+                                       text);
+        messageDialog.setModal(true);
+        if (messageDialog.exec() == QDialog::Rejected) {
             m_aborted = true;
             QMetaObject::invokeMethod(this, "reject", Qt::QueuedConnection);
             return;
@@ -87,40 +89,41 @@ void ResourceUpdateDialog::checkCandidates()
 
     auto versions = mcVersions(m_instance);
 
-    SequentialTask check_task(tr("Checking for updates"));
+    SequentialTask checkTask(tr("Checking for updates"));
 
     if (!m_modrinthToUpdate.empty()) {
         m_modrinthCheckTask.reset(new ModrinthCheckUpdate(m_modrinthToUpdate, versions, m_loadersList, m_resourceModel));
         connect(m_modrinthCheckTask.get(), &CheckUpdateTask::checkFailed, this,
-                [this](Resource* resource, QString reason, QUrl recover_url) {
-                    m_failedCheckUpdate.append({ resource, reason, recover_url });
+                [this](Resource* resource, const QString& reason, const QUrl& recoverUrl) {
+                    m_failedCheckUpdate.append({ resource, reason, recoverUrl });
                 });
-        check_task.addTask(m_modrinthCheckTask);
+        checkTask.addTask(m_modrinthCheckTask);
     }
 
     if (!m_flameToUpdate.empty()) {
         m_flameCheckTask.reset(new FlameCheckUpdate(m_flameToUpdate, versions, m_loadersList, m_resourceModel));
-        connect(m_flameCheckTask.get(), &CheckUpdateTask::checkFailed, this, [this](Resource* resource, QString reason, QUrl recover_url) {
-            m_failedCheckUpdate.append({ resource, reason, recover_url });
-        });
-        check_task.addTask(m_flameCheckTask);
+        connect(m_flameCheckTask.get(), &CheckUpdateTask::checkFailed, this,
+                [this](Resource* resource, const QString& reason, const QUrl& recoverUrl) {
+                    m_failedCheckUpdate.append({ resource, reason, recoverUrl });
+                });
+        checkTask.addTask(m_flameCheckTask);
     }
 
-    connect(&check_task, &Task::failed, this,
-            [this](QString reason) { CustomMessageBox::selectable(this, tr("Error"), reason, QMessageBox::Critical)->exec(); });
+    connect(&checkTask, &Task::failed, this,
+            [this](const QString& reason) { CustomMessageBox::selectable(this, tr("Error"), reason, QMessageBox::Critical)->exec(); });
 
-    connect(&check_task, &Task::succeeded, this, [this, &check_task]() {
-        QStringList warnings = check_task.warnings();
+    connect(&checkTask, &Task::succeeded, this, [this, &checkTask]() {
+        QStringList warnings = checkTask.warnings();
         if (warnings.count()) {
             CustomMessageBox::selectable(this, tr("Warnings"), warnings.join('\n'), QMessageBox::Warning)->exec();
         }
     });
 
     // Check for updates
-    ProgressDialog progress_dialog(m_parent);
-    progress_dialog.setSkipButton(true, tr("Abort"));
-    progress_dialog.setWindowTitle(tr("Checking for updates..."));
-    auto ret = progress_dialog.execWithTask(&check_task);
+    ProgressDialog progressDialog(m_parent);
+    progressDialog.setSkipButton(true, tr("Abort"));
+    progressDialog.setWindowTitle(tr("Checking for updates..."));
+    auto ret = progressDialog.execWithTask(&checkTask);
 
     // If the dialog was skipped / some download error happened
     if (ret == QDialog::DialogCode::Rejected) {
@@ -133,8 +136,8 @@ void ResourceUpdateDialog::checkCandidates()
 
     // Add found updates for Modrinth
     if (m_modrinthCheckTask) {
-        auto modrinth_updates = m_modrinthCheckTask->getUpdates();
-        for (auto& updatable : modrinth_updates) {
+        auto modrinthUpdates = m_modrinthCheckTask->getUpdates();
+        for (auto& updatable : modrinthUpdates) {
             qDebug() << QString("Mod %1 has an update available!").arg(updatable.name);
 
             appendResource(updatable);
@@ -145,8 +148,8 @@ void ResourceUpdateDialog::checkCandidates()
 
     // Add found updated for Flame
     if (m_flameCheckTask) {
-        auto flame_updates = m_flameCheckTask->getUpdates();
-        for (auto& updatable : flame_updates) {
+        auto flameUpdates = m_flameCheckTask->getUpdates();
+        for (auto& updatable : flameUpdates) {
             qDebug() << QString("Mod %1 has an update available!").arg(updatable.name);
 
             appendResource(updatable);
@@ -161,33 +164,35 @@ void ResourceUpdateDialog::checkCandidates()
         for (const auto& failed : m_failedCheckUpdate) {
             const auto& mod = std::get<0>(failed);
             const auto& reason = std::get<1>(failed);
-            const auto& recover_url = std::get<2>(failed);
+            const auto& recoverUrl = std::get<2>(failed);
 
             qDebug() << mod->name() << "failed to check for updates!";
 
             text += tr("Mod name: %1").arg(mod->name()) + "<br>";
-            if (!reason.isEmpty())
+            if (!reason.isEmpty()) {
                 text += tr("Reason: %1").arg(reason) + "<br>";
-            if (!recover_url.isEmpty())
+            }
+            if (!recoverUrl.isEmpty()) {
                 //: %1 is the link to download it manually
                 text += tr("Possible solution: Getting the latest version manually:<br>%1<br>")
-                            .arg(QString("<a href='%1'>%1</a>").arg(recover_url.toString()));
+                            .arg(QString("<a href='%1'>%1</a>").arg(recoverUrl.toString()));
+            }
             text += "<br>";
         }
 
-        ScrollMessageBox message_dialog(m_parent, tr("Failed to check for updates"),
-                                        tr("Could not check or get the following resources for updates:<br>"
-                                           "Do you wish to proceed without those resources?"),
-                                        text, "Disable unavailable mods");
-        message_dialog.setModal(true);
-        if (message_dialog.exec() == QDialog::Rejected) {
+        ScrollMessageBox messageDialog(m_parent, tr("Failed to check for updates"),
+                                       tr("Could not check or get the following resources for updates:<br>"
+                                          "Do you wish to proceed without those resources?"),
+                                       text, tr("Disable unavailable mods"));
+        messageDialog.setModal(true);
+        if (messageDialog.exec() == QDialog::Rejected) {
             m_aborted = true;
             QMetaObject::invokeMethod(this, "reject", Qt::QueuedConnection);
             return;
         }
 
         // Disable unavailable mods
-        if (message_dialog.isOptionChecked()) {
+        if (messageDialog.isOptionChecked()) {
             for (const auto& failed : m_failedCheckUpdate) {
                 const auto& mod = std::get<0>(failed);
                 mod->enable(EnableAction::DISABLE);
@@ -196,10 +201,10 @@ void ResourceUpdateDialog::checkCandidates()
     }
 
     if (m_includeDeps && !APPLICATION->settings()->get("ModDependenciesDisabled").toBool()) {  // dependencies
-        auto* mod_model = dynamic_cast<ModFolderModel*>(m_resourceModel);
+        auto* modModel = dynamic_cast<ModFolderModel*>(m_resourceModel);
 
-        if (mod_model != nullptr) {
-            auto depTask = makeShared<GetModDependenciesTask>(m_instance, mod_model, selectedVers);
+        if (modModel != nullptr) {
+            auto depTask = makeShared<GetModDependenciesTask>(m_instance, modModel, selectedVers);
 
             connect(depTask.get(), &Task::failed, this, [this](const QString& reason) {
                 CustomMessageBox::selectable(this, tr("Error"), reason, QMessageBox::Critical)->exec();
@@ -215,10 +220,10 @@ void ResourceUpdateDialog::checkCandidates()
                 }
             });
 
-            ProgressDialog progress_dialog_deps(m_parent);
-            progress_dialog_deps.setSkipButton(true, tr("Abort"));
-            progress_dialog_deps.setWindowTitle(tr("Checking for dependencies..."));
-            auto dret = progress_dialog_deps.execWithTask(depTask.get());
+            ProgressDialog progressDialogDeps(m_parent);
+            progressDialogDeps.setSkipButton(true, tr("Abort"));
+            progressDialogDeps.setWindowTitle(tr("Checking for dependencies..."));
+            auto dret = progressDialogDeps.execWithTask(depTask.get());
 
             // If the dialog was skipped / some download error happened
             if (dret == QDialog::DialogCode::Rejected) {
@@ -237,11 +242,11 @@ void ResourceUpdateDialog::checkCandidates()
                 auto download_task = makeShared<ResourceDownloadTask>(dep->pack, dep->version, m_resourceModel);
                 auto extraInfo = dependencyExtraInfo.value(dep->version.addonId.toString());
                 CheckUpdateTask::Update updatable = {
-                    dep->pack->name, dep->version.hash,   tr("Not installed"), dep->version.version,      dep->version.version_type,
-                    changelog,       dep->pack->provider, download_task,       !extraInfo.maybe_installed
+                    dep->pack->name, dep->version.hash,   tr("Not installed"), dep->version.version,     dep->version.version_type,
+                    changelog,       dep->pack->provider, download_task,       !extraInfo.maybeInstalled
                 };
 
-                appendResource(updatable, extraInfo.required_by);
+                appendResource(updatable, extraInfo.requiredBy);
                 m_tasks.insert(updatable.name, updatable.download);
             }
         }
@@ -436,7 +441,7 @@ void ResourceUpdateDialog::onMetadataFailed(Resource* resource, bool try_others,
     }
 }
 
-void ResourceUpdateDialog::appendResource(CheckUpdateTask::Update const& info, QStringList requiredBy)
+void ResourceUpdateDialog::appendResource(const CheckUpdateTask::Update& info, QStringList requiredBy)
 {
     auto item_top = new QTreeWidgetItem(ui->modTreeWidget);
     item_top->setCheckState(0, info.enabled ? Qt::CheckState::Checked : Qt::CheckState::Unchecked);

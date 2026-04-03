@@ -39,23 +39,10 @@ class FlameAPI : public ResourceAPI {
         return loaders & (ModPlatform::NeoForge | ModPlatform::Forge | ModPlatform::Fabric | ModPlatform::Quilt);
     }
 
+    static ModPlatform::ResourceType getResourceType(int classId);
+
    private:
-    static int getClassId(ModPlatform::ResourceType type)
-    {
-        switch (type) {
-            default:
-            case ModPlatform::ResourceType::Mod:
-                return 6;
-            case ModPlatform::ResourceType::ResourcePack:
-                return 12;
-            case ModPlatform::ResourceType::ShaderPack:
-                return 6552;
-            case ModPlatform::ResourceType::Modpack:
-                return 4471;
-            case ModPlatform::ResourceType::DataPack:
-                return 6945;
-        }
-    }
+    static int getClassId(ModPlatform::ResourceType type);
 
     static int getMappedModLoader(ModPlatform::ModLoaderType loaders)
     {
