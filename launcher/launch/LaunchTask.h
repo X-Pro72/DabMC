@@ -65,7 +65,7 @@ class LaunchTask : public Task {
 
     void setPid(qint64 pid) { m_pid = pid; }
 
-    qint64 pid() { return m_pid; }
+    qint64 pid() const { return m_pid; }
 
     /**
      * @brief prepare the process for launch (for multi-stage launch)
@@ -115,7 +115,7 @@ class LaunchTask : public Task {
     void finalizeSteps(bool successful, const QString& error);
 
    protected:
-    bool parseXmlLogs(QString const& line, MessageLevel level);
+    bool parseXmlLogs(const QString& line, MessageLevel level);
 
    protected: /* data */
     MinecraftInstance* m_instance;

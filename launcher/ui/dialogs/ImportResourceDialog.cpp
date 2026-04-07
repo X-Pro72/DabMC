@@ -7,7 +7,6 @@
 #include "Application.h"
 #include "InstanceList.h"
 
-#include <InstanceList.h>
 #include "modplatform/ResourceType.h"
 #include "ui/instanceview/InstanceDelegate.h"
 #include "ui/instanceview/InstanceProxyModel.h"
@@ -18,7 +17,7 @@ ImportResourceDialog::ImportResourceDialog(QString file_path, ModPlatform::Resou
     ui->setupUi(this);
     setWindowModality(Qt::WindowModal);
 
-    auto contentsWidget = ui->instanceView;
+    auto* contentsWidget = ui->instanceView;
     contentsWidget->setViewMode(QListView::ListMode);
     contentsWidget->setFlow(QListView::LeftToRight);
     contentsWidget->setIconSize(QSize(48, 48));
@@ -58,8 +57,9 @@ void ImportResourceDialog::activated(QModelIndex index)
 
 void ImportResourceDialog::selectionChanged(QItemSelection selected, QItemSelection deselected)
 {
-    if (selected.empty())
+    if (selected.empty()) {
         return;
+    }
 
     QString key = selected.first().indexes().first().data(InstanceList::InstanceIDRole).toString();
     if (!key.isEmpty()) {

@@ -27,8 +27,8 @@
 #include "ui_BlockedModsDialog.h"
 
 #include "Application.h"
-#include "settings/SettingsObject.h"
 #include "modplatform/helpers/HashUtils.h"
+#include "settings/SettingsObject.h"
 
 #include <QDebug>
 #include <QDesktopServices>
@@ -208,14 +208,16 @@ void BlockedModsDialog::watchPath(QString path, bool watch_recursive)
         return;
     }
     auto to_watch_path = to_watch.canonicalFilePath();
-    if (m_watcher.directories().contains(to_watch_path))
+    if (m_watcher.directories().contains(to_watch_path)) {
         return;  // don't watch the same path twice (no loops!)
+    }
 
     qDebug() << "[Blocked Mods Dialog] Adding Watch Path:" << path;
     m_watcher.addPath(to_watch_path);
 
-    if (!to_watch.isDir() || !watch_recursive)
+    if (!to_watch.isDir() || !watch_recursive) {
         return;
+    }
 
     QDirIterator it(to_watch_path, QDir::Filter::Dirs | QDir::Filter::NoDotAndDotDot, QDirIterator::NoIteratorFlags);
     while (it.hasNext()) {
@@ -379,7 +381,7 @@ bool BlockedModsDialog::checkValidPath(QString path)
 
 bool BlockedModsDialog::allModsMatched()
 {
-    return std::all_of(m_mods.begin(), m_mods.end(), [](auto const& mod) { return mod.matched; });
+    return std::all_of(m_mods.begin(), m_mods.end(), [](const auto& mod) { return mod.matched; });
 }
 
 /// @brief ensure matched file paths still exist

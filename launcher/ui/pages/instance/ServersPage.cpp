@@ -91,7 +91,7 @@ struct Server {
         }
     }
 
-    void serialize(nbt::tag_compound& server)
+    void serialize(nbt::tag_compound& server) const
     {
         server.insert("name", m_name.trimmed().toUtf8().toStdString());
         server.insert("ip", m_address.trimmed().toUtf8().toStdString());
@@ -122,11 +122,13 @@ static std::unique_ptr<nbt::tag_compound> parseServersDat(const QString& filenam
         std::istringstream foo(std::string(input.constData(), input.size()));
         auto pair = nbt::io::read_compound(foo);
 
-        if (pair.first != "")
+        if (!pair.first.empty()) {
             return nullptr;
+        }
 
-        if (pair.second == nullptr)
+        if (pair.second == nullptr) {
             return nullptr;
+        }
 
         return std::move(pair.second);
     } catch (...) {
@@ -276,8 +278,9 @@ class ServersModel : public QAbstractListModel {
 
     QVariant headerData(int section, Qt::Orientation orientation, int role) const override
     {
-        if (section < 0 || section >= COLUMN_COUNT)
+        if (section < 0 || section >= COLUMN_COUNT) {
             return QVariant();
+        }
 
         if (role == Qt::DisplayRole) {
             switch (section) {
@@ -295,30 +298,33 @@ class ServersModel : public QAbstractListModel {
 
     virtual QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override
     {
-        if (!index.isValid())
+        if (!index.isValid()) {
             return QVariant();
+        }
 
         int row = index.row();
         int column = index.column();
-        if (column < 0 || column >= COLUMN_COUNT)
+        if (column < 0 || column >= COLUMN_COUNT) {
             return QVariant();
+        }
 
-        if (row < 0 || row >= m_servers.size())
+        if (row < 0 || row >= m_servers.size()) {
             return QVariant();
+        }
 
         switch (role) {
             case Qt::DecorationRole: {
                 if (column == 0) {
-                    auto& bytes = m_servers[row].m_icon;
+                    const auto& bytes = m_servers[row].m_icon;
                     if (bytes.size()) {
                         QPixmap px;
-                        if (px.loadFromData(bytes))
+                        if (px.loadFromData(bytes)) {
                             return QIcon(px);
+                        }
                     }
                     return QIcon::fromTheme("unknown_server");
-                } else {
-                    return QVariant();
                 }
+                return QVariant();
             }
             case Qt::DisplayRole:
                 switch (column) {
@@ -336,10 +342,11 @@ class ServersModel : public QAbstractListModel {
                         return QVariant();
                 }
             case ServerPtrRole:
-                if (column == 0)
+                if (column == 0) {
                     return QVariant::fromValue<void*>((void*)&m_servers[row]);
-                else
+                } else {
                     return QVariant();
+                }
             default:
                 return QVariant();
         }
@@ -361,7 +368,7 @@ class ServersModel : public QAbstractListModel {
         if (m_locked) {
             return;
         }
-        auto server = at(row);
+        auto* server = at(row);
         if (!server || server->m_name == name) {
             return;
         }
@@ -375,7 +382,7 @@ class ServersModel : public QAbstractListModel {
         if (m_locked) {
             return;
         }
-        auto server = at(row);
+        auto* server = at(row);
         if (!server || server->m_address == address) {
             return;
         }
@@ -389,7 +396,7 @@ class ServersModel : public QAbstractListModel {
         if (m_locked) {
             return;
         }
-        auto server = at(row);
+        auto* server = at(row);
         if (!server || server->m_acceptsTextures == textures) {
             return;
         }
@@ -447,8 +454,9 @@ class ServersModel : public QAbstractListModel {
 
             // Update the model when the task is done
             connect(task, &Task::finished, this, [this, task, row]() {
-                if (m_servers.size() < row)
+                if (m_servers.size() < row) {
                     return;
+                }
                 m_servers[row].m_currentPlayers = task->m_outputOnlinePlayers;
                 emit dataChanged(index(row, 0), index(row, COLUMN_COUNT - 1));
             });
@@ -464,7 +472,7 @@ class ServersModel : public QAbstractListModel {
         qDebug() << "Changed:" << path;
         load();
     }
-    void fileChanged(const QString& path) { qDebug() << "Changed:" << path; }
+    static void fileChanged(const QString& path) { qDebug() << "Changed:" << path; }
 
    private slots:
     void save_internal()
@@ -558,7 +566,7 @@ ServersPage::ServersPage(BaseInstance* inst, QWidget* parent) : QMainWindow(pare
     ui->serversView->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(ui->serversView, &QTreeView::customContextMenuRequested, this, &ServersPage::ShowContextMenu);
 
-    auto head = ui->serversView->header();
+    auto* head = ui->serversView->header();
     if (head->count()) {
         head->setSectionResizeMode(0, QHeaderView::Stretch);
         for (int i = 1; i < head->count(); i++) {
@@ -566,7 +574,7 @@ ServersPage::ServersPage(BaseInstance* inst, QWidget* parent) : QMainWindow(pare
         }
     }
 
-    auto selectionModel = ui->serversView->selectionModel();
+    auto* selectionModel = ui->serversView->selectionModel();
     connect(selectionModel, &QItemSelectionModel::currentChanged, this, &ServersPage::currentChanged);
     connect(m_inst, &MinecraftInstance::runningStatusChanged, this, &ServersPage::runningStateChanged);
     connect(ui->nameLine, &QLineEdit::textEdited, this, &ServersPage::nameEdited);
@@ -595,7 +603,7 @@ void ServersPage::retranslate()
 
 void ServersPage::ShowContextMenu(const QPoint& pos)
 {
-    auto menu = ui->toolBar->createContextMenu(this, tr("Context menu"));
+    auto* menu = ui->toolBar->createContextMenu(this, tr("Context menu"));
     menu->exec(ui->serversView->mapToGlobal(pos));
     delete menu;
 }
@@ -639,14 +647,13 @@ void ServersPage::rowsRemoved([[maybe_unused]] const QModelIndex& parent, int fi
     if (currentServer < first) {
         // current was before the removal
         return;
-    } else if (currentServer >= first && currentServer <= last) {
+    }
+    if (currentServer >= first && currentServer <= last) {
         // current got removed...
         return;
-    } else {
-        // current was past the removal
-        int count = last - first + 1;
-        currentServer -= count;
-    }
+    }  // current was past the removal
+    int count = last - first + 1;
+    currentServer -= count;
 }
 
 void ServersPage::nameEdited(const QString& name)
@@ -667,7 +674,7 @@ void ServersPage::resourceIndexChanged(int index)
 
 void ServersPage::updateState()
 {
-    auto server = m_model->at(currentServer);
+    auto* server = m_model->at(currentServer);
 
     bool serverEditEnabled = server && !m_locked;
     ui->addressLine->setEnabled(serverEditEnabled);
@@ -695,7 +702,7 @@ void ServersPage::openedImpl()
 {
     m_model->observe();
 
-    auto const setting_name = QString("WideBarVisibility_%1").arg(id());
+    const auto setting_name = QString("WideBarVisibility_%1").arg(id());
     m_wide_bar_setting = APPLICATION->settings()->getOrRegisterSetting(setting_name);
 
     ui->toolBar->setVisibilityState(QByteArray::fromBase64(m_wide_bar_setting->get().toString().toUtf8()));
@@ -734,8 +741,9 @@ void ServersPage::on_actionRemove_triggered()
                                      QMessageBox::Warning, QMessageBox::Yes | QMessageBox::No, QMessageBox::No)
             ->exec();
 
-    if (response != QMessageBox::Yes)
+    if (response != QMessageBox::Yes) {
         return;
+    }
 
     m_model->removeRow(currentServer);
 }

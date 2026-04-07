@@ -54,7 +54,7 @@ ExternalResourcesPage::ExternalResourcesPage(BaseInstance* instance, ResourceFol
 
     ui->actionsToolbar->insertSpacer(ui->actionViewFolder);
 
-    m_filterModel = model->createFilterProxyModel(this);
+    m_filterModel = ResourceFolderModel::createFilterProxyModel(this);
     m_filterModel->setDynamicSortFilter(true);
     m_filterModel->setFilterCaseSensitivity(Qt::CaseInsensitive);
     m_filterModel->setSortCaseSensitivity(Qt::CaseInsensitive);
@@ -81,7 +81,7 @@ ExternalResourcesPage::ExternalResourcesPage(BaseInstance* instance, ResourceFol
     connect(ui->treeView, &ModListView::customContextMenuRequested, this, &ExternalResourcesPage::ShowContextMenu);
     connect(ui->treeView, &ModListView::activated, this, &ExternalResourcesPage::itemActivated);
 
-    auto selection_model = ui->treeView->selectionModel();
+    auto* selection_model = ui->treeView->selectionModel();
 
     connect(selection_model, &QItemSelectionModel::currentChanged, this, [this](const QModelIndex& current, const QModelIndex& previous) {
         if (!current.isValid()) {
@@ -93,8 +93,9 @@ ExternalResourcesPage::ExternalResourcesPage(BaseInstance* instance, ResourceFol
     });
 
     auto updateExtra = [this]() {
-        if (updateExtraInfo)
+        if (updateExtraInfo) {
             updateExtraInfo(id(), extraHeaderInfoString());
+        }
     };
 
     connect(selection_model, &QItemSelectionModel::selectionChanged, this, updateExtra);
@@ -105,7 +106,7 @@ ExternalResourcesPage::ExternalResourcesPage(BaseInstance* instance, ResourceFol
     connect(m_model, &ResourceFolderModel::rowsInserted, this, [this] { updateActions(); });
     connect(m_model, &ResourceFolderModel::rowsRemoved, this, [this] { updateActions(); });
 
-    auto viewHeader = ui->treeView->header();
+    auto* viewHeader = ui->treeView->header();
     viewHeader->setContextMenuPolicy(Qt::CustomContextMenu);
 
     connect(viewHeader, &QHeaderView::customContextMenuRequested, this, &ExternalResourcesPage::ShowHeaderContextMenu);
@@ -130,14 +131,14 @@ QMenu* ExternalResourcesPage::createPopupMenu()
 
 void ExternalResourcesPage::ShowContextMenu(const QPoint& pos)
 {
-    auto menu = ui->actionsToolbar->createContextMenu(this, tr("Context menu"));
+    auto* menu = ui->actionsToolbar->createContextMenu(this, tr("Context menu"));
     menu->exec(ui->treeView->mapToGlobal(pos));
     delete menu;
 }
 
 void ExternalResourcesPage::ShowHeaderContextMenu(const QPoint& pos)
 {
-    auto menu = m_model->createHeaderContextMenu(ui->treeView);
+    auto* menu = m_model->createHeaderContextMenu(ui->treeView);
     menu->exec(ui->treeView->mapToGlobal(pos));
     menu->deleteLater();
 }
@@ -146,7 +147,7 @@ void ExternalResourcesPage::openedImpl()
 {
     m_model->startWatching();
 
-    auto const setting_name = QString("WideBarVisibility_%1").arg(id());
+    const auto setting_name = QString("WideBarVisibility_%1").arg(id());
     m_wide_bar_setting = APPLICATION->settings()->getOrRegisterSetting(setting_name);
 
     ui->actionsToolbar->setVisibilityState(QByteArray::fromBase64(m_wide_bar_setting->get().toString().toUtf8()));
@@ -198,12 +199,14 @@ bool ExternalResourcesPage::listFilter(QKeyEvent* keyEvent)
 
 bool ExternalResourcesPage::eventFilter(QObject* obj, QEvent* ev)
 {
-    if (ev->type() != QEvent::KeyPress)
+    if (ev->type() != QEvent::KeyPress) {
         return QWidget::eventFilter(obj, ev);
+    }
 
     QKeyEvent* keyEvent = static_cast<QKeyEvent*>(ev);
-    if (obj == ui->treeView)
+    if (obj == ui->treeView) {
         return listFilter(keyEvent);
+    }
 
     return QWidget::eventFilter(obj, ev);
 }
@@ -232,8 +235,9 @@ void ExternalResourcesPage::removeItem()
             count++;
 
             // if a folder is selected, show the confirmation dialog
-            if (m_model->at(i.row()).fileinfo().isDir())
+            if (m_model->at(i.row()).fileinfo().isDir()) {
                 folder = true;
+            }
         }
     }
 
@@ -257,8 +261,9 @@ void ExternalResourcesPage::removeItem()
                                                      QMessageBox::Yes | QMessageBox::No, QMessageBox::No)
                             ->exec();
 
-        if (response != QMessageBox::Yes)
+        if (response != QMessageBox::Yes) {
             return;
+        }
     }
 
     removeItems(selection);
@@ -273,8 +278,9 @@ void ExternalResourcesPage::removeItems(const QItemSelection& selection)
                                                      QMessageBox::Warning, QMessageBox::Yes | QMessageBox::No, QMessageBox::No)
                             ->exec();
 
-        if (response != QMessageBox::Yes)
+        if (response != QMessageBox::Yes) {
             return;
+        }
     }
     m_model->deleteResources(selection.indexes());
 }
@@ -294,10 +300,11 @@ void ExternalResourcesPage::disableItem()
 void ExternalResourcesPage::viewHomepage()
 {
     auto selection = m_filterModel->mapSelectionToSource(ui->treeView->selectionModel()->selection()).indexes();
-    for (auto resource : m_model->selectedResources(selection)) {
+    for (auto* resource : m_model->selectedResources(selection)) {
         auto url = resource->homepage();
-        if (!url.isEmpty())
+        if (!url.isEmpty()) {
             DesktopServices::openUrl(url);
+        }
     }
 }
 
@@ -335,7 +342,7 @@ void ExternalResourcesPage::updateFrame(const QModelIndex& current, [[maybe_unus
 {
     auto sourceCurrent = m_filterModel->mapToSource(current);
     int row = sourceCurrent.row();
-    Resource const& resource = m_model->at(row);
+    const Resource& resource = m_model->at(row);
     ui->frame->updateWithResource(resource);
 }
 
@@ -343,8 +350,9 @@ QString ExternalResourcesPage::extraHeaderInfoString()
 {
     if (ui && ui->treeView && ui->treeView->selectionModel()) {
         auto selection = m_filterModel->mapSelectionToSource(ui->treeView->selectionModel()->selection()).indexes();
-        if (auto count = std::count_if(selection.cbegin(), selection.cend(), [](auto v) { return v.column() == 0; }); count != 0)
+        if (auto count = std::count_if(selection.cbegin(), selection.cend(), [](auto v) { return v.column() == 0; }); count != 0) {
             return tr(" (%1 installed, %2 selected)").arg(m_model->size()).arg(count);
+        }
     }
     return tr(" (%1 installed)").arg(m_model->size());
 }

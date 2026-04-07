@@ -18,7 +18,7 @@ void LegacyFMLLibrariesTask::executeTask()
 {
     // Get the mod list
     MinecraftInstance* inst = (MinecraftInstance*)m_inst;
-    auto components = inst->getPackProfile();
+    auto* components = inst->getPackProfile();
     auto profile = components->getProfile();
 
     if (!profile->hasTrait("legacyFML")) {
@@ -45,8 +45,9 @@ void LegacyFMLLibrariesTask::executeTask()
     // now check the lib folder inside the instance for files.
     for (auto& lib : libList) {
         QFileInfo libInfo(FS::PathCombine(inst->libDir(), lib.filename));
-        if (libInfo.exists())
+        if (libInfo.exists()) {
             continue;
+        }
         fmlLibsToProcess.append(lib);
     }
 
@@ -59,7 +60,7 @@ void LegacyFMLLibrariesTask::executeTask()
     // download missing libs to our place
     setStatus(tr("Downloading FML libraries..."));
     NetJob::Ptr dljob{ new NetJob("FML libraries", APPLICATION->network()) };
-    auto metacache = APPLICATION->metacache();
+    auto* metacache = APPLICATION->metacache();
     Net::Download::Options options = Net::Download::Option::MakeEternal;
     const QString base = baseUrl();
     for (auto& lib : fmlLibsToProcess) {
@@ -88,7 +89,7 @@ void LegacyFMLLibrariesTask::fmllibsFinished()
     if (!fmlLibsToProcess.isEmpty()) {
         setStatus(tr("Copying FML libraries into the instance..."));
         MinecraftInstance* inst = (MinecraftInstance*)m_inst;
-        auto metacache = APPLICATION->metacache();
+        auto* metacache = APPLICATION->metacache();
         int index = 0;
         for (auto& lib : fmlLibsToProcess) {
             progress(index, fmlLibsToProcess.size());
@@ -119,9 +120,9 @@ bool LegacyFMLLibrariesTask::abort()
 {
     if (downloadJob) {
         return downloadJob->abort();
-    } else {
-        qWarning() << "Prematurely aborted LegacyFMLLibrariesTask";
     }
+    qWarning() << "Prematurely aborted LegacyFMLLibrariesTask";
+
     return true;
 }
 

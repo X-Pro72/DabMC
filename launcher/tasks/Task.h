@@ -121,8 +121,8 @@ class Task : public QObject, public QRunnable {
     QString getStatus() { return m_status; }
     QString getDetails() { return m_details; }
 
-    qint64 getProgress() { return m_progress; }
-    qint64 getTotalProgress() { return m_progressTotal; }
+    qint64 getProgress() const { return m_progress; }
+    qint64 getTotalProgress() const { return m_progressTotal; }
     virtual auto getStepProgress() const -> TaskStepProgressList { return {}; }
 
     QUuid getUid() { return m_uid; }
@@ -149,7 +149,7 @@ class Task : public QObject, public QRunnable {
     void status(QString status);
     void details(QString details);
     void warningLogged(const QString& warning);
-    void stepProgress(TaskStepProgress const& task_progress);
+    void stepProgress(const TaskStepProgress& task_progress);
 
     //! Emitted when the canAbort() status has changed. */
     void abortStatusChanged(bool can_abort);
@@ -165,8 +165,9 @@ class Task : public QObject, public QRunnable {
     //! used by external code to ask the task to abort
     virtual bool abort()
     {
-        if (canAbort())
+        if (canAbort()) {
             emitAborted();
+        }
         return canAbort();
     }
 
@@ -176,10 +177,7 @@ class Task : public QObject, public QRunnable {
         emit abortStatusChanged(can_abort);
     }
 
-    void setAbortButtonText(QString text)
-    {
-        emit abortButtonTextChanged(text);
-    }
+    void setAbortButtonText(QString text) { emit abortButtonTextChanged(text); }
 
    protected:
     //! The task subclass must implement this method. This method is called to start to run the task.
@@ -194,7 +192,7 @@ class Task : public QObject, public QRunnable {
     //! The Task subclass must call this method when the task has failed
     virtual void emitFailed(QString reason = "");
 
-    virtual void propagateStepProgress(TaskStepProgress const& task_progress);
+    virtual void propagateStepProgress(const TaskStepProgress& task_progress);
 
    public slots:
     void setStatus(const QString& status);

@@ -41,7 +41,7 @@ class LinkTask : public Task {
     void executeTask() override
     {
         if (!(*m_lnk)()) {
-#if defined Q_OS_WIN32
+#ifdef Q_OS_WIN32
             if (!m_useHard) {
                 qDebug() << "EXPECTED: Link failure, Windows requires permissions for symlinks";
 
@@ -67,7 +67,7 @@ class LinkTask : public Task {
     }
 
     FS::create_link* m_lnk;
-#if defined Q_OS_WIN32
+#ifdef Q_OS_WIN32
     bool m_useHard = false;
 #endif
     bool m_linkRecursive = true;
@@ -92,7 +92,7 @@ class FileSystemTest : public QObject {
         QCOMPARE(QString("/foo/foo/foo"), FS::PathCombine(leadingSlash, leadingSlash, leadingSlash));
     }
 
-    void test_PathCombine1_data()
+    static void test_PathCombine1_data()
     {
         QTest::addColumn<QString>("result");
         QTest::addColumn<QString>("path1");
@@ -100,14 +100,14 @@ class FileSystemTest : public QObject {
 
         QTest::newRow("qt 1") << "/abc/def/ghi/jkl" << "/abc/def" << "ghi/jkl";
         QTest::newRow("qt 2") << "/abc/def/ghi/jkl" << "/abc/def/" << "ghi/jkl";
-#if defined(Q_OS_WIN)
+#ifdef Q_OS_WIN
         QTest::newRow("win native, from C:") << "C:/abc" << "C:" << "abc";
         QTest::newRow("win native 1") << "C:/abc/def/ghi/jkl" << "C:\\abc\\def" << "ghi\\jkl";
         QTest::newRow("win native 2") << "C:/abc/def/ghi/jkl" << "C:\\abc\\def\\" << "ghi\\jkl";
 #endif
     }
 
-    void test_PathCombine1()
+    static void test_PathCombine1()
     {
         QFETCH(QString, result);
         QFETCH(QString, path1);
@@ -116,7 +116,7 @@ class FileSystemTest : public QObject {
         QCOMPARE(FS::PathCombine(path1, path2), result);
     }
 
-    void test_PathCombine2_data()
+    static void test_PathCombine2_data()
     {
         QTest::addColumn<QString>("result");
         QTest::addColumn<QString>("path1");
@@ -127,7 +127,7 @@ class FileSystemTest : public QObject {
         QTest::newRow("qt 2") << "/abc/def/ghi/jkl" << "/abc/" << "def" << "ghi/jkl";
         QTest::newRow("qt 3") << "/abc/def/ghi/jkl" << "/abc" << "def/" << "ghi/jkl";
         QTest::newRow("qt 4") << "/abc/def/ghi/jkl" << "/abc/" << "def/" << "ghi/jkl";
-#if defined(Q_OS_WIN)
+#ifdef Q_OS_WIN
         QTest::newRow("win 1") << "C:/abc/def/ghi/jkl" << "C:\\abc" << "def" << "ghi\\jkl";
         QTest::newRow("win 2") << "C:/abc/def/ghi/jkl" << "C:\\abc\\" << "def" << "ghi\\jkl";
         QTest::newRow("win 3") << "C:/abc/def/ghi/jkl" << "C:\\abc" << "def\\" << "ghi\\jkl";
@@ -135,7 +135,7 @@ class FileSystemTest : public QObject {
 #endif
     }
 
-    void test_PathCombine2()
+    static void test_PathCombine2()
     {
         QFETCH(QString, result);
         QFETCH(QString, path1);
@@ -145,7 +145,7 @@ class FileSystemTest : public QObject {
         QCOMPARE(FS::PathCombine(path1, path2, path3), result);
     }
 
-    void test_copy()
+    static void test_copy()
     {
         QString folder = QFINDTESTDATA("testdata/FileSystem/test_folder");
         auto f = [&folder]() {
@@ -176,7 +176,7 @@ class FileSystemTest : public QObject {
         f();
     }
 
-    void test_copy_with_blacklist()
+    static void test_copy_with_blacklist()
     {
         QString folder = QFINDTESTDATA("testdata/FileSystem/test_folder");
         auto f = [&folder]() {
@@ -209,7 +209,7 @@ class FileSystemTest : public QObject {
         f();
     }
 
-    void test_copy_with_whitelist()
+    static void test_copy_with_whitelist()
     {
         QString folder = QFINDTESTDATA("testdata/FileSystem/test_folder");
         auto f = [&folder]() {
@@ -243,7 +243,7 @@ class FileSystemTest : public QObject {
         f();
     }
 
-    void test_copy_with_dot_hidden()
+    static void test_copy_with_dot_hidden()
     {
         QString folder = QFINDTESTDATA("testdata/FileSystem/test_folder");
         auto f = [&folder]() {
@@ -278,7 +278,7 @@ class FileSystemTest : public QObject {
         f();
     }
 
-    void test_copy_single_file()
+    static void test_copy_single_file()
     {
         QTemporaryDir tempDir;
         tempDir.setAutoRemove(true);
@@ -304,9 +304,9 @@ class FileSystemTest : public QObject {
         }
     }
 
-    void test_getDesktop() { QCOMPARE(FS::getDesktopDir(), QStandardPaths::writableLocation(QStandardPaths::DesktopLocation)); }
+    static void test_getDesktop() { QCOMPARE(FS::getDesktopDir(), QStandardPaths::writableLocation(QStandardPaths::DesktopLocation)); }
 
-    void test_link()
+    static void test_link()
     {
         QString folder = QFINDTESTDATA("testdata/FileSystem/test_folder");
         auto f = [&folder]() {
@@ -329,8 +329,9 @@ class FileSystemTest : public QObject {
             for (auto entry : target_dir.entryList()) {
                 qDebug() << entry;
                 QFileInfo entry_lnk_info(target_dir.filePath(entry));
-                if (!entry_lnk_info.isDir())
+                if (!entry_lnk_info.isDir()) {
                     QVERIFY(!entry_lnk_info.isSymLink());
+                }
             }
 
             QFileInfo lnk_info(target_dir.path());
@@ -351,7 +352,7 @@ class FileSystemTest : public QObject {
         f();
     }
 
-    void test_hard_link()
+    static void test_hard_link()
     {
         QString folder = QFINDTESTDATA("testdata/FileSystem/test_folder");
         auto f = [&folder]() {
@@ -400,7 +401,7 @@ class FileSystemTest : public QObject {
         f();
     }
 
-    void test_link_with_blacklist()
+    static void test_link_with_blacklist()
     {
         QString folder = QFINDTESTDATA("testdata/FileSystem/test_folder");
         auto f = [&folder]() {
@@ -425,8 +426,9 @@ class FileSystemTest : public QObject {
             for (auto entry : target_dir.entryList()) {
                 qDebug() << entry;
                 QFileInfo entry_lnk_info(target_dir.filePath(entry));
-                if (!entry_lnk_info.isDir())
+                if (!entry_lnk_info.isDir()) {
                     QVERIFY(entry_lnk_info.isSymLink());
+                }
             }
 
             QFileInfo lnk_info(target_dir.path());
@@ -446,7 +448,7 @@ class FileSystemTest : public QObject {
         f();
     }
 
-    void test_link_with_whitelist()
+    static void test_link_with_whitelist()
     {
         QString folder = QFINDTESTDATA("testdata/FileSystem/test_folder");
         auto f = [&folder]() {
@@ -472,8 +474,9 @@ class FileSystemTest : public QObject {
             for (auto entry : target_dir.entryList()) {
                 qDebug() << entry;
                 QFileInfo entry_lnk_info(target_dir.filePath(entry));
-                if (!entry_lnk_info.isDir())
+                if (!entry_lnk_info.isDir()) {
                     QVERIFY(entry_lnk_info.isSymLink());
+                }
             }
 
             QFileInfo lnk_info(target_dir.path());
@@ -493,7 +496,7 @@ class FileSystemTest : public QObject {
         f();
     }
 
-    void test_link_with_dot_hidden()
+    static void test_link_with_dot_hidden()
     {
         QString folder = QFINDTESTDATA("testdata/FileSystem/test_folder");
         auto f = [&folder]() {
@@ -518,8 +521,9 @@ class FileSystemTest : public QObject {
             for (auto entry : target_dir.entryList(filter)) {
                 qDebug() << entry;
                 QFileInfo entry_lnk_info(target_dir.filePath(entry));
-                if (!entry_lnk_info.isDir())
+                if (!entry_lnk_info.isDir()) {
                     QVERIFY(entry_lnk_info.isSymLink());
+                }
             }
 
             QFileInfo lnk_info(target_dir.path());
@@ -540,7 +544,7 @@ class FileSystemTest : public QObject {
         f();
     }
 
-    void test_link_single_file()
+    static void test_link_single_file()
     {
         QTemporaryDir tempDir;
         tempDir.setAutoRemove(true);
@@ -575,7 +579,7 @@ class FileSystemTest : public QObject {
         }
     }
 
-    void test_link_with_max_depth()
+    static void test_link_with_max_depth()
     {
         QString folder = QFINDTESTDATA("testdata/FileSystem/test_folder");
         auto f = [&folder]() {
@@ -601,8 +605,9 @@ class FileSystemTest : public QObject {
             auto filter = QDir::Filter::Files | QDir::Filter::Dirs | QDir::Filter::Hidden;
             for (auto entry : target_dir.entryList(filter)) {
                 qDebug() << entry;
-                if (entry == "." || entry == "..")
+                if (entry == "." || entry == "..") {
                     continue;
+                }
                 QFileInfo entry_lnk_info(target_dir.filePath(entry));
                 QVERIFY(entry_lnk_info.isSymLink());
             }
@@ -625,7 +630,7 @@ class FileSystemTest : public QObject {
         f();
     }
 
-    void test_link_with_no_max_depth()
+    static void test_link_with_no_max_depth()
     {
         QString folder = QFINDTESTDATA("testdata/FileSystem/test_folder");
         auto f = [&folder]() {
@@ -680,7 +685,7 @@ class FileSystemTest : public QObject {
         f();
     }
 
-    void test_path_depth()
+    static void test_path_depth()
     {
         QCOMPARE(FS::pathDepth(""), 0);
         QCOMPARE(FS::pathDepth("."), 0);
@@ -695,7 +700,7 @@ class FileSystemTest : public QObject {
         QCOMPARE(FS::pathDepth("/baz/../bar/foo.txt"), 1);
     }
 
-    void test_path_trunc()
+    static void test_path_trunc()
     {
         QCOMPARE(FS::pathTruncate("", 0), QDir::toNativeSeparators(""));
         QCOMPARE(FS::pathTruncate("foo.txt", 0), QDir::toNativeSeparators(""));
@@ -705,7 +710,7 @@ class FileSystemTest : public QObject {
         QCOMPARE(FS::pathTruncate("/bar/foo.txt", 1), QDir::toNativeSeparators("/bar"));
         QCOMPARE(FS::pathTruncate("bar/foo.txt", 1), QDir::toNativeSeparators("bar"));
         QCOMPARE(FS::pathTruncate("baz/bar/foo.txt", 2), QDir::toNativeSeparators("baz/bar"));
-#if defined(Q_OS_WIN)
+#ifdef Q_OS_WIN
         QCOMPARE(FS::pathTruncate("C:\\bar\\foo.txt", 1), QDir::toNativeSeparators("C:\\bar"));
 #endif
     }

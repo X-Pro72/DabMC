@@ -40,11 +40,13 @@ class InstallLoaderPage : public VersionSelectWidget, public BasePage {
         setEmptyString(tr("No versions are currently available for Minecraft %1").arg(minecraftVersion));
         setExactIfPresentFilter(BaseVersionList::ParentVersionRole, minecraftVersion);
 
-        if (oldestVersion != Version() && Version(minecraftVersion) < oldestVersion)
+        if (oldestVersion != Version() && Version(minecraftVersion) < oldestVersion) {
             setExactFilter(BaseVersionList::ParentVersionRole, "AAA");
+        }
 
-        if (const QString currentVersion = profile->getComponentVersion(id); !currentVersion.isNull())
+        if (const QString currentVersion = profile->getComponentVersion(id); !currentVersion.isNull()) {
             setCurrentVersion(currentVersion);
+        }
     }
 
     QString id() const override { return uid; }
@@ -53,12 +55,14 @@ class InstallLoaderPage : public VersionSelectWidget, public BasePage {
 
     void openedImpl() override
     {
-        if (loaded)
+        if (loaded) {
             return;
+        }
 
         const auto versions = APPLICATION->metadataIndex()->get(uid);
-        if (!versions)
+        if (!versions) {
             return;
+        }
 
         initialize(versions.get());
         loaded = true;
@@ -66,7 +70,7 @@ class InstallLoaderPage : public VersionSelectWidget, public BasePage {
 
     void setParentContainer(BasePageContainer* container) override
     {
-        auto dialog = dynamic_cast<QDialog*>(dynamic_cast<PageContainer*>(container)->parent());
+        auto* dialog = dynamic_cast<QDialog*>(dynamic_cast<PageContainer*>(container)->parent());
         connect(view(), &QAbstractItemView::doubleClicked, dialog, &QDialog::accept);
     }
 
@@ -79,7 +83,7 @@ class InstallLoaderPage : public VersionSelectWidget, public BasePage {
 
 static InstallLoaderPage* pageCast(BasePage* page)
 {
-    auto result = dynamic_cast<InstallLoaderPage*>(page);
+    auto* result = dynamic_cast<InstallLoaderPage*>(page);
     Q_ASSERT(result != nullptr);
     return result;
 }
@@ -87,20 +91,20 @@ static InstallLoaderPage* pageCast(BasePage* page)
 InstallLoaderDialog::InstallLoaderDialog(PackProfile* profile, const QString& uid, QWidget* parent)
     : QDialog(parent), profile(profile), container(new PageContainer(this, QString(), this)), buttons(new QDialogButtonBox(this))
 {
-    auto layout = new QVBoxLayout(this);
-    // small margins look ugly on macOS on modal windows
-    #ifndef Q_OS_MACOS
+    auto* layout = new QVBoxLayout(this);
+// small margins look ugly on macOS on modal windows
+#ifndef Q_OS_MACOS
     layout->setContentsMargins(0, 0, 0, 0);
-    #endif
+#endif
     container->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
     layout->addWidget(container);
 
-    auto buttonLayout = new QHBoxLayout(this);
-    // small margins look ugly on macOS on modal windows
-    #ifndef Q_OS_MACOS
+    auto* buttonLayout = new QHBoxLayout(this);
+// small margins look ugly on macOS on modal windows
+#ifndef Q_OS_MACOS
     buttonLayout->setContentsMargins(0, 0, 6, 6);
-    #endif
-    auto refreshButton = new QPushButton(tr("&Refresh"), this);
+#endif
+    auto* refreshButton = new QPushButton(tr("&Refresh"), this);
     connect(refreshButton, &QPushButton::clicked, this, [this] { pageCast(container->selectedPage())->loadList(); });
     buttonLayout->addWidget(refreshButton);
 
@@ -119,12 +123,14 @@ InstallLoaderDialog::InstallLoaderDialog(PackProfile* profile, const QString& ui
     resize(520, 347);
 
     for (BasePage* page : container->getPages()) {
-        if (page->id() == uid)
+        if (page->id() == uid) {
             container->selectPage(page->id());
+        }
 
         connect(pageCast(page), &VersionSelectWidget::selectedVersionChanged, this, [this, page] {
-            if (page->id() == container->selectedPage()->id())
+            if (page->id() == container->selectedPage()->id()) {
                 validate(container->selectedPage());
+            }
         });
     }
     connect(container, &PageContainer::selectedPageChanged, this, [this](BasePage* previous, BasePage* current) { validate(current); });

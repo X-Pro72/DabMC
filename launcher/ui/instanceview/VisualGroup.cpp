@@ -41,6 +41,7 @@
 #include <QModelIndex>
 #include <QPainter>
 #include <QtMath>
+#include <algorithm>
 #include <utility>
 
 #include "InstanceView.h"
@@ -77,9 +78,7 @@ void VisualGroup::update()
         view->initViewItemOption(&viewItemOption);
 
         auto itemHeight = view->itemDelegate()->sizeHint(viewItemOption, item).height();
-        if (itemHeight > maxRowHeight) {
-            maxRowHeight = itemHeight;
-        }
+        maxRowHeight = std::max(itemHeight, maxRowHeight);
         rows[currentRow].items.append(item);
         positionInRow++;
     }
@@ -90,7 +89,7 @@ void VisualGroup::update()
 QPair<int, int> VisualGroup::positionOf(const QModelIndex& index) const
 {
     int y = 0;
-    for (auto& row : rows) {
+    for (const auto& row : rows) {
         for (auto x = 0; x < row.items.size(); x++) {
             if (row.items[x] == index) {
                 return qMakePair(x, y);
@@ -151,15 +150,15 @@ void VisualGroup::drawHeader(QPainter* painter, const QStyleOptionViewItem& opti
     QPen pen;
     pen.setWidth(2);
     QColor penColor = option.palette.text().color();
-    penColor.setAlphaF(0.6f);
+    penColor.setAlphaF(0.6F);
     pen.setColor(penColor);
     painter->setPen(pen);
     painter->setRenderHint(QPainter::Antialiasing);
 
     // sizes and offsets, to keep things consistent below
-    const int arrowOffsetLeft = fontMetrics.height() / 2 + 7;
+    const int arrowOffsetLeft = (fontMetrics.height() / 2) + 7;
     const int textOffsetLeft = arrowOffsetLeft * 2;
-    const int centerHeight = optRect.top() + fontMetrics.height() / 2;
+    const int centerHeight = optRect.top() + (fontMetrics.height() / 2);
     const QString& textToDraw = text.isEmpty() ? QObject::tr("Ungrouped") : text;
 
     // BEGIN: arrow
@@ -167,14 +166,14 @@ void VisualGroup::drawHeader(QPainter* painter, const QStyleOptionViewItem& opti
         constexpr int arrowSize = 6;
         QPolygon arrowPolygon;
         if (collapsed) {
-            arrowPolygon << QPoint(arrowOffsetLeft - arrowSize / 2, centerHeight - arrowSize)
-                         << QPoint(arrowOffsetLeft + arrowSize / 2, centerHeight)
-                         << QPoint(arrowOffsetLeft - arrowSize / 2, centerHeight + arrowSize);
+            arrowPolygon << QPoint(arrowOffsetLeft - (arrowSize / 2), centerHeight - arrowSize)
+                         << QPoint(arrowOffsetLeft + (arrowSize / 2), centerHeight)
+                         << QPoint(arrowOffsetLeft - (arrowSize / 2), centerHeight + arrowSize);
             painter->drawPolyline(arrowPolygon);
         } else {
-            arrowPolygon << QPoint(arrowOffsetLeft - arrowSize, centerHeight - arrowSize / 2)
-                         << QPoint(arrowOffsetLeft, centerHeight + arrowSize / 2)
-                         << QPoint(arrowOffsetLeft + arrowSize, centerHeight - arrowSize / 2);
+            arrowPolygon << QPoint(arrowOffsetLeft - arrowSize, centerHeight - (arrowSize / 2))
+                         << QPoint(arrowOffsetLeft, centerHeight + (arrowSize / 2))
+                         << QPoint(arrowOffsetLeft + arrowSize, centerHeight - (arrowSize / 2));
             painter->drawPolyline(arrowPolygon);
         }
     }
@@ -194,7 +193,7 @@ void VisualGroup::drawHeader(QPainter* painter, const QStyleOptionViewItem& opti
 
     // BEGIN: horizontal line
     {
-        penColor.setAlphaF(0.05f);
+        penColor.setAlphaF(0.05F);
         pen.setColor(penColor);
         painter->setPen(pen);
         // startPoint is left + arrow + text + space

@@ -41,10 +41,10 @@
 #include <algorithm>
 
 #include "Application.h"
-#include "settings/SettingsObject.h"
 #include "java/JavaChecker.h"
 #include "java/JavaInstallList.h"
 #include "java/JavaUtils.h"
+#include "settings/SettingsObject.h"
 #include "tasks/ConcurrentTask.h"
 
 JavaInstallList::JavaInstallList(QObject* parent, bool onlyManagedVersions)
@@ -91,11 +91,13 @@ int JavaInstallList::count() const
 
 QVariant JavaInstallList::data(const QModelIndex& index, int role) const
 {
-    if (!index.isValid())
+    if (!index.isValid()) {
         return QVariant();
+    }
 
-    if (index.row() > count())
+    if (index.row() > count()) {
         return QVariant();
+    }
 
     auto version = std::dynamic_pointer_cast<JavaInstall>(m_vlist[index.row()]);
     switch (role) {
@@ -147,7 +149,7 @@ void JavaInstallList::sortVersions()
     endResetModel();
 }
 
-JavaListLoadTask::JavaListLoadTask(JavaInstallList* vlist, bool onlyManagedVersions) : Task(), m_only_managed_versions(onlyManagedVersions)
+JavaListLoadTask::JavaListLoadTask(JavaInstallList* vlist, bool onlyManagedVersions) : m_only_managed_versions(onlyManagedVersions)
 {
     m_list = vlist;
     m_current_recommended = NULL;
@@ -168,7 +170,7 @@ void JavaListLoadTask::executeTask()
     qDebug() << "Probing the following Java paths: ";
     int id = 0;
     for (QString candidate : candidate_paths) {
-        auto checker = new JavaChecker(candidate, "", 0, 0, 0, id);
+        auto* checker = new JavaChecker(candidate, "", 0, 0, 0, id);
         connect(checker, &JavaChecker::checkFinished, [this](const JavaChecker::Result& result) { m_results << result; });
         job->addTask(Task::Ptr(checker));
         id++;

@@ -21,7 +21,7 @@
 #include <QSaveFile>
 #include "Application.h"
 
-#if defined(LAUNCHER_APPLICATION)
+#ifdef LAUNCHER_APPLICATION
 
 /* PSaveFile
  * A class that mimics QSaveFile for Windows.
@@ -51,7 +51,7 @@ class PSaveFile : public QSaveFile {
     PSaveFile(const QString& name, QObject* parent) : QSaveFile(name, parent) { addPath(name); }
     virtual ~PSaveFile()
     {
-        if (auto app = APPLICATION_DYN) {
+        if (auto* app = APPLICATION_DYN) {
             app->removeQSavePath(m_absoluteFilePath);
         }
     }
@@ -60,7 +60,7 @@ class PSaveFile : public QSaveFile {
     void addPath(const QString& path)
     {
         m_absoluteFilePath = QFileInfo(path).absoluteFilePath() + ".";  // add dot for tmp files only
-        if (auto app = APPLICATION_DYN) {
+        if (auto* app = APPLICATION_DYN) {
             app->addQSavePath(m_absoluteFilePath);
         }
     }

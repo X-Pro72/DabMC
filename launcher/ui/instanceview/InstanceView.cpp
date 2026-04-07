@@ -154,7 +154,7 @@ void InstanceView::updateScrollbar()
         // top margin
         totalHeight += m_categoryMargin;
         int itemScroll = 0;
-        for (auto category : m_groups) {
+        for (auto* category : m_groups) {
             category->m_verticalPosition = totalHeight;
             totalHeight += category->totalHeight() + m_categoryMargin;
             if (!itemScroll && category->totalHeight() != 0) {
@@ -162,8 +162,9 @@ void InstanceView::updateScrollbar()
             }
         }
         // do not divide by zero
-        if (itemScroll == 0)
+        if (itemScroll == 0) {
             itemScroll = 64;
+        }
 
         totalHeight += m_bottomMargin;
         verticalScrollBar()->setSingleStep(itemScroll);
@@ -187,11 +188,11 @@ void InstanceView::updateGeometries()
         if (!cats.contains(groupName)) {
             VisualGroup* old = this->category(groupName);
             if (old) {
-                auto cat = new VisualGroup(old);
+                auto* cat = new VisualGroup(old);
                 cats.insert(groupName, cat);
                 cat->update();
             } else {
-                auto cat = new VisualGroup(groupName, this);
+                auto* cat = new VisualGroup(groupName, this);
                 if (m_fVisibility) {
                     cat->collapsed = m_fVisibility(groupName);
                 }
@@ -212,9 +213,8 @@ bool InstanceView::isIndexHidden(const QModelIndex& index) const
     VisualGroup* cat = category(index);
     if (cat) {
         return cat->collapsed;
-    } else {
-        return false;
     }
+    return false;
 }
 
 VisualGroup* InstanceView::category(const QModelIndex& index) const
@@ -224,7 +224,7 @@ VisualGroup* InstanceView::category(const QModelIndex& index) const
 
 VisualGroup* InstanceView::category(const QString& cat) const
 {
-    for (auto group : m_groups) {
+    for (auto* group : m_groups) {
         if (group->text == cat) {
             return group;
         }
@@ -234,7 +234,7 @@ VisualGroup* InstanceView::category(const QString& cat) const
 
 VisualGroup* InstanceView::categoryAt(const QPoint& pos, VisualGroup::HitResults& result) const
 {
-    for (auto group : m_groups) {
+    for (auto* group : m_groups) {
         result = group->hitScan(pos);
         if (result != VisualGroup::NoHit) {
             return group;
@@ -249,7 +249,7 @@ QString InstanceView::groupNameAt(const QPoint& point)
     executeDelayedItemsLayout();
 
     VisualGroup::HitResults hitResult;
-    auto group = categoryAt(point + offset(), hitResult);
+    auto* group = categoryAt(point + offset(), hitResult);
     if (group && (hitResult & (VisualGroup::HeaderHit | VisualGroup::BodyHit))) {
         return group->text;
     }
@@ -385,7 +385,8 @@ void InstanceView::mouseReleaseEvent(QMouseEvent* event)
             m_pressedCategory = nullptr;
             setState(NoState);
             return;
-        } else if (state() == CollapsingState) {
+        }
+        if (state() == CollapsingState) {
             m_pressedCategory->collapsed = true;
             emit groupStateChanged(m_pressedCategory->text, true);
 
@@ -631,7 +632,7 @@ void InstanceView::dropEvent(QDropEvent* event)
     stopAutoScroll();
     setState(NoState);
 
-    auto mimedata = event->mimeData();
+    const auto* mimedata = event->mimeData();
 
     if (event->source() == this) {
         if (event->possibleActions() & Qt::MoveAction) {
@@ -644,7 +645,7 @@ void InstanceView::dropEvent(QDropEvent* event)
                 return;
             }
             auto instanceId = QString::fromUtf8(mimedata->data("application/x-instanceid"));
-            auto instanceList = APPLICATION->instances();
+            auto* instanceList = APPLICATION->instances();
             instanceList->setInstanceGroup(instanceId, group->text);
             event->setDropAction(Qt::MoveAction);
             event->accept();
@@ -673,8 +674,9 @@ void InstanceView::startDrag(Qt::DropActions supportedActions)
     executeDelayedItemsLayout();
 
     QModelIndexList indexes = selectionModel()->selectedIndexes();
-    if (indexes.count() == 0)
+    if (indexes.count() == 0) {
         return;
+    }
 
     QMimeData* mimeData = model()->mimeData(indexes);
     if (!mimeData) {
@@ -723,8 +725,8 @@ QRect InstanceView::geometryRect(const QModelIndex& index) const
     initViewItemOption(&option);
 
     QRect out;
-    out.setTop(cat->verticalPosition() + cat->headerHeight() + 5 + cat->rowTopOf(index));
-    out.setLeft(m_spacing + x * (itemWidth() + m_spacing));
+    out.setTop(cat->verticalPosition() + VisualGroup::headerHeight() + 5 + cat->rowTopOf(index));
+    out.setLeft(m_spacing + (x * (itemWidth() + m_spacing)));
     out.setSize(itemDelegate()->sizeHint(option, index));
     m_geometryCache.insert(row, new QRect(out));
     return out;
@@ -800,7 +802,7 @@ bool InstanceView::isDragEventAccepted([[maybe_unused]] QDropEvent* event)
 std::pair<VisualGroup*, VisualGroup::HitResults> InstanceView::rowDropPos(const QPoint& pos)
 {
     VisualGroup::HitResults hitResult;
-    auto group = categoryAt(pos + offset(), hitResult);
+    auto* group = categoryAt(pos + offset(), hitResult);
     return std::make_pair(group, hitResult);
 }
 
@@ -812,7 +814,7 @@ QPoint InstanceView::offset() const
 QRegion InstanceView::visualRegionForSelection(const QItemSelection& selection) const
 {
     QRegion region;
-    for (auto& range : selection) {
+    for (const auto& range : selection) {
         int start_row = range.top();
         int end_row = range.bottom();
         for (int row = start_row; row <= end_row; ++row) {
@@ -833,10 +835,11 @@ QModelIndex InstanceView::moveCursor(QAbstractItemView::CursorAction cursorActio
     if (!current.isValid()) {
         return current;
     }
-    auto cat = category(current);
+    auto* cat = category(current);
     int group_index = m_groups.indexOf(cat);
-    if (group_index < 0)
+    if (group_index < 0) {
         return current;
+    }
 
     QPair<int, int> pos = cat->positionOf(current);
     int column = pos.first;
@@ -850,7 +853,7 @@ QModelIndex InstanceView::moveCursor(QAbstractItemView::CursorAction cursorActio
             if (row == 0) {
                 int prevGroupIndex = group_index - 1;
                 while (prevGroupIndex >= 0) {
-                    auto prevGroup = m_groups[prevGroupIndex];
+                    auto* prevGroup = m_groups[prevGroupIndex];
                     if (prevGroup->collapsed) {
                         prevGroupIndex--;
                         continue;
@@ -878,7 +881,7 @@ QModelIndex InstanceView::moveCursor(QAbstractItemView::CursorAction cursorActio
             if (row == cat->rows.size() - 1) {
                 int nextGroupIndex = group_index + 1;
                 while (nextGroupIndex < m_groups.size()) {
-                    auto nextGroup = m_groups[nextGroupIndex];
+                    auto* nextGroup = m_groups[nextGroupIndex];
                     if (nextGroup->collapsed) {
                         nextGroupIndex++;
                         continue;
@@ -905,24 +908,24 @@ QModelIndex InstanceView::moveCursor(QAbstractItemView::CursorAction cursorActio
             if (column > 0) {
                 m_currentCursorColumn = column - 1;
                 return cat->rows[row][column - 1];
-            } else if (row > 0) {
+            }
+            if (row > 0) {
                 row -= 1;
                 int newRowSize = cat->rows[row].size();
                 m_currentCursorColumn = newRowSize - 1;
                 return cat->rows[row][m_currentCursorColumn];
-            } else {
-                int prevGroupIndex = group_index - 1;
-                while (prevGroupIndex >= 0) {
-                    auto prevGroup = m_groups[prevGroupIndex];
-                    if (prevGroup->collapsed) {
-                        prevGroupIndex--;
-                        continue;
-                    }
-                    int lastRow = prevGroup->numRows() - 1;
-                    int lastCol = prevGroup->rows[lastRow].size() - 1;
-                    m_currentCursorColumn = lastCol;
-                    return prevGroup->rows[lastRow][lastCol];
+            }
+            int prevGroupIndex = group_index - 1;
+            while (prevGroupIndex >= 0) {
+                auto* prevGroup = m_groups[prevGroupIndex];
+                if (prevGroup->collapsed) {
+                    prevGroupIndex--;
+                    continue;
                 }
+                int lastRow = prevGroup->numRows() - 1;
+                int lastCol = prevGroup->rows[lastRow].size() - 1;
+                m_currentCursorColumn = lastCol;
+                return prevGroup->rows[lastRow][lastCol];
             }
             return current;
         }
@@ -930,21 +933,21 @@ QModelIndex InstanceView::moveCursor(QAbstractItemView::CursorAction cursorActio
             if (column < cat->rows[row].size() - 1) {
                 m_currentCursorColumn = column + 1;
                 return cat->rows[row][column + 1];
-            } else if (row < cat->rows.size() - 1) {
+            }
+            if (row < cat->rows.size() - 1) {
                 row += 1;
                 m_currentCursorColumn = 0;
                 return cat->rows[row][m_currentCursorColumn];
-            } else {
-                int nextGroupIndex = group_index + 1;
-                while (nextGroupIndex < m_groups.size()) {
-                    auto nextGroup = m_groups[nextGroupIndex];
-                    if (nextGroup->collapsed) {
-                        nextGroupIndex++;
-                        continue;
-                    }
-                    m_currentCursorColumn = 0;
-                    return nextGroup->rows[0][0];
+            }
+            int nextGroupIndex = group_index + 1;
+            while (nextGroupIndex < m_groups.size()) {
+                auto* nextGroup = m_groups[nextGroupIndex];
+                if (nextGroup->collapsed) {
+                    nextGroupIndex++;
+                    continue;
                 }
+                m_currentCursorColumn = 0;
+                return nextGroup->rows[0][0];
             }
             return current;
         }
@@ -982,8 +985,9 @@ void InstanceView::scrollContentsBy(int dx, int dy)
 
 void InstanceView::scrollTo(const QModelIndex& index, ScrollHint hint)
 {
-    if (!index.isValid())
+    if (!index.isValid()) {
         return;
+    }
 
     const QRect rect = visualRect(index);
     if (hint == EnsureVisible && viewport()->rect().contains(rect)) {
@@ -1002,11 +1006,12 @@ int InstanceView::verticalScrollToValue([[maybe_unused]] const QModelIndex& inde
 
     int verticalValue = verticalScrollBar()->value();
     QRect adjusted = rect.adjusted(-spacing(), -spacing(), spacing(), spacing());
-    if (hint == QListView::PositionAtTop || above)
+    if (hint == QListView::PositionAtTop || above) {
         verticalValue += adjusted.top();
-    else if (hint == QListView::PositionAtBottom || below)
+    } else if (hint == QListView::PositionAtBottom || below) {
         verticalValue += qMin(adjusted.top(), adjusted.bottom() - area.height() + 1);
-    else if (hint == QListView::PositionAtCenter)
+    } else if (hint == QListView::PositionAtCenter) {
         verticalValue += adjusted.top() - ((area.height() - adjusted.height()) / 2);
+    }
     return verticalValue;
 }

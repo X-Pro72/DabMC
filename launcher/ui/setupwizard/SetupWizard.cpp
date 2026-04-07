@@ -35,11 +35,13 @@ void SetupWizard::retranslate()
 
 BaseWizardPage* SetupWizard::getBasePage(int id)
 {
-    if (id == -1)
+    if (id == -1) {
         return nullptr;
-    auto pagePtr = page(id);
-    if (!pagePtr)
+    }
+    auto* pagePtr = page(id);
+    if (!pagePtr) {
         return nullptr;
+    }
     return dynamic_cast<BaseWizardPage*>(pagePtr);
 }
 
@@ -50,15 +52,15 @@ BaseWizardPage* SetupWizard::getCurrentBasePage()
 
 void SetupWizard::pageChanged(int id)
 {
-    auto basePagePtr = getBasePage(id);
+    auto* basePagePtr = getBasePage(id);
     if (!basePagePtr) {
         return;
     }
     if (basePagePtr->wantsRefreshButton()) {
         setButtonLayout({ QWizard::CustomButton1, QWizard::Stretch, QWizard::BackButton, QWizard::NextButton, QWizard::FinishButton });
-        auto customButton = button(QWizard::CustomButton1);
+        auto* customButton = button(QWizard::CustomButton1);
         connect(customButton, &QAbstractButton::clicked, [this]() {
-            auto basePagePtr = getCurrentBasePage();
+            auto* basePagePtr = getCurrentBasePage();
             if (basePagePtr) {
                 basePagePtr->refresh();
             }

@@ -21,7 +21,7 @@ class FilterModel : public QSortFilterProxyModel {
    public:
     FilterModel(QObject* parent = Q_NULLPTR);
     enum Sorting { ByName, ByGameVersion };
-    const QMap<QString, Sorting> getAvailableSortings();
+    QMap<QString, Sorting> getAvailableSortings();
     QString translateCurrentSorting();
     void setSorting(Sorting sorting);
     Sorting getCurrentSorting();
@@ -47,7 +47,7 @@ class ListModel : public QAbstractListModel {
     QMap<QString, LogoCallback> waitingCallbacks;
 
     void requestLogo(QString file);
-    QString translatePackType(PackType type) const;
+    static QString translatePackType(PackType type);
 
    private slots:
     void logoFailed(QString logo);

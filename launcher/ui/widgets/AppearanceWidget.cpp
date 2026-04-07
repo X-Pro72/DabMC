@@ -131,7 +131,7 @@ void AppearanceWidget::retranslateUi()
 
 void AppearanceWidget::applyIconTheme(int index)
 {
-    auto settings = APPLICATION->settings();
+    auto* settings = APPLICATION->settings();
     auto originalIconTheme = settings->get("IconTheme").toString();
     auto newIconTheme = m_ui->iconsComboBox->itemData(index).toString();
     if (originalIconTheme != newIconTheme) {
@@ -142,7 +142,7 @@ void AppearanceWidget::applyIconTheme(int index)
 
 void AppearanceWidget::applyWidgetTheme(int index)
 {
-    auto settings = APPLICATION->settings();
+    auto* settings = APPLICATION->settings();
     auto originalAppTheme = settings->get("ApplicationTheme").toString();
     auto newAppTheme = m_ui->widgetStyleComboBox->itemData(index).toString();
     if (originalAppTheme != newAppTheme) {
@@ -155,7 +155,7 @@ void AppearanceWidget::applyWidgetTheme(int index)
 
 void AppearanceWidget::applyCatTheme(int index)
 {
-    auto settings = APPLICATION->settings();
+    auto* settings = APPLICATION->settings();
     auto originalCat = settings->get("BackgroundCat").toString();
     auto newCat = m_ui->catPackComboBox->itemData(index).toString();
     if (originalCat != newCat) {
@@ -189,8 +189,9 @@ void AppearanceWidget::loadThemeSettings()
         QIcon iconForComboBox = QIcon(theme->path() + "/scalable/settings");
         m_ui->iconsComboBox->addItem(iconForComboBox, theme->name(), theme->id());
 
-        if (currentIconTheme == theme->id())
+        if (currentIconTheme == theme->id()) {
             m_ui->iconsComboBox->setCurrentIndex(i);
+        }
     }
 
     const QString currentTheme = settings->get("ApplicationTheme").toString();
@@ -200,11 +201,13 @@ void AppearanceWidget::loadThemeSettings()
 
         m_ui->widgetStyleComboBox->addItem(theme->name(), theme->id());
 
-        if (!theme->tooltip().isEmpty())
+        if (!theme->tooltip().isEmpty()) {
             m_ui->widgetStyleComboBox->setItemData(i, theme->tooltip(), Qt::ToolTipRole);
+        }
 
-        if (currentTheme == theme->id())
+        if (currentTheme == theme->id()) {
             m_ui->widgetStyleComboBox->setCurrentIndex(i);
+        }
     }
 
     if (!m_themesOnly) {
@@ -216,8 +219,9 @@ void AppearanceWidget::loadThemeSettings()
             QIcon catIcon = QIcon(QString("%1").arg(cat->path()));
             m_ui->catPackComboBox->addItem(catIcon, cat->name(), cat->id());
 
-            if (currentCat == cat->id())
+            if (currentCat == cat->id()) {
                 m_ui->catPackComboBox->setCurrentIndex(i);
+            }
         }
     }
 
@@ -241,11 +245,13 @@ void AppearanceWidget::updateConsolePreview()
         QColor bg = colors.background.value(level);
         QColor fg = colors.foreground.value(level);
 
-        if (bg.isValid())
+        if (bg.isValid()) {
             format.setBackground(bg);
+        }
 
-        if (fg.isValid())
+        if (fg.isValid()) {
             format.setForeground(fg);
+        }
 
         // append a paragraph/line
         auto workCursor = m_ui->consolePreview->textCursor();
@@ -258,10 +264,11 @@ void AppearanceWidget::updateConsolePreview()
 
     QDate today = QDate::currentDate();
 
-    if (today.month() == 10 && today.day() == 31)
+    if (today.month() == 10 && today.day() == 31) {
         print(tr("[ERROR] OOoooOOOoooo! A spooky error!"), MessageLevel::Error);
-    else
+    } else {
         print(tr("[ERROR] A spooky error!"), MessageLevel::Error);
+    }
 
     print(tr("[INFO] A harmless message..."), MessageLevel::Info);
     print(tr("[WARN] A not so spooky warning."), MessageLevel::Warning);
@@ -274,7 +281,8 @@ void AppearanceWidget::updateCatPreview()
     QIcon catPackIcon(APPLICATION->themeManager()->getCatPack());
     m_ui->catPreview->setIcon(catPackIcon);
 
-    auto effect = dynamic_cast<QGraphicsOpacityEffect*>(m_ui->catPreview->graphicsEffect());
-    if (effect)
+    auto* effect = dynamic_cast<QGraphicsOpacityEffect*>(m_ui->catPreview->graphicsEffect());
+    if (effect) {
         effect->setOpacity(m_ui->catOpacitySlider->value() / 100.0);
+    }
 }

@@ -93,8 +93,9 @@ void FlamePackExportTask::collectHashes()
         // require sensible file types
         if (!std::any_of(FILE_EXTENSIONS.begin(), FILE_EXTENSIONS.end(), [&relative](const QString& extension) {
                 return relative.endsWith('.' + extension) || relative.endsWith('.' + extension + ".disabled");
-            }))
+            })) {
             continue;
+        }
 
         if (relative.startsWith("resourcepacks/") &&
             (relative.endsWith(".zip") || relative.endsWith(".zip.disabled"))) {  // is resourcepack
@@ -173,7 +174,7 @@ void FlamePackExportTask::makeApiRequest()
         fingerprints.push_back(murmur.toUInt());
     }
 
-    auto [matchTask, response] = api.matchFingerprints(fingerprints);
+    auto [matchTask, response] = FlameAPI::matchFingerprints(fingerprints);
     task = matchTask;
 
     connect(task.get(), &Task::succeeded, this, [this, response] {
@@ -217,9 +218,10 @@ void FlamePackExportTask::makeApiRequest()
                 }
 
                 setStatus(tr("Parsing API response from CurseForge for '%1'...").arg(mod->name));
-                if (fileObj["isAvailable"].toBool())
+                if (fileObj["isAvailable"].toBool()) {
                     resolvedFiles.insert(mod->path, { Json::requireInteger(fileObj, "modId"), Json::requireInteger(fileObj, "id"),
                                                       mod->enabled, mod->isMod });
+                }
             }
 
         } catch (Json::JsonException& e) {
@@ -251,7 +253,8 @@ void FlamePackExportTask::getProjectsInfo()
     if (addonIds.isEmpty()) {
         buildZip();
         return;
-    } else if (addonIds.size() == 1) {
+    }
+    if (addonIds.size() == 1) {
         std::tie(projTask, response) = api.getProject(*addonIds.begin());
     } else {
         std::tie(projTask, response) = api.getProjects(addonIds);
@@ -270,10 +273,11 @@ void FlamePackExportTask::getProjectsInfo()
 
         try {
             QJsonArray entries;
-            if (addonIds.size() == 1)
+            if (addonIds.size() == 1) {
                 entries = { Json::requireObject(Json::requireObject(doc), "data") };
-            else
+            } else {
                 entries = Json::requireArray(Json::requireObject(doc), "data");
+            }
 
             for (auto entry : entries) {
                 auto entryObj = Json::requireObject(entry);
@@ -289,8 +293,9 @@ void FlamePackExportTask::getProjectsInfo()
                             val.name = pack.name;
                             val.slug = pack.slug;
                             QStringList authors;
-                            for (auto author : pack.authors)
+                            for (auto author : pack.authors) {
                                 authors << author.name;
+                            }
 
                             val.authors = authors.join(", ");
                             resolvedFiles[key] = val;
@@ -367,7 +372,7 @@ QByteArray FlamePackExportTask::generateIndex()
 
     QJsonObject version;
 
-    auto profile = m_options.instance->getPackProfile();
+    auto* profile = m_options.instance->getPackProfile();
     // collect all supported components
     const ComponentPtr minecraft = profile->getComponent("net.minecraft");
     const ComponentPtr quilt = profile->getComponent("org.quiltmc.quilt-loader");
@@ -376,19 +381,21 @@ QByteArray FlamePackExportTask::generateIndex()
     const ComponentPtr neoforge = profile->getComponent("net.neoforged");
 
     // convert all available components to mrpack dependencies
-    if (minecraft != nullptr)
+    if (minecraft != nullptr) {
         version["version"] = minecraft->m_version;
+    }
     QString id;
-    if (quilt != nullptr)
+    if (quilt != nullptr) {
         id = "quilt-" + quilt->m_version;
-    else if (fabric != nullptr)
+    } else if (fabric != nullptr) {
         id = "fabric-" + fabric->m_version;
-    else if (forge != nullptr)
+    } else if (forge != nullptr) {
         id = "forge-" + forge->m_version;
-    else if (neoforge != nullptr) {
+    } else if (neoforge != nullptr) {
         id = "neoforge-";
-        if (minecraft->m_version == "1.20.1")
+        if (minecraft->m_version == "1.20.1") {
             id += "1.20.1-";
+        }
         id += neoforge->m_version;
     }
     version["modLoaders"] = QJsonArray();
@@ -399,8 +406,9 @@ QByteArray FlamePackExportTask::generateIndex()
         version["modLoaders"] = QJsonArray({ loader });
     }
 
-    if (m_options.recommendedRAM > 0)
+    if (m_options.recommendedRAM > 0) {
         version["recommendedRam"] = m_options.recommendedRAM;
+    }
 
     obj["minecraft"] = version;
 

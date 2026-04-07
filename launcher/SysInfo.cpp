@@ -58,7 +58,7 @@ bool rosettaDetect()
 namespace SysInfo {
 QString currentSystem()
 {
-#if defined(Q_OS_LINUX)
+#ifdef Q_OS_LINUX
     return "linux";
 #elif defined(Q_OS_MACOS)
     return "osx";
@@ -88,10 +88,10 @@ QString useQTForArch()
 int defaultMaxJvmMem()
 {
     // If totalRAM < 6GB, use (totalRAM / 1.5), else 4GB
-    if (const uint64_t totalRAM = HardwareInfo::totalRamMiB(); totalRAM < (4096 * 1.5))
+    if (const uint64_t totalRAM = HardwareInfo::totalRamMiB(); totalRAM < (4096 * 1.5)) {
         return totalRAM / 1.5;
-    else
-        return 4096;
+    }
+    return 4096;
 }
 
 QString getSupportedJavaArchitecture()
@@ -99,27 +99,35 @@ QString getSupportedJavaArchitecture()
     auto sys = currentSystem();
     auto arch = useQTForArch();
     if (sys == "windows") {
-        if (arch == "x86_64")
+        if (arch == "x86_64") {
             return "windows-x64";
-        if (arch == "i386")
+        }
+        if (arch == "i386") {
             return "windows-x86";
+        }
         // Unknown, maybe arm, appending arch
         return "windows-" + arch;
     }
     if (sys == "osx") {
-        if (arch == "arm64")
+        if (arch == "arm64") {
             return "mac-os-arm64";
-        if (arch.contains("64"))
+        }
+        if (arch.contains("64")) {
             return "mac-os-x64";
-        if (arch.contains("86"))
+        }
+        if (arch.contains("86")) {
             return "mac-os-x86";
+        }
         // Unknown, maybe something new, appending arch
         return "mac-os-" + arch;
-    } else if (sys == "linux") {
-        if (arch == "x86_64")
+    }
+    if (sys == "linux") {
+        if (arch == "x86_64") {
             return "linux-x64";
-        if (arch == "i386")
+        }
+        if (arch == "i386") {
             return "linux-x86";
+        }
         // will work for arm32 arm(64)
         return "linux-" + arch;
     }

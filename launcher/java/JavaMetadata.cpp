@@ -29,12 +29,13 @@ namespace Java {
 
 DownloadType parseDownloadType(QString javaDownload)
 {
-    if (javaDownload == "manifest")
+    if (javaDownload == "manifest") {
         return DownloadType::Manifest;
-    else if (javaDownload == "archive")
+    }
+    if (javaDownload == "archive") {
         return DownloadType::Archive;
-    else
-        return DownloadType::Unknown;
+    }
+    return DownloadType::Unknown;
 }
 QString downloadTypeToString(DownloadType javaDownload)
 {

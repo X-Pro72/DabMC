@@ -91,8 +91,9 @@ std::optional<QString> GuiUtil::uploadPaste(const QString& name, const QString& 
     auto baseURL = APPLICATION->settings()->get("PastebinCustomAPIBase").toString();
     bool shouldTruncate = false;
 
-    if (baseURL.isEmpty())
+    if (baseURL.isEmpty()) {
         baseURL = PasteUpload::PasteTypes[pasteType].defaultBase;
+    }
 
     if (auto url = QUrl(baseURL); url.isValid()) {
         auto response = CustomMessageBox::selectable(parentWidget, QObject::tr("Confirm Upload"),
@@ -103,8 +104,9 @@ std::optional<QString> GuiUtil::uploadPaste(const QString& name, const QString& 
                                                      QMessageBox::Warning, QMessageBox::Yes | QMessageBox::No, QMessageBox::No)
                             ->exec();
 
-        if (response != QMessageBox::Yes)
+        if (response != QMessageBox::Yes) {
             return {};
+        }
 
         if (baseURL == "https://api.mclo.gs" && text.count("\n") > MaxMclogsLines) {
             auto truncateResponse = CustomMessageBox::selectable(
@@ -135,7 +137,7 @@ std::optional<QString> GuiUtil::uploadPaste(const QString& name, const QString& 
 
     auto job = NetJob::Ptr(new NetJob("Log Upload", APPLICATION->network()));
 
-    auto pasteJob = new PasteUpload(textToUpload, baseURL, pasteType);
+    auto* pasteJob = new PasteUpload(textToUpload, baseURL, pasteType);
     job->addNetAction(Net::NetRequest::Ptr(pasteJob));
     QObject::connect(job.get(), &Task::failed, [parentWidget](QString reason) {
         CustomMessageBox::selectable(parentWidget, QObject::tr("Failed to upload logs!"), reason, QMessageBox::Critical)->show();
@@ -229,7 +231,7 @@ static QStringList BrowseForFileInternal(QString context,
 QString GuiUtil::BrowseForFile(QString context, QString caption, QString filter, QString defaultPath, QWidget* parentWidget)
 {
     auto resultList = BrowseForFileInternal(context, caption, filter, defaultPath, parentWidget, true);
-    if (resultList.size()) {
+    if (!resultList.empty()) {
         return resultList[0];
     }
     return QString();

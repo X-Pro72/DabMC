@@ -121,12 +121,12 @@ bool ModrinthPage::eventFilter(QObject* watched, QEvent* event)
             this->triggerSearch();
             keyEvent->accept();
             return true;
-        } else {
-            if (m_search_timer.isActive())
-                m_search_timer.stop();
-
-            m_search_timer.start(350);
         }
+        if (m_search_timer.isActive()) {
+            m_search_timer.stop();
+        }
+
+        m_search_timer.start(350);
     }
     return QObject::eventFilter(watched, event);
 }
@@ -161,8 +161,9 @@ void ModrinthPage::onSelectionChanged(QModelIndex curr, [[maybe_unused]] QModelI
             QVariant current_updated;
             current_updated.setValue(pack);
 
-            if (!m_model->setData(curr, current_updated, Qt::UserRole))
+            if (!m_model->setData(curr, current_updated, Qt::UserRole)) {
                 qWarning() << "Failed to cache extra info for the current pack!";
+            }
 
             suggestCurrent();
             updateUI();
@@ -172,8 +173,9 @@ void ModrinthPage::onSelectionChanged(QModelIndex curr, [[maybe_unused]] QModelI
             m_job->start();
         }
 
-    } else
+    } else {
         updateUI();
+    }
 
     if (!m_current->versionsLoaded || m_filterWidget->changed()) {
         qDebug() << "Loading modrinth modpack versions";
@@ -190,8 +192,9 @@ void ModrinthPage::onSelectionChanged(QModelIndex curr, [[maybe_unused]] QModelI
             m_current->versions = doc;
             m_current->versionsLoaded = true;
             auto pred = [this](const ModPlatform::IndexedVersion& v) {
-                if (auto filter = m_filterWidget->getFilter())
+                if (auto filter = m_filterWidget->getFilter()) {
                     return !filter->checkModpackFilters(v);
+                }
                 return false;
             };
 #if QT_VERSION >= QT_VERSION_CHECK(6, 1, 0)
@@ -210,8 +213,9 @@ void ModrinthPage::onSelectionChanged(QModelIndex curr, [[maybe_unused]] QModelI
             QVariant current_updated;
             current_updated.setValue(m_current);
 
-            if (!m_model->setData(curr, current_updated, Qt::UserRole))
+            if (!m_model->setData(curr, current_updated, Qt::UserRole)) {
                 qWarning() << "Failed to cache versions for the current pack!";
+            }
 
             suggestCurrent();
         };
@@ -226,11 +230,12 @@ void ModrinthPage::onSelectionChanged(QModelIndex curr, [[maybe_unused]] QModelI
 
     } else {
         for (auto version : m_current->versions) {
-            if (!version.version.contains(version.version))
+            if (!version.version.contains(version.version)) {
                 m_ui->versionSelectionBox->addItem(QString("%1 - %2").arg(version.version, version.version_number),
                                                    QVariant(version.fileId));
-            else
+            } else {
                 m_ui->versionSelectionBox->addItem(version.version, QVariant(version.fileId));
+            }
         }
 
         suggestCurrent();
@@ -241,10 +246,11 @@ void ModrinthPage::updateUI()
 {
     QString text = "";
 
-    if (m_current->websiteUrl.isEmpty())
+    if (m_current->websiteUrl.isEmpty()) {
         text = m_current->name;
-    else
+    } else {
         text = "<a href=\"" + m_current->websiteUrl + "\">" + m_current->name + "</a>";
+    }
 
     if (!m_current->authors.empty()) {
         auto authorToStr = [](ModPlatform::ModpackAuthor& author) {
@@ -283,14 +289,18 @@ void ModrinthPage::updateUI()
             text += "<br><br>" + tr("External links:") + "<br>";
         }
 
-        if (!m_current->extraData.issuesUrl.isEmpty())
+        if (!m_current->extraData.issuesUrl.isEmpty()) {
             text += "- " + tr("Issues: <a href=%1>%1</a>").arg(m_current->extraData.issuesUrl) + "<br>";
-        if (!m_current->extraData.wikiUrl.isEmpty())
+        }
+        if (!m_current->extraData.wikiUrl.isEmpty()) {
             text += "- " + tr("Wiki: <a href=%1>%1</a>").arg(m_current->extraData.wikiUrl) + "<br>";
-        if (!m_current->extraData.sourceUrl.isEmpty())
+        }
+        if (!m_current->extraData.sourceUrl.isEmpty()) {
             text += "- " + tr("Source code: <a href=%1>%1</a>").arg(m_current->extraData.sourceUrl) + "<br>";
-        if (!m_current->extraData.discordUrl.isEmpty())
+        }
+        if (!m_current->extraData.discordUrl.isEmpty()) {
             text += "- " + tr("Discord: <a href=%1>%1</a>").arg(m_current->extraData.discordUrl) + "<br>";
+        }
     }
 
     text += "<hr>";
@@ -363,11 +373,9 @@ void ModrinthPage::createFilterWidget()
 {
     auto widget = ModFilterWidget::create(nullptr, true);
     m_filterWidget.swap(widget);
-    auto old = m_ui->splitter->replaceWidget(0, m_filterWidget.get());
+    auto* old = m_ui->splitter->replaceWidget(0, m_filterWidget.get());
     // because we replaced the widget we also need to delete it
-    if (old) {
-        delete old;
-    }
+    delete old;
 
     connect(m_ui->filterButton, &QPushButton::clicked, this, [this] { m_filterWidget->setHidden(!m_filterWidget->isHidden()); });
 

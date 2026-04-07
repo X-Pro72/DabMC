@@ -9,7 +9,7 @@
 
 InstanceNameChange askForChangingInstanceName(QWidget* parent, const QString& old_name, const QString& new_name)
 {
-    auto dialog =
+    auto* dialog =
         CustomMessageBox::selectable(parent, QObject::tr("Change instance name"),
                                      QObject::tr("The instance's name seems to include the old version. Would you like to update it?\n\n"
                                                  "Old name: %1\n"
@@ -18,17 +18,19 @@ InstanceNameChange askForChangingInstanceName(QWidget* parent, const QString& ol
                                      QMessageBox::Question, QMessageBox::No | QMessageBox::Yes);
     auto result = dialog->exec();
 
-    if (result == QMessageBox::Yes)
+    if (result == QMessageBox::Yes) {
         return InstanceNameChange::ShouldChange;
+    }
     return InstanceNameChange::ShouldKeep;
 }
 
 ShouldUpdate askIfShouldUpdate(QWidget* parent, QString original_version_name)
 {
-    if (APPLICATION->settings()->get("SkipModpackUpdatePrompt").toBool())
+    if (APPLICATION->settings()->get("SkipModpackUpdatePrompt").toBool()) {
         return ShouldUpdate::SkipUpdating;
+    }
 
-    auto info = CustomMessageBox::selectable(
+    auto* info = CustomMessageBox::selectable(
         parent, QObject::tr("Similar modpack was found!"),
         QObject::tr(
             "One or more of your instances are from this same modpack%1. Do you want to create a "
@@ -41,19 +43,23 @@ ShouldUpdate askIfShouldUpdate(QWidget* parent, QString original_version_name)
 
     info->exec();
 
-    if (info->clickedButton() == update)
+    if (info->clickedButton() == update) {
         return ShouldUpdate::Update;
-    if (info->clickedButton() == skip)
+    }
+    if (info->clickedButton() == skip) {
         return ShouldUpdate::SkipUpdating;
+    }
     return ShouldUpdate::Cancel;
 }
 
 QString InstanceName::name() const
 {
-    if (!m_modified_name.isEmpty())
+    if (!m_modified_name.isEmpty()) {
         return modifiedName();
-    if (!m_original_version.isEmpty())
+    }
+    if (!m_original_version.isEmpty()) {
         return QString("%1 %2").arg(m_original_name, m_original_version);
+    }
 
     return m_original_name;
 }
@@ -65,8 +71,9 @@ QString InstanceName::originalName() const
 
 QString InstanceName::modifiedName() const
 {
-    if (!m_modified_name.isEmpty())
+    if (!m_modified_name.isEmpty()) {
         return m_modified_name;
+    }
     return m_original_name;
 }
 
@@ -82,14 +89,14 @@ void InstanceName::setName(InstanceName& other)
     m_modified_name = other.m_modified_name;
 }
 
-InstanceTask::InstanceTask() : Task(), InstanceName() {}
+InstanceTask::InstanceTask() {}
 
 ShouldDeleteSaves askIfShouldDeleteSaves(QWidget* parent)
 {
-    auto dialog = CustomMessageBox::selectable(parent, QObject::tr("Delete Existing Save Files"),
-                                               QObject::tr("An earlier version of this mod pack installed save files.\n"
-                                                           "Would you like to remove those existing saves as part of this update?"),
-                                               QMessageBox::Question, QMessageBox::No | QMessageBox::Yes);
+    auto* dialog = CustomMessageBox::selectable(parent, QObject::tr("Delete Existing Save Files"),
+                                                QObject::tr("An earlier version of this mod pack installed save files.\n"
+                                                            "Would you like to remove those existing saves as part of this update?"),
+                                                QMessageBox::Question, QMessageBox::No | QMessageBox::Yes);
     auto result = dialog->exec();
     return result == QMessageBox::Yes ? ShouldDeleteSaves::Yes : ShouldDeleteSaves::No;
 }

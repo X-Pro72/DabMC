@@ -15,7 +15,7 @@ class IniFileTest : public QObject {
     void initTestCase() {}
     void cleanupTestCase() {}
 
-    void test_Escape_data()
+    static void test_Escape_data()
     {
         QTest::addColumn<QString>("through");
 
@@ -27,7 +27,7 @@ class IniFileTest : public QObject {
         QTest::newRow("Hashtags") << "some data#something";
     }
 
-    void test_SaveLoad()
+    static void test_SaveLoad()
     {
         QString a = "a";
         QString b = "a\nb\t\n\\\\\\C:\\Program files\\terrible\\name\\of something\\#thisIsNotAComment";
@@ -46,7 +46,7 @@ class IniFileTest : public QObject {
         QCOMPARE(f2.get("b", "NOT SET").toString(), b);
     }
 
-    void test_SaveLoadLists()
+    static void test_SaveLoadLists()
     {
         QString slist_strings = "(\"a\",\"b\",\"c\")";
         QStringList list_strings = { "a", "b", "c" };
@@ -75,7 +75,7 @@ class IniFileTest : public QObject {
         QCOMPARE(out_list_numbers, list_numbers);
     }
 
-    void test_SaveAlreadyExistingFile()
+    static void test_SaveAlreadyExistingFile()
     {
         QString fileContent = R"(InstanceType=OneSix
 iconKey=vanillia_icon
@@ -86,7 +86,7 @@ Wrapperommand=)";
         fileContent += "\"";
         fileContent += +R"(\"$INST_JAVA\" -jar packwiz-installer-bootstrap.jar link =)";
         fileContent += "\"\n";
-#if defined(Q_OS_WIN)
+#ifdef Q_OS_WIN
         QString fileName = "test_SaveAlreadyExistingFile.ini";
         QFile file(fileName);
         QCOMPARE(file.open(QFile::WriteOnly | QFile::Text), true);
@@ -111,14 +111,14 @@ Wrapperommand=)";
         QCOMPARE(f2.get("PreLaunchCommand", "NOT SET").toString(), "\"$INST_JAVA\" -jar packwiz-installer-bootstrap.jar link");
         QCOMPARE(f2.get("Wrapperommand", "NOT SET").toString(), "\"$INST_JAVA\" -jar packwiz-installer-bootstrap.jar link =");
         QCOMPARE(f2.get("ConfigVersion", "NOT SET").toString(), "1.3");
-#if defined(Q_OS_WIN)
+#ifdef Q_OS_WIN
         FS::deletePath(fileName);
 #endif
     }
 
-    void test_SaveAlreadyExistingFileWithSpecialChars()
+    static void test_SaveAlreadyExistingFileWithSpecialChars()
     {
-#if defined(Q_OS_WIN)
+#ifdef Q_OS_WIN
         QString fileName = "test_SaveAlreadyExistingFileWithSpecialChars.ini";
 #else
         QTemporaryFile file;
@@ -144,20 +144,22 @@ Wrapperommand=)";
         // load
         INIFile f1;
         f1.loadFile(fileName);
-        for (auto key : settings.allKeys())
+        for (auto key : settings.allKeys()) {
             QCOMPARE(f1.get(key, "NOT SET").toString(), settings.value(key).toString());
+        }
         f1.saveFile(fileName);
         INIFile f2;
         f2.loadFile(fileName);
-        for (auto key : settings.allKeys())
+        for (auto key : settings.allKeys()) {
             QCOMPARE(f2.get(key, "NOT SET").toString(), settings.value(key).toString());
+        }
         QCOMPARE(f2.get("ConfigVersion", "NOT SET").toString(), "1.3");
-#if defined(Q_OS_WIN)
+#ifdef Q_OS_WIN
         FS::deletePath(fileName);
 #endif
     }
 
-    void test_SaveAlreadyExistingFileWithSpecialCharsV1()
+    static void test_SaveAlreadyExistingFileWithSpecialCharsV1()
     {
         QString fileContent = R"(InstanceType=OneSix
 ConfigVersion=1.1
@@ -167,7 +169,7 @@ OverrideCommands=true
 PreLaunchCommand=)";
         fileContent += "\"\\\"env mesa=true\\\"\"\n";
 
-#if defined(Q_OS_WIN)
+#ifdef Q_OS_WIN
         QString fileName = "test_SaveAlreadyExistingFileWithSpecialCharsV1.ini";
         QFile file(fileName);
         QCOMPARE(file.open(QFile::WriteOnly | QFile::Text), true);
@@ -186,7 +188,7 @@ PreLaunchCommand=)";
         f1.loadFile(fileName);
         QCOMPARE(f1.get("PreLaunchCommand", "NOT SET").toString(), "env mesa=true");
         QCOMPARE(f1.get("ConfigVersion", "NOT SET").toString(), "1.3");
-#if defined(Q_OS_WIN)
+#ifdef Q_OS_WIN
         FS::deletePath(fileName);
 #endif
     }

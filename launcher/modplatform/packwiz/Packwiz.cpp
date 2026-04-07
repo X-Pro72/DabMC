@@ -136,8 +136,9 @@ auto V1::createModFormat([[maybe_unused]] const QDir& index_dir,
     mod.releaseType = mod_version.version_type;
 
     mod.version_number = mod_version.version_number;
-    if (mod.version_number.isNull())  // on CurseForge, there is only a version name - not a version number
+    if (mod.version_number.isNull()) {  // on CurseForge, there is only a version name - not a version number
         mod.version_number = mod_version.version;
+    }
 
     mod.dependencies = mod_version.dependencies;
     return mod;
@@ -157,8 +158,9 @@ void V1::updateModIndex(const QDir& index_dir, Mod& mod)
 
     QFile index_file(index_dir.absoluteFilePath(real_fname));
 
-    if (real_fname != normalized_fname)
+    if (real_fname != normalized_fname) {
         index_file.rename(normalized_fname);
+    }
 
     // There's already data on there!
     // TODO: We should do more stuff here, as the user is likely trying to
@@ -172,7 +174,7 @@ void V1::updateModIndex(const QDir& index_dir, Mod& mod)
 
     toml::table update;
     switch (mod.provider) {
-        case (ModPlatform::ResourceProvider::FLAME):
+        case ModPlatform::ResourceProvider::FLAME:
             if (mod.file_id.toInt() == 0 || mod.project_id.toInt() == 0) {
                 qCritical() << QString("Did not write file %1 because missing information!").arg(normalized_fname);
                 return;
@@ -182,7 +184,7 @@ void V1::updateModIndex(const QDir& index_dir, Mod& mod)
                 { "project-id", mod.project_id.toInt() },
             };
             break;
-        case (ModPlatform::ResourceProvider::MODRINTH):
+        case ModPlatform::ResourceProvider::MODRINTH:
             if (mod.mod_id().toString().isEmpty() || mod.version().toString().isEmpty()) {
                 qCritical() << QString("Did not write file %1 because missing information!").arg(normalized_fname);
                 return;
@@ -250,8 +252,9 @@ void V1::deleteModIndex(const QDir& index_dir, QString& mod_slug)
 {
     auto normalized_fname = indexFileName(mod_slug);
     auto real_fname = getRealIndexName(index_dir, normalized_fname);
-    if (real_fname.isEmpty())
+    if (real_fname.isEmpty()) {
         return;
+    }
 
     QFile index_file(index_dir.absoluteFilePath(real_fname));
 
@@ -271,8 +274,9 @@ auto V1::getIndexForMod(const QDir& index_dir, QString slug) -> Mod
 
     auto normalized_fname = indexFileName(slug);
     auto real_fname = getRealIndexName(index_dir, normalized_fname, true);
-    if (real_fname.isEmpty())
+    if (real_fname.isEmpty()) {
         return {};
+    }
 
     toml::table table;
 #if TOML_EXCEPTIONS
@@ -325,7 +329,7 @@ auto V1::getIndexForMod(const QDir& index_dir, QString slug) -> Mod
     mod.version_number = table["x-prismlauncher-version-number"].value_or("");
 
     {  // [download] info
-        auto download_table = table["download"].as_table();
+        auto* download_table = table["download"].as_table();
         if (!download_table) {
             qCritical() << QString("No [download] section found on mod metadata!");
             return {};
@@ -361,10 +365,10 @@ auto V1::getIndexForMod(const QDir& index_dir, QString slug) -> Mod
         }
     }
     {  // dependencies
-        auto deps = table["x-prismlauncher-dependencies"].as_array();
+        auto* deps = table["x-prismlauncher-dependencies"].as_array();
         if (deps) {
             for (auto&& depNode : *deps) {
-                auto dep = depNode.as_table();
+                auto* dep = depNode.as_table();
                 if (dep) {
                     ModPlatform::Dependency d;
                     d.addonId = stringEntry(*dep, "addonId");
@@ -386,8 +390,9 @@ auto V1::getIndexForMod(const QDir& index_dir, QVariant& mod_id) -> Mod
     for (auto& file_name : index_dir.entryList(QDir::Filter::Files)) {
         auto mod = getIndexForMod(index_dir, file_name);
 
-        if (mod.mod_id() == mod_id)
+        if (mod.mod_id() == mod_id) {
             return mod;
+        }
     }
 
     return {};

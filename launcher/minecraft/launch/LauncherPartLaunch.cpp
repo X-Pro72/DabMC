@@ -58,7 +58,7 @@ LauncherPartLaunch::LauncherPartLaunch(LaunchTask* parent)
         *connection =
             connect(&m_process, &LoggedProcess::log, this, [connection](const QStringList& lines, [[maybe_unused]] MessageLevel level) {
                 qDebug() << lines;
-                if (lines.filter(s_settingUser).length() != 0) {
+                if (!lines.filter(s_settingUser).empty()) {
                     APPLICATION->closeAllWindows();
                     disconnect(*connection);
                 }
@@ -79,7 +79,7 @@ void LauncherPartLaunch::executeTask()
         return;
     }
 
-    auto instance = m_parent->instance();
+    auto* instance = m_parent->instance();
 
     QString legacyJarPath;
     if (instance->getLauncher() == "legacy" || instance->shouldApplyOnlineFixes()) {
@@ -107,8 +107,9 @@ void LauncherPartLaunch::executeTask()
     auto classPath = instance->getClassPath();
     classPath.prepend(jarPath);
 
-    if (!legacyJarPath.isEmpty())
+    if (!legacyJarPath.isEmpty()) {
         classPath.prepend(legacyJarPath);
+    }
 
     auto natPath = instance->getNativePath();
 #ifdef Q_OS_WIN
@@ -177,9 +178,10 @@ void LauncherPartLaunch::on_state(LoggedProcess::State state)
             return;
         }
         case LoggedProcess::Finished: {
-            auto instance = m_parent->instance();
-            if (instance->settings()->get("CloseAfterLaunch").toBool())
+            auto* instance = m_parent->instance();
+            if (instance->settings()->get("CloseAfterLaunch").toBool()) {
                 APPLICATION->showMainWindow();
+            }
 
             m_parent->setPid(-1);
             m_parent->instance()->setMinecraftRunning(false);

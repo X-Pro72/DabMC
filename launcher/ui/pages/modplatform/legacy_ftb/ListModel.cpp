@@ -35,10 +35,10 @@
 
 #include "ListModel.h"
 #include "Application.h"
-#include "settings/SettingsObject.h"
 #include "net/ApiDownload.h"
 #include "net/HttpMetaCache.h"
 #include "net/NetJob.h"
+#include "settings/SettingsObject.h"
 
 #include <Version.h>
 #include "StringUtils.h"
@@ -73,8 +73,8 @@ bool FilterModel::lessThan(const QModelIndex& left, const QModelIndex& right) co
         Version lv(leftPack.mcVersion);
         Version rv(rightPack.mcVersion);
         return lv < rv;
-
-    } else if (currentSorting == Sorting::ByName) {
+    }
+    if (currentSorting == Sorting::ByName) {
         return StringUtils::naturalCompare(leftPack.name, rightPack.name, Qt::CaseSensitive) >= 0;
     }
 
@@ -92,8 +92,9 @@ bool FilterModel::filterAcceptsRow([[maybe_unused]] int sourceRow, [[maybe_unuse
     QVariant raw = sourceModel()->data(index, Qt::UserRole);
     Q_ASSERT(raw.canConvert<Modpack>());
     auto pack = raw.value<Modpack>();
-    if (searchTerm.startsWith("#"))
+    if (searchTerm.startsWith("#")) {
         return pack.packCode == searchTerm.mid(1);
+    }
     return pack.name.contains(searchTerm, Qt::CaseInsensitive);
 }
 
@@ -103,7 +104,7 @@ void FilterModel::setSearchTerm(const QString term)
     invalidate();
 }
 
-const QMap<QString, FilterModel::Sorting> FilterModel::getAvailableSortings()
+QMap<QString, FilterModel::Sorting> FilterModel::getAvailableSortings()
 {
     return sortings;
 }
@@ -128,7 +129,7 @@ ListModel::ListModel(QObject* parent) : QAbstractListModel(parent) {}
 
 ListModel::~ListModel() {}
 
-QString ListModel::translatePackType(PackType type) const
+QString ListModel::translatePackType(PackType type)
 {
     switch (type) {
         case PackType::Public:
@@ -187,7 +188,8 @@ QVariant ListModel::data(const QModelIndex& index, int role) const
             if (pack.broken) {
                 // FIXME: Hardcoded color
                 return QColor(255, 0, 50);
-            } else if (pack.bugged) {
+            }
+            if (pack.bugged) {
                 // FIXME: Hardcoded color
                 // bugged pack, currently only indicates bugged xml
                 return QColor(244, 229, 66);

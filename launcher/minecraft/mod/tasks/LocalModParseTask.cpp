@@ -8,6 +8,7 @@
 #include <QJsonValue>
 #include <QRegularExpression>
 #include <QString>
+#include <algorithm>
 
 #include "FileSystem.h"
 #include "Json.h"
@@ -49,7 +50,7 @@ ModDetails ReadMCModInfo(QByteArray contents)
         details.homeurl = homeurl;
         details.description = firstObj.value("description").toString();
         QJsonArray authors = firstObj.value("authorList").toArray();
-        if (authors.size() == 0) {
+        if (authors.empty()) {
             // FIXME: what is the format of this? is there any?
             authors = firstObj.value("authors").toArray();
         }
@@ -67,8 +68,9 @@ ModDetails ReadMCModInfo(QByteArray contents)
         }
 
         auto addDep = [&details](QString dep) {
-            if (dep == "mod_MinecraftForge" || dep == "Forge")
+            if (dep == "mod_MinecraftForge" || dep == "Forge") {
                 return;
+            }
             if (dep.contains(":")) {
                 dep = dep.section(":", 1);
             }
@@ -98,7 +100,8 @@ ModDetails ReadMCModInfo(QByteArray contents)
     // this is the very old format that had just the array
     if (jsonDoc.isArray()) {
         return getInfoFromArray(jsonDoc.array());
-    } else if (jsonDoc.isObject()) {
+    }
+    if (jsonDoc.isObject()) {
         auto val = jsonDoc.object().value("modinfoversion");
         if (val.isUndefined()) {
             val = jsonDoc.object().value("modListVersion");
@@ -107,8 +110,9 @@ ModDetails ReadMCModInfo(QByteArray contents)
         int version = val.toInt(-1);
 
         // Some mods set the number with "", so it's a String instead
-        if (version < 0)
+        if (version < 0) {
             version = val.toString("").toInt();
+        }
 
         if (version != 2) {
             qWarning() << QString(R"(The value of 'modListVersion' is "%1" (expected "2")! The file may be corrupted.)").arg(version);
@@ -148,43 +152,43 @@ ModDetails ReadMCModTOML(QByteArray contents)
 #endif
 
     // array defined by [[mods]]
-    auto tomlModsArr = tomlData["mods"].as_array();
+    auto* tomlModsArr = tomlData["mods"].as_array();
     if (!tomlModsArr) {
         qWarning() << "Corrupted mods.toml? Couldn't find [[mods]] array!";
         return {};
     }
 
     // we only really care about the first element, since multiple mods in one file is not supported by us at the moment
-    auto tomlModsTable0 = tomlModsArr->get(0);
+    auto* tomlModsTable0 = tomlModsArr->get(0);
     if (!tomlModsTable0) {
         qWarning() << "Corrupted mods.toml? [[mods]] didn't have an element at index 0!";
         return {};
     }
-    auto modsTable = tomlModsTable0->as_table();
+    auto* modsTable = tomlModsTable0->as_table();
     if (!modsTable) {
         qWarning() << "Corrupted mods.toml? [[mods]] was not a table!";
         return {};
     }
 
     // mandatory properties - always in [[mods]]
-    if (auto modIdDatum = (*modsTable)["modId"].as_string()) {
+    if (auto* modIdDatum = (*modsTable)["modId"].as_string()) {
         details.mod_id = QString::fromStdString(modIdDatum->get());
     }
-    if (auto versionDatum = (*modsTable)["version"].as_string()) {
+    if (auto* versionDatum = (*modsTable)["version"].as_string()) {
         details.version = QString::fromStdString(versionDatum->get());
     }
-    if (auto displayNameDatum = (*modsTable)["displayName"].as_string()) {
+    if (auto* displayNameDatum = (*modsTable)["displayName"].as_string()) {
         details.name = QString::fromStdString(displayNameDatum->get());
     }
-    if (auto descriptionDatum = (*modsTable)["description"].as_string()) {
+    if (auto* descriptionDatum = (*modsTable)["description"].as_string()) {
         details.description = QString::fromStdString(descriptionDatum->get());
     }
 
     // optional properties - can be in the root table or [[mods]]
     QString authors = "";
-    if (auto authorsDatum = tomlData["authors"].as_string()) {
+    if (auto* authorsDatum = tomlData["authors"].as_string()) {
         authors = QString::fromStdString(authorsDatum->get());
-    } else if (auto authorsDatumMods = (*modsTable)["authors"].as_string()) {
+    } else if (auto* authorsDatumMods = (*modsTable)["authors"].as_string()) {
         authors = QString::fromStdString(authorsDatumMods->get());
     }
     if (!authors.isEmpty()) {
@@ -192,9 +196,9 @@ ModDetails ReadMCModTOML(QByteArray contents)
     }
 
     QString homeurl = "";
-    if (auto homeurlDatum = tomlData["displayURL"].as_string()) {
+    if (auto* homeurlDatum = tomlData["displayURL"].as_string()) {
         homeurl = QString::fromStdString(homeurlDatum->get());
-    } else if (auto homeurlDatumMods = (*modsTable)["displayURL"].as_string()) {
+    } else if (auto* homeurlDatumMods = (*modsTable)["displayURL"].as_string()) {
         homeurl = QString::fromStdString(homeurlDatumMods->get());
     }
     // fix up url.
@@ -204,26 +208,27 @@ ModDetails ReadMCModTOML(QByteArray contents)
     details.homeurl = homeurl;
 
     QString issueTrackerURL = "";
-    if (auto issueTrackerURLDatum = tomlData["issueTrackerURL"].as_string()) {
+    if (auto* issueTrackerURLDatum = tomlData["issueTrackerURL"].as_string()) {
         issueTrackerURL = QString::fromStdString(issueTrackerURLDatum->get());
-    } else if (auto issueTrackerURLDatumMods = (*modsTable)["issueTrackerURL"].as_string()) {
+    } else if (auto* issueTrackerURLDatumMods = (*modsTable)["issueTrackerURL"].as_string()) {
         issueTrackerURL = QString::fromStdString(issueTrackerURLDatumMods->get());
     }
     details.issue_tracker = issueTrackerURL;
 
     QString license = "";
-    if (auto licenseDatum = tomlData["license"].as_string()) {
+    if (auto* licenseDatum = tomlData["license"].as_string()) {
         license = QString::fromStdString(licenseDatum->get());
-    } else if (auto licenseDatumMods = (*modsTable)["license"].as_string()) {
+    } else if (auto* licenseDatumMods = (*modsTable)["license"].as_string()) {
         license = QString::fromStdString(licenseDatumMods->get());
     }
-    if (!license.isEmpty())
+    if (!license.isEmpty()) {
         details.licenses.append(ModLicense(license));
+    }
 
     QString logoFile = "";
-    if (auto logoFileDatum = tomlData["logoFile"].as_string()) {
+    if (auto* logoFileDatum = tomlData["logoFile"].as_string()) {
         logoFile = QString::fromStdString(logoFileDatum->get());
-    } else if (auto logoFileDatumMods = (*modsTable)["logoFile"].as_string()) {
+    } else if (auto* logoFileDatumMods = (*modsTable)["logoFile"].as_string()) {
         logoFile = QString::fromStdString(logoFileDatumMods->get());
     }
     details.icon_file = logoFile;
@@ -234,19 +239,19 @@ ModDetails ReadMCModTOML(QByteArray contents)
             return;
         }
         auto isNeoForgeDep = [](toml::table* t) {
-            auto type = (*t)["type"].as_string();
+            auto* type = (*t)["type"].as_string();
             return type && type->get() == "required";
         };
         auto isForgeDep = [](toml::table* t) {
-            auto mandatory = (*t)["mandatory"].as_boolean();
+            auto* mandatory = (*t)["mandatory"].as_boolean();
             return mandatory && mandatory->get();
         };
         for (auto& dep : *dependencies) {
-            auto dep_table = dep.as_table();
+            auto* dep_table = dep.as_table();
             if (!dep_table) {
                 continue;
             }
-            auto modId = (*dep_table)["modId"].as_string();
+            auto* modId = (*dep_table)["modId"].as_string();
             if (!modId || ignoreModIds.contains(QString::fromStdString(modId->get()))) {
                 continue;
             }
@@ -258,9 +263,9 @@ ModDetails ReadMCModTOML(QByteArray contents)
 
     if (tomlData.contains("dependencies")) {
         auto depValue = tomlData["dependencies"];
-        if (auto array = depValue.as_array()) {
+        if (auto* array = depValue.as_array()) {
             parseDep(array);
-        } else if (auto depTable = depValue.as_table()) {
+        } else if (auto* depTable = depValue.as_table()) {
             auto expectedKey = details.mod_id.toStdString();
             if (!depTable->contains(expectedKey)) {
                 if (auto it = depTable->begin(); it != depTable->end()) {
@@ -342,9 +347,7 @@ ModDetails ReadFabricModInfo(QByteArray contents)
                 int largest = 0;
                 for (auto key : obj.keys()) {
                     auto size = key.split('x').first().toInt();
-                    if (size > largest) {
-                        largest = size;
-                    }
+                    largest = std::max(size, largest);
                 }
                 if (largest > 0) {
                     auto key = QString::number(largest) + "x" + QString::number(largest);
@@ -440,9 +443,7 @@ ModDetails ReadQuiltModInfo(QByteArray contents)
                     int largest = 0;
                     for (auto key : obj.keys()) {
                         auto size = key.split('x').first().toInt();
-                        if (size > largest) {
-                            largest = size;
-                        }
+                        largest = std::max(size, largest);
                     }
                     if (largest > 0) {
                         auto key = QString::number(largest) + "x" + QString::number(largest);
@@ -496,8 +497,9 @@ ModDetails ReadForgeInfo(QByteArray contents)
     details.mod_id = "Forge";
     details.homeurl = "http://www.minecraftforge.net/forum/";
     INIFile ini;
-    if (!ini.loadFile(contents))
+    if (!ini.loadFile(contents)) {
         return details;
+    }
 
     QString major = ini.get("forge.major.number", "0").toString();
     QString minor = ini.get("forge.minor.number", "0").toString();
@@ -538,9 +540,9 @@ ModDetails ReadNilModInfo(QByteArray contents, QString fname)
     ModDetails details;
 
     QDCSS cssData = QDCSS(contents);
-    auto name = cssData.get("@nilmod.name");
-    auto desc = cssData.get("@nilmod.description");
-    auto authors = cssData.get("@nilmod.authors");
+    auto* name = cssData.get("@nilmod.name");
+    auto* desc = cssData.get("@nilmod.description");
+    auto* authors = cssData.get("@nilmod.authors");
 
     if (name->has_value()) {
         details.name = name->value();
@@ -684,11 +686,13 @@ bool processFolder(Mod& mod, [[maybe_unused]] ProcessingLevel level)
     QFileInfo mcmod_info(FS::PathCombine(mod.fileinfo().filePath(), "mcmod.info"));
     if (mcmod_info.exists() && mcmod_info.isFile()) {
         QFile mcmod(mcmod_info.filePath());
-        if (!mcmod.open(QIODevice::ReadOnly))
+        if (!mcmod.open(QIODevice::ReadOnly)) {
             return false;
+        }
         auto data = mcmod.readAll();
-        if (data.isEmpty() || data.isNull())
+        if (data.isEmpty() || data.isNull()) {
             return false;
+        }
         details = ReadMCModInfo(data);
 
         mod.setDetails(details);
@@ -809,8 +813,9 @@ void LocalModParseTask::executeTask()
 
     m_result->details = mod.details();
 
-    if (m_aborted)
+    if (m_aborted) {
         emitAborted();
-    else
+    } else {
         emitSucceeded();
+    }
 }

@@ -55,8 +55,9 @@ struct ModLicense {
         QStringList notNameParts = {};
         for (auto part : parts) {
             auto _url = QUrl(part);
-            if (part.startsWith("(") && part.endsWith(")"))
+            if (part.startsWith("(") && part.endsWith(")")) {
                 _url = QUrl(part.mid(1, part.size() - 2));
+            }
 
             if (_url.isValid() && !_url.scheme().isEmpty() && !_url.host().isEmpty()) {
                 this->url = _url.toString();
@@ -104,7 +105,7 @@ struct ModLicense {
         return *this;
     }
 
-    bool isEmpty() { return this->name.isEmpty() && this->id.isEmpty() && this->url.isEmpty() && this->description.isEmpty(); }
+    bool isEmpty() const { return this->name.isEmpty() && this->id.isEmpty() && this->url.isEmpty() && this->description.isEmpty(); }
 };
 
 struct ModDetails {
@@ -127,18 +128,18 @@ struct ModDetails {
     QString description = {};
 
     /* List of the author's names */
-    QStringList authors = {};
+    QStringList authors;
 
     /* Issue Tracker URL */
     QString issue_tracker = {};
 
     /* License */
-    QList<ModLicense> licenses = {};
+    QList<ModLicense> licenses;
 
     /* Path of mod logo */
     QString icon_file = {};
 
-    QStringList dependencies = {};
+    QStringList dependencies;
 
     ModDetails() = default;
 

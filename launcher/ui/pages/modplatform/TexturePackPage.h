@@ -25,7 +25,7 @@ class TexturePackResourcePage : public ResourcePackResourcePage {
     static T* create(TexturePackDownloadDialog* dialog, BaseInstance& instance)
     {
         auto page = new T(dialog, instance);
-        auto model = static_cast<TexturePackResourceModel*>(page->getModel());
+        auto* model = static_cast<TexturePackResourceModel*>(page->getModel());
 
         connect(model, &ResourceModel::versionListUpdated, page, &ResourcePage::versionListUpdated);
         connect(model, &ResourceModel::projectInfoUpdated, page, &ResourcePage::updateUi);
@@ -35,9 +35,9 @@ class TexturePackResourcePage : public ResourcePackResourcePage {
     }
 
     //: The plural version of 'texture pack'
-    inline QString resourcesString() const override { return tr("texture packs"); }
+    QString resourcesString() const override { return tr("texture packs"); }
     //: The singular version of 'texture packs'
-    inline QString resourceString() const override { return tr("texture pack"); }
+    QString resourceString() const override { return tr("texture pack"); }
 
    protected:
     TexturePackResourcePage(TexturePackDownloadDialog* dialog, BaseInstance& instance) : ResourcePackResourcePage(dialog, instance) {}

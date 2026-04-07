@@ -64,7 +64,7 @@ void tokenToJSONV3(QJsonObject& parent, const Token& t, const char* tokenName)
         out["refresh_token"] = QJsonValue(t.refresh_token);
         save = true;
     }
-    if (t.extra.size()) {
+    if (!t.extra.empty()) {
         out["extra"] = QJsonObject::fromVariantMap(t.extra);
         save = true;
     }
@@ -308,8 +308,9 @@ bool AccountData::resumeStateFromV3(QJsonObject data)
 
     yggdrasilToken = tokenFromJSONV3(data, "ygg");
     // versions before 7.2 used "offline" as the offline token
-    if (yggdrasilToken.token == "offline")
+    if (yggdrasilToken.token == "offline") {
         yggdrasilToken.token = "0";
+    }
 
     minecraftProfile = profileFromJSONV3(data, "profile");
     if (!entitlementFromJSONV3(data, minecraftEntitlement)) {

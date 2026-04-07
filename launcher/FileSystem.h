@@ -91,13 +91,13 @@ bool ensureFilePathExists(QString filenamepath);
  * Creates all the folders in a path for the specified path
  * last segment of the path is treated as a folder name and is created!
  */
-bool ensureFolderPathExists(const QFileInfo folderPath);
+bool ensureFolderPathExists(QFileInfo folderPath);
 
 /**
  * Creates all the folders in a path for the specified path
  * last segment of the path is treated as a folder name and is created!
  */
-bool ensureFolderPathExists(const QString folderPathName);
+bool ensureFolderPathExists(QString folderPathName);
 
 /**
  * @brief Copies a directory and it's contents from src to dest
@@ -133,7 +133,7 @@ class copy : public QObject {
 
     bool operator()(bool dryRun = false) { return operator()(QString(), dryRun); }
 
-    qsizetype totalCopied() { return m_copied; }
+    qsizetype totalCopied() const { return m_copied; }
     qsizetype totalFailed() { return m_failedPaths.length(); }
     QStringList failed() { return m_failedPaths; }
 
@@ -239,7 +239,7 @@ class create_link : public QObject {
 
     bool operator()(bool dryRun = false) { return operator()(QString(), dryRun); }
 
-    int totalLinked() { return m_linked; }
+    int totalLinked() const { return m_linked; }
     int totalToLink() { return static_cast<int>(m_links_to_make.size()); }
 
     void runPrivileged() { runPrivileged(QString()); }
@@ -507,7 +507,7 @@ class clone : public QObject {
 
     bool operator()(bool dryRun = false) { return operator()(QString(), dryRun); }
 
-    qsizetype totalCloned() { return m_cloned; }
+    qsizetype totalCloned() const { return m_cloned; }
     qsizetype totalFailed() { return m_failedClones.length(); }
 
     QList<QPair<QString, QString>> failed() { return m_failedClones; }
@@ -534,7 +534,7 @@ class clone : public QObject {
  */
 bool clone_file(const QString& src, const QString& dst, std::error_code& ec);
 
-#if defined(Q_OS_WIN)
+#ifdef Q_OS_WIN
 bool win_ioctl_clone(const std::wstring& src_path, const std::wstring& dst_path, std::error_code& ec);
 #elif defined(Q_OS_LINUX)
 bool linux_ficlone(const std::string& src_path, const std::string& dst_path, std::error_code& ec);

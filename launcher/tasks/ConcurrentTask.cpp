@@ -38,7 +38,7 @@
 #include <QDebug>
 #include "tasks/Task.h"
 
-ConcurrentTask::ConcurrentTask(QString task_name, int max_concurrent) : Task(), m_total_max_size(max_concurrent)
+ConcurrentTask::ConcurrentTask(QString task_name, int max_concurrent) : m_total_max_size(max_concurrent)
 {
     setObjectName(task_name);
 }
@@ -46,8 +46,9 @@ ConcurrentTask::ConcurrentTask(QString task_name, int max_concurrent) : Task(), 
 ConcurrentTask::~ConcurrentTask()
 {
     for (auto task : m_doing) {
-        if (task)
+        if (task) {
             task->disconnect(this);
+        }
     }
 }
 
@@ -63,8 +64,9 @@ void ConcurrentTask::addTask(Task::Ptr task)
 
 void ConcurrentTask::executeTask()
 {
-    for (auto i = 0; i < m_total_max_size; i++)
+    for (auto i = 0; i < m_total_max_size; i++) {
         QMetaObject::invokeMethod(this, &ConcurrentTask::executeNextSubTask, Qt::QueuedConnection);
+    }
 }
 
 bool ConcurrentTask::abort()
@@ -88,10 +90,11 @@ bool ConcurrentTask::abort()
         suceedeed &= (task.value())->abort();
     }
 
-    if (suceedeed)
+    if (suceedeed) {
         emitAborted();
-    else
+    } else {
         emitFailed(tr("Failed to abort all running tasks."));
+    }
 
     return suceedeed;
 }
@@ -121,7 +124,7 @@ void ConcurrentTask::executeNextSubTask()
             if (m_failed.isEmpty()) {
                 emitSucceeded();
             } else if (m_failed.count() == 1) {
-                auto task = m_failed.keys().first();
+                auto* task = m_failed.keys().first();
                 auto reason = task->failReason();
                 if (reason.isEmpty()) {  // clearly a bug somewhere
                     reason = tr("Task failed");
@@ -247,11 +250,11 @@ void ConcurrentTask::updateState()
                       .arg(QString::number(m_doing.count()), QString::number(m_done.count()), QString::number(totalSize())));
     } else {
         QString status = tr("Please wait...");
-        if (m_queue.size() > 0) {
+        if (!m_queue.empty()) {
             status = tr("Waiting for a task to start...");
-        } else if (m_doing.size() > 0) {
+        } else if (!m_doing.empty()) {
             status = tr("Executing 1 task:");
-        } else if (m_done.size() > 0) {
+        } else if (!m_done.empty()) {
             status = tr("Task finished.");
         }
         setStatus(status);

@@ -98,9 +98,9 @@ struct Language {
     float percentTranslated() const
     {
         if (total == 0) {
-            return 100.0f;
+            return 100.0F;
         }
-        return 100.0f * float(translated) / float(total);
+        return 100.0F * float(translated) / float(total);
     }
 
     void setTranslationStats(unsigned _translated, unsigned _untranslated, unsigned _fuzzy)
@@ -349,14 +349,16 @@ enum class Column { Language, Completeness };
 
 QVariant TranslationsModel::data(const QModelIndex& index, int role) const
 {
-    if (!index.isValid())
+    if (!index.isValid()) {
         return QVariant();
+    }
 
     int row = index.row();
     auto column = static_cast<Column>(index.column());
 
-    if (row < 0 || row >= d->m_languages.size())
+    if (row < 0 || row >= d->m_languages.size()) {
         return QVariant();
+    }
 
     auto& lang = d->m_languages[row];
     switch (role) {
@@ -425,8 +427,9 @@ QList<Language>::Iterator TranslationsModel::findLanguage(const QString& key)
 std::optional<Language> TranslationsModel::findLanguageAsOptional(const QString& key)
 {
     auto found = findLanguage(key);
-    if (found != d->m_languages.end())
+    if (found != d->m_languages.end()) {
         return *found;
+    }
     return {};
 }
 
@@ -494,7 +497,7 @@ bool TranslationsModel::selectLanguage(QString key)
 
     if (langPtr->localFileType == FileType::PO) {
         qDebug() << "Loading Application Language File for" << langCode.toLocal8Bit().constData() << "...";
-        auto poTranslator = new POTranslator(FS::PathCombine(d->m_dir.path(), langCode + ".po"));
+        auto* poTranslator = new POTranslator(FS::PathCombine(d->m_dir.path(), langCode + ".po"));
         if (!poTranslator->isEmpty()) {
             if (!QCoreApplication::installTranslator(poTranslator)) {
                 delete poTranslator;

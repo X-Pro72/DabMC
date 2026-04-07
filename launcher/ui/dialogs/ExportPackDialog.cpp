@@ -91,7 +91,7 @@ ExportPackDialog::ExportPackDialog(MinecraftInstance* instance, QWidget* parent,
     const QDir instanceRoot(instance->instanceRoot());
     m_proxy = new FileIgnoreProxy(instance->instanceRoot(), this);
     auto prefix = QDir(instance->instanceRoot()).relativeFilePath(instance->gameRoot());
-    for (auto path : { "logs", "crash-reports", ".cache", ".fabric", ".quilt" }) {
+    for (const auto* path : { "logs", "crash-reports", ".cache", ".fabric", ".quilt" }) {
         m_proxy->ignoreFilesWithPath().insert(FS::PathCombine(prefix, path));
     }
     m_proxy->ignoreFilesWithName().append({ ".DS_Store", "thumbs.db", "Thumbs.db" });
@@ -101,7 +101,7 @@ ExportPackDialog::ExportPackDialog(MinecraftInstance* instance, QWidget* parent,
 
     const QDir::Filters filter(QDir::AllEntries | QDir::NoDotAndDotDot | QDir::AllDirs | QDir::Hidden);
 
-    for (auto resourceModel : instance->resourceLists()) {
+    for (auto* resourceModel : instance->resourceLists()) {
         if (resourceModel == nullptr) {
             continue;
         }
@@ -140,20 +140,21 @@ ExportPackDialog::~ExportPackDialog()
 void ExportPackDialog::done(int result)
 {
     m_proxy->saveBlockedPathsToFile(ignoreFileName());
-    auto settings = m_instance->settings();
+    auto* settings = m_instance->settings();
     settings->set("ExportName", m_ui->name->text());
     settings->set("ExportVersion", m_ui->version->text());
     settings->set("ExportOptionalFiles", m_ui->optionalFiles->isChecked());
 
-    if (m_provider == ModPlatform::ResourceProvider::MODRINTH)
+    if (m_provider == ModPlatform::ResourceProvider::MODRINTH) {
         settings->set("ExportSummary", m_ui->summary->toPlainText());
-    else {
+    } else {
         settings->set("ExportAuthor", m_ui->author->text());
 
-        if (m_ui->recommendedMemoryCheckBox->isChecked())
+        if (m_ui->recommendedMemoryCheckBox->isChecked()) {
             settings->set("ExportRecommendedRAM", m_ui->recommendedMemory->value());
-        else
+        } else {
             settings->reset("ExportRecommendedRAM");
+        }
     }
 
     if (result == Accepted) {
@@ -164,17 +165,21 @@ void ExportPackDialog::done(int result)
         if (m_provider == ModPlatform::ResourceProvider::MODRINTH) {
             output = QFileDialog::getSaveFileName(this, tr("Export %1").arg(name), FS::PathCombine(QDir::homePath(), filename + ".mrpack"),
                                                   tr("Modrinth pack") + " (*.mrpack *.zip)", nullptr);
-            if (output.isEmpty())
+            if (output.isEmpty()) {
                 return;
-            if (!(output.endsWith(".zip") || output.endsWith(".mrpack")))
+            }
+            if (!(output.endsWith(".zip") || output.endsWith(".mrpack"))) {
                 output.append(".mrpack");
+            }
         } else {
             output = QFileDialog::getSaveFileName(this, tr("Export %1").arg(name), FS::PathCombine(QDir::homePath(), filename + ".zip"),
                                                   tr("CurseForge pack") + " (*.zip)", nullptr);
-            if (output.isEmpty())
+            if (output.isEmpty()) {
                 return;
-            if (!output.endsWith(".zip"))
+            }
+            if (!output.endsWith(".zip")) {
                 output.append(".zip");
+            }
         }
 
         Task* task;
@@ -206,8 +211,9 @@ void ExportPackDialog::done(int result)
 
         ProgressDialog progress(this);
         progress.setSkipButton(true, tr("Abort"));
-        if (progress.execWithTask(task) != QDialog::Accepted)
+        if (progress.execWithTask(task) != QDialog::Accepted) {
             return;
+        }
     }
 
     QDialog::done(result);

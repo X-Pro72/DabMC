@@ -13,8 +13,6 @@
 
 #include "tasks/ConcurrentTask.h"
 
-static const ModrinthAPI g_api;
-
 ModrinthCheckUpdate::ModrinthCheckUpdate(QList<Resource*>& resources,
                                          std::vector<Version>& mcVersions,
                                          QList<ModPlatform::ModLoaderType> loadersList,
@@ -105,7 +103,7 @@ void ModrinthCheckUpdate::getUpdateModsForLoader(std::optional<ModPlatform::ModL
         return;
     }
 
-    auto [job, response] = g_api.latestVersions(hashes, m_hashType, m_gameVersions, loader);
+    auto [job, response] = ModrinthAPI::latestVersions(hashes, m_hashType, m_gameVersions, loader);
 
     connect(job.get(), &Task::succeeded, this, [this, response, loader] { checkVersionsResponse(response, loader); });
 
@@ -182,10 +180,11 @@ void ModrinthCheckUpdate::checkVersionsResponse(QByteArray* response, std::optio
 
                 QString old_version = resource->metadata()->version_number;
                 if (old_version.isEmpty()) {
-                    if (resource->status() == ResourceStatus::NOT_INSTALLED)
+                    if (resource->status() == ResourceStatus::NOT_INSTALLED) {
                         old_version = tr("Not installed");
-                    else
+                    } else {
                         old_version = tr("Unknown");
+                    }
                 }
 
                 m_updates.emplace_back(pack->name, hash, old_version, project_ver.version_number, project_ver.version_type,
@@ -211,20 +210,22 @@ void ModrinthCheckUpdate::checkNextLoader()
     if (m_loaderIdx < m_loadersList.size()) {  // this are mods so check with loades
         getUpdateModsForLoader(m_loadersList.at(m_loaderIdx), m_loaderIdx > m_initialSize);
         return;
-    } else if (m_loadersList.isEmpty() && m_loaderIdx == 0) {  // this are other resources no need to check more than once with empty loader
+    }
+    if (m_loadersList.isEmpty() && m_loaderIdx == 0) {  // this are other resources no need to check more than once with empty loader
         getUpdateModsForLoader();
         return;
     }
 
-    for (auto resource : m_mappings) {
+    for (auto* resource : m_mappings) {
         QString reason;
 
-        if (dynamic_cast<Mod*>(resource) != nullptr)
+        if (dynamic_cast<Mod*>(resource) != nullptr) {
             reason =
                 tr("No valid version found for this resource. It's probably unavailable for the current game "
                    "version / mod loader.");
-        else
+        } else {
             reason = tr("No valid version found for this resource. It's probably unavailable for the current game version.");
+        }
 
         emit checkFailed(resource, reason);
     }

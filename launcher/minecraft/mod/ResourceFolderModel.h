@@ -125,7 +125,7 @@ class ResourceFolderModel : public QAbstractListModel {
 
     Resource::Ptr find(QString id);
 
-    QDir const& dir() const { return m_dir; }
+    const QDir& dir() const { return m_dir; }
 
     /** Checks whether there's any parse tasks being done.
      *
@@ -159,7 +159,7 @@ class ResourceFolderModel : public QAbstractListModel {
 
     QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
 
-    void setupHeaderAction(QAction* act, int column);
+    void setupHeaderAction(QAction* act, int column) const;
     void saveColumns(QTreeView* tree);
     void loadColumns(QTreeView* tree);
     QMenu* createHeaderContextMenu(QTreeView* tree);
@@ -168,7 +168,7 @@ class ResourceFolderModel : public QAbstractListModel {
      *
      *  The actual comparisons and filtering are done directly by the Resource, so to modify behavior go there instead!
      */
-    QSortFilterProxyModel* createFilterProxyModel(QObject* parent = nullptr);
+    static QSortFilterProxyModel* createFilterProxyModel(QObject* parent = nullptr);
 
     SortType columnToSortKey(size_t column) const;
     QList<QHeaderView::ResizeMode> columnResizeModes() const { return m_column_resize_modes; }

@@ -148,8 +148,9 @@ void PackInstallTask::onDownloadSucceeded(QByteArray* responsePtr)
     }
 
     // Display message if one exists
-    if (!message.isEmpty())
+    if (!message.isEmpty()) {
         m_support->displayMessage(message);
+    }
 
     auto ver = getComponentVersion("net.minecraft", m_version.minecraft);
     if (!ver) {
@@ -202,26 +203,30 @@ void PackInstallTask::deleteExistingFiles()
     keeps.files.append(VersionKeep{ "root", "servers.dat" });
 
     // Merge with version deletes and keeps
-    for (const auto& item : m_version.deletes.files)
+    for (const auto& item : m_version.deletes.files) {
         deletes.files.append(item);
-    for (const auto& item : m_version.deletes.folders)
+    }
+    for (const auto& item : m_version.deletes.folders) {
         deletes.folders.append(item);
-    for (const auto& item : m_version.keeps.files)
+    }
+    for (const auto& item : m_version.keeps.files) {
         keeps.files.append(item);
-    for (const auto& item : m_version.keeps.folders)
+    }
+    for (const auto& item : m_version.keeps.folders) {
         keeps.folders.append(item);
+    }
 
     auto getPathForBase = [this](const QString& base) {
         auto minecraftPath = FS::PathCombine(m_stagingPath, "minecraft");
 
         if (base == "root") {
             return minecraftPath;
-        } else if (base == "config") {
-            return FS::PathCombine(minecraftPath, "config");
-        } else {
-            qWarning() << "Unrecognised base path" << base;
-            return minecraftPath;
         }
+        if (base == "config") {
+            return FS::PathCombine(minecraftPath, "config");
+        }
+        qWarning() << "Unrecognised base path" << base;
+        return minecraftPath;
     };
 
     auto convertToSystemPath = [](const QString& path) {
@@ -262,8 +267,9 @@ void PackInstallTask::deleteExistingFiles()
         auto targetPath = convertToSystemPath(item.target);
         auto fullPath = FS::PathCombine(basePath, targetPath);
 
-        if (shouldKeep(fullPath))
+        if (shouldKeep(fullPath)) {
             continue;
+        }
 
         filesToDelete.insert(fullPath);
     }
@@ -277,8 +283,9 @@ void PackInstallTask::deleteExistingFiles()
         while (it.hasNext()) {
             auto path = it.next();
 
-            if (shouldKeep(path))
+            if (shouldKeep(path)) {
                 continue;
+            }
 
             filesToDelete.insert(path);
         }
@@ -359,16 +366,19 @@ QString PackInstallTask::getVersionForLoader(QString uid)
                 // filtering for those loaders.
                 if (m_version.loader.type != "fabric") {
                     auto iter = std::find_if(reqs.begin(), reqs.end(), [](const Meta::Require& req) { return req.uid == "net.minecraft"; });
-                    if (iter == reqs.end())
+                    if (iter == reqs.end()) {
                         continue;
-                    if (iter->equalsVersion != m_version.minecraft)
+                    }
+                    if (iter->equalsVersion != m_version.minecraft) {
                         continue;
+                    }
                 }
 
                 if (m_version.loader.recommended) {
                     // first recommended build we find, we use.
-                    if (!version->isRecommended())
+                    if (!version->isRecommended()) {
                         continue;
+                    }
                 }
 
                 return version->descriptor();
@@ -376,7 +386,8 @@ QString PackInstallTask::getVersionForLoader(QString uid)
 
             emitFailed(tr("Failed to find version for %1 loader").arg(m_version.loader.type));
             return Q_NULLPTR;
-        } else if (m_version.loader.choose) {
+        }
+        if (m_version.loader.choose) {
             // Fabric Loader doesn't depend on a given Minecraft version.
             if (m_version.loader.type == "fabric") {
                 return m_support->chooseVersion(vlist, Q_NULLPTR);
@@ -420,7 +431,8 @@ QString PackInstallTask::detectLibrary(const VersionLibrary& library)
 
         if (name == QString("guava")) {
             return "com.google.guava:guava:" + version;
-        } else if (name == QString("commons-lang3")) {
+        }
+        if (name == QString("commons-lang3")) {
             return "org.apache.commons:commons-lang3:" + version;
         }
     }
@@ -502,8 +514,9 @@ bool PackInstallTask::createLibrariesComponent(QString instanceRoot, PackProfile
                 libExempt = Version(libSpecifier.version()) >= Version(existingLib.version());
             }
         }
-        if (libExempt)
+        if (libExempt) {
             continue;
+        }
 
         auto library = std::make_shared<Library>();
         library->setRawName(libName);
@@ -604,8 +617,9 @@ bool PackInstallTask::createPackComponent(QString instanceRoot, PackProfile* pro
     for (auto arg : args) {
         if (arg.startsWith("--tweakClass=") || previous == "--tweakClass") {
             auto tweakClass = arg.remove("--tweakClass=");
-            if (tweakers.contains(tweakClass))
+            if (tweakers.contains(tweakClass)) {
                 continue;
+            }
 
             f->addTweakers.append(tweakClass);
         }
@@ -714,12 +728,14 @@ void PackInstallTask::downloadMods()
     QList<VersionMod> blocked_mods;
     for (const auto& mod : m_version.mods) {
         // skip non-client mods
-        if (!mod.client)
+        if (!mod.client) {
             continue;
+        }
 
         // skip optional mods that were not selected
-        if (mod.optional && !selectedMods.contains(mod.name))
+        if (mod.optional && !selectedMods.contains(mod.name)) {
             continue;
+        }
 
         QString url;
         switch (mod.download) {
@@ -763,8 +779,9 @@ void PackInstallTask::downloadMods()
             jobPtr->addNetAction(dl);
         } else {
             auto relpath = getDirForModType(mod.type, mod.type_raw);
-            if (relpath == Q_NULLPTR)
+            if (relpath == Q_NULLPTR) {
                 continue;
+            }
 
             auto entry = APPLICATION->metacache()->resolveEntry("ATLauncherPacks", cacheName);
             entry->setStale(true);
@@ -830,8 +847,9 @@ void PackInstallTask::downloadMods()
                 }
                 auto modIter = std::find_if(blocked_mods.begin(), blocked_mods.end(),
                                             [blocked](const VersionMod& mod) { return mod.url == blocked.websiteUrl; });
-                if (modIter == blocked_mods.end())
+                if (modIter == blocked_mods.end()) {
                     continue;
+                }
                 auto mod = *modIter;
                 if (mod.type == ModType::Extract || mod.type == ModType::TexturePackExtract || mod.type == ModType::ResourcePackExtract) {
                     modsToExtract.insert(blocked.localPath, mod);
@@ -839,8 +857,9 @@ void PackInstallTask::downloadMods()
                     modsToDecomp.insert(blocked.localPath, mod);
                 } else {
                     auto relpath = getDirForModType(mod.type, mod.type_raw);
-                    if (relpath == Q_NULLPTR)
+                    if (relpath == Q_NULLPTR) {
                         continue;
+                    }
 
                     auto path = FS::PathCombine(m_stagingPath, "minecraft", relpath, mod.file);
 
@@ -918,8 +937,8 @@ bool PackInstallTask::extractMods(const QMap<QString, VersionMod>& toExtract,
 
     setStatus(tr("Extracting mods..."));
     for (auto iter = toExtract.begin(); iter != toExtract.end(); iter++) {
-        auto& modPath = iter.key();
-        auto& mod = iter.value();
+        const auto& modPath = iter.key();
+        const auto& mod = iter.value();
 
         QString extractToDir;
         if (mod.type == ModType::Extract) {
@@ -948,8 +967,8 @@ bool PackInstallTask::extractMods(const QMap<QString, VersionMod>& toExtract,
     }
 
     for (auto iter = toDecomp.begin(); iter != toDecomp.end(); iter++) {
-        auto& modPath = iter.key();
-        auto& mod = iter.value();
+        const auto& modPath = iter.key();
+        const auto& mod = iter.value();
         auto extractToDir = getDirForModType(mod.decompType, mod.decompType_raw);
 
         QDir extractDir(m_stagingPath);
@@ -963,8 +982,8 @@ bool PackInstallTask::extractMods(const QMap<QString, VersionMod>& toExtract,
     }
 
     for (auto iter = toCopy.begin(); iter != toCopy.end(); iter++) {
-        auto& from = iter.key();
-        auto& to = iter.value();
+        const auto& from = iter.key();
+        const auto& to = iter.value();
 
         // If the file already exists, assume the mod is the correct copy - and remove
         // the copy from the Configs.zip
@@ -994,7 +1013,7 @@ void PackInstallTask::install()
     MinecraftInstance instance(m_globalSettings, std::make_unique<INISettingsObject>(instanceConfigPath), m_stagingPath);
     {
         SettingsObject::Lock lock(instance.settings());
-        auto components = instance.getPackProfile();
+        auto* components = instance.getPackProfile();
         components->buildingFromScratch();
 
         // Use a component to add libraries BEFORE Minecraft
@@ -1009,20 +1028,23 @@ void PackInstallTask::install()
         // Loader
         if (m_version.loader.type == QString("forge")) {
             auto version = getVersionForLoader("net.minecraftforge");
-            if (version == Q_NULLPTR)
+            if (version == Q_NULLPTR) {
                 return;
+            }
 
             components->setComponentVersion("net.minecraftforge", version);
         } else if (m_version.loader.type == QString("neoforge")) {
             auto version = getVersionForLoader("net.neoforged");
-            if (version == Q_NULLPTR)
+            if (version == Q_NULLPTR) {
                 return;
+            }
 
             components->setComponentVersion("net.neoforged", version);
         } else if (m_version.loader.type == QString("fabric")) {
             auto version = getVersionForLoader("net.fabricmc.fabric-loader");
-            if (version == Q_NULLPTR)
+            if (version == Q_NULLPTR) {
                 return;
+            }
 
             components->setComponentVersion("net.fabricmc.fabric-loader", version);
         } else if (m_version.loader.type != QString()) {

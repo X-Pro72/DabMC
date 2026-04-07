@@ -63,8 +63,9 @@ QString stripVariableEntries(QString name, QString target, QString remove)
 
     for (QString item : toRemove) {
         bool removed = targetItems.removeOne(item);
-        if (!removed)
+        if (!removed) {
             qWarning() << "Entry" << item << "could not be stripped from variable" << name;
+        }
     }
     return targetItems.join(delimiter);
 }
@@ -145,7 +146,7 @@ JavaInstallPtr JavaUtils::GetDefaultJava()
 
     javaVersion->id = "java";
     javaVersion->arch = "unknown";
-#if defined(Q_OS_WIN32)
+#ifdef Q_OS_WIN32
     javaVersion->path = "javaw";
 #else
     javaVersion->path = "java";
@@ -157,7 +158,7 @@ JavaInstallPtr JavaUtils::GetDefaultJava()
 QStringList addJavasFromEnv(QList<QString> javas)
 {
     auto env = QProcessEnvironment::systemEnvironment().value(QStringLiteral("%1_JAVA_PATHS").arg(BuildConfig.LAUNCHER_ENVNAME));
-#if defined(Q_OS_WIN32)
+#ifdef Q_OS_WIN32
     QList<QString> javaPaths = env.replace("\\", "/").split(QLatin1String(";"));
 
     auto envPath = qEnvironmentVariable("PATH");
@@ -174,7 +175,7 @@ QStringList addJavasFromEnv(QList<QString> javas)
     return javas;
 }
 
-#if defined(Q_OS_WIN32)
+#ifdef Q_OS_WIN32
 QList<JavaInstallPtr> JavaUtils::FindJavaFromRegistryKey(DWORD keyType, QString keyName, QString keyJavaDir, QString subkeySuffix)
 {
     QList<JavaInstallPtr> javas;
@@ -414,17 +415,19 @@ QList<QString> JavaUtils::FindJavaPaths()
 QList<QString> JavaUtils::FindJavaPaths()
 {
     QList<QString> javas;
-    javas.append(this->GetDefaultJava()->path);
+    javas.append(JavaUtils::GetDefaultJava()->path);
     auto scanJavaDir = [&javas](
                            const QString& dirPath,
                            const std::function<bool(const QFileInfo&)>& filter = [](const QFileInfo&) { return true; }) {
         QDir dir(dirPath);
-        if (!dir.exists())
+        if (!dir.exists()) {
             return;
+        }
         auto entries = dir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
         for (auto& entry : entries) {
-            if (!filter(entry))
+            if (!filter(entry)) {
                 continue;
+            }
 
             QString prefix;
             prefix = entry.canonicalFilePath();
@@ -440,7 +443,7 @@ QList<QString> JavaUtils::FindJavaPaths()
             scanJavaDir(snap + dirPath);
         }
     };
-#if defined(Q_OS_LINUX)
+#ifdef Q_OS_LINUX
     // oracle RPMs
     scanJavaDirs("/usr/java");
     // general locations used by distro packaging
@@ -516,7 +519,7 @@ QString JavaUtils::getJavaCheckPath()
 QStringList getMinecraftJavaBundle()
 {
     QStringList processpaths;
-#if defined(Q_OS_MACOS)
+#ifdef Q_OS_MACOS
     processpaths << FS::PathCombine(QDir::homePath(), FS::PathCombine("Library", "Application Support", "minecraft", "runtime"));
 #elif defined(Q_OS_WIN32)
 
@@ -537,8 +540,9 @@ QStringList getMinecraftJavaBundle()
     while (!processpaths.isEmpty()) {
         auto dirPath = processpaths.takeFirst();
         QDir dir(dirPath);
-        if (!dir.exists())
+        if (!dir.exists()) {
             continue;
+        }
         auto entries = dir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
         auto binFound = false;
         for (auto& entry : entries) {
@@ -557,7 +561,7 @@ QStringList getMinecraftJavaBundle()
     return javas;
 }
 
-#if defined(Q_OS_WIN32)
+#ifdef Q_OS_WIN32
 const QString JavaUtils::javaExecutable = "javaw.exe";
 #else
 const QString JavaUtils::javaExecutable = "java";
@@ -574,8 +578,9 @@ QStringList getPrismJavaBundle()
     };
     auto scanJavaDir = [scanDir](const QString& dirPath) {
         QDir dir(dirPath);
-        if (!dir.exists())
+        if (!dir.exists()) {
             return;
+        }
         auto entries = dir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
         for (auto& entry : entries) {
             scanDir(entry.canonicalFilePath());

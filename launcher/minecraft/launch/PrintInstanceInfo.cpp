@@ -21,7 +21,7 @@
 
 #include "HardwareInfo.h"
 
-#if defined(Q_OS_FREEBSD)
+#ifdef Q_OS_FREEBSD
 namespace {
 void runSysctlHwModel(QStringList& log)
 {
@@ -58,7 +58,7 @@ void runPciconf(QStringList& log)
 
 void PrintInstanceInfo::executeTask()
 {
-    auto instance = m_parent->instance();
+    auto* instance = m_parent->instance();
     QStringList log;
 
     log << "OS: " + QString("%1 | %2 | %3").arg(QSysInfo::prettyProductName(), QSysInfo::kernelType(), QSysInfo::kernelVersion());

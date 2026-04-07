@@ -49,8 +49,9 @@ ResourceFolderModel::ResourceFolderModel(const QDir& dir, BaseInstance* instance
 
 ResourceFolderModel::~ResourceFolderModel()
 {
-    while (!QThreadPool::globalInstance()->waitForDone(100))
+    while (!QThreadPool::globalInstance()->waitForDone(100)) {
         QCoreApplication::processEvents();
+    }
 }
 
 bool ResourceFolderModel::startWatching(const QStringList& paths)
@@ -58,15 +59,17 @@ bool ResourceFolderModel::startWatching(const QStringList& paths)
     // Remove orphaned metadata next time
     m_first_folder_load = true;
 
-    if (m_is_watching)
+    if (m_is_watching) {
         return false;
+    }
 
     auto couldnt_be_watched = m_watcher.addPaths(paths);
     for (auto path : paths) {
-        if (couldnt_be_watched.contains(path))
+        if (couldnt_be_watched.contains(path)) {
             qDebug() << "Failed to start watching" << path;
-        else
+        } else {
             qDebug() << "Started watching" << path;
+        }
     }
 
     update();
@@ -77,15 +80,17 @@ bool ResourceFolderModel::startWatching(const QStringList& paths)
 
 bool ResourceFolderModel::stopWatching(const QStringList& paths)
 {
-    if (!m_is_watching)
+    if (!m_is_watching) {
         return false;
+    }
 
     auto couldnt_be_stopped = m_watcher.removePaths(paths);
     for (auto path : paths) {
-        if (couldnt_be_stopped.contains(path))
+        if (couldnt_be_stopped.contains(path)) {
             qDebug() << "Failed to stop watching" << path;
-        else
+        } else {
             qDebug() << "Stopped watching" << path;
+        }
     }
 
     m_is_watching = !m_is_watching;
@@ -138,8 +143,9 @@ bool ResourceFolderModel::installResource(QString original_path)
             QFileInfo new_path_file_info(new_path);
             resource.setFile(new_path_file_info);
 
-            if (!m_is_watching)
+            if (!m_is_watching) {
                 return update();
+            }
 
             return true;
         }
@@ -157,8 +163,9 @@ bool ResourceFolderModel::installResource(QString original_path)
             QFileInfo newpathInfo(new_path);
             resource.setFile(newpathInfo);
 
-            if (!m_is_watching)
+            if (!m_is_watching) {
                 return update();
+            }
 
             return true;
         }
@@ -229,14 +236,16 @@ bool ResourceFolderModel::uninstallResource(const QString& file_name, bool prese
 
 bool ResourceFolderModel::deleteResources(const QModelIndexList& indexes)
 {
-    if (indexes.isEmpty())
+    if (indexes.isEmpty()) {
         return true;
+    }
 
     for (auto i : indexes) {
-        if (i.column() != 0)
+        if (i.column() != 0) {
             continue;
+        }
 
-        auto& resource = m_resources.at(i.row());
+        const auto& resource = m_resources.at(i.row());
         resource->destroy(indexDir());
     }
 
@@ -247,14 +256,16 @@ bool ResourceFolderModel::deleteResources(const QModelIndexList& indexes)
 
 void ResourceFolderModel::deleteMetadata(const QModelIndexList& indexes)
 {
-    if (indexes.isEmpty())
+    if (indexes.isEmpty()) {
         return;
+    }
 
     for (auto i : indexes) {
-        if (i.column() != 0)
+        if (i.column() != 0) {
             continue;
+        }
 
-        auto& resource = m_resources.at(i.row());
+        const auto& resource = m_resources.at(i.row());
         resource->destroyMetadata(indexDir());
     }
 
@@ -271,17 +282,20 @@ bool ResourceFolderModel::setResourceEnabled(const QModelIndexList& indexes, Ena
                                          QMessageBox::Warning, QMessageBox::Yes | QMessageBox::No, QMessageBox::No)
                 ->exec();
 
-        if (response != QMessageBox::Yes)
+        if (response != QMessageBox::Yes) {
             return false;
+        }
     }
 
-    if (indexes.isEmpty())
+    if (indexes.isEmpty()) {
         return true;
+    }
 
     bool succeeded = true;
-    for (auto const& idx : indexes) {
-        if (!validateIndex(idx) || idx.column() != 0)
+    for (const auto& idx : indexes) {
+        if (!validateIndex(idx) || idx.column() != 0) {
             continue;
+        }
 
         int row = idx.row();
 
@@ -318,8 +332,9 @@ bool ResourceFolderModel::update()
     }
 
     m_current_update_task.reset(createUpdateTask());
-    if (!m_current_update_task)
+    if (!m_current_update_task) {
         return false;
+    }
 
     connect(m_current_update_task.get(), &Task::succeeded, this, &ResourceFolderModel::onUpdateSucceeded,
             Qt::ConnectionType::QueuedConnection);
@@ -340,7 +355,7 @@ bool ResourceFolderModel::update()
     Task::Ptr preUpdate{ createPreUpdateTask() };
 
     if (preUpdate != nullptr) {
-        auto task = new SequentialTask("ResourceFolderModel::update");
+        auto* task = new SequentialTask("ResourceFolderModel::update");
 
         task->addTask(preUpdate);
         task->addTask(m_current_update_task);
@@ -362,8 +377,9 @@ void ResourceFolderModel::resolveResource(Resource::Ptr res)
     }
 
     Task::Ptr task{ createParseTask(*res) };
-    if (!task)
+    if (!task) {
         return;
+    }
 
     int ticket = m_next_resolution_ticket.fetch_add(1);
 
@@ -410,8 +426,9 @@ void ResourceFolderModel::onUpdateSucceeded()
 void ResourceFolderModel::onParseSucceeded(int ticket, QString resource_id)
 {
     auto iter = m_active_parse_tasks.constFind(ticket);
-    if (iter == m_active_parse_tasks.constEnd() || !m_resources_index.contains(resource_id))
+    if (iter == m_active_parse_tasks.constEnd() || !m_resources_index.contains(resource_id)) {
         return;
+    }
 
     int row = m_resources_index[resource_id];
     emit dataChanged(index(row), index(row, columnCount(QModelIndex()) - 1));
@@ -420,8 +437,8 @@ void ResourceFolderModel::onParseSucceeded(int ticket, QString resource_id)
 Task* ResourceFolderModel::createUpdateTask()
 {
     auto index_dir = indexDir();
-    auto task = new ResourceFolderLoadTask(dir(), index_dir, m_is_indexed, m_first_folder_load,
-                                           [this](const QFileInfo& file) { return createResource(file); });
+    auto* task = new ResourceFolderLoadTask(dir(), index_dir, m_is_indexed, m_first_folder_load,
+                                            [this](const QFileInfo& file) { return createResource(file); });
     m_first_folder_load = false;
     return task;
 }
@@ -446,8 +463,9 @@ Qt::ItemFlags ResourceFolderModel::flags(const QModelIndex& index) const
 {
     Qt::ItemFlags defaultFlags = QAbstractListModel::flags(index);
     auto flags = defaultFlags | Qt::ItemIsDropEnabled;
-    if (index.isValid())
+    if (index.isValid()) {
         flags |= Qt::ItemIsUserCheckable;
+    }
     return flags;
 }
 
@@ -488,14 +506,12 @@ bool ResourceFolderModel::dropMimeData(const QMimeData* data, Qt::DropAction act
 
 bool ResourceFolderModel::validateIndex(const QModelIndex& index) const
 {
-    if (!index.isValid())
+    if (!index.isValid()) {
         return false;
+    }
 
     int row = index.row();
-    if (row < 0 || row >= m_resources.size())
-        return false;
-
-    return true;
+    return !(row < 0 || row >= m_resources.size());
 }
 
 // HACK: all subclasses need to call this to have the whole row painted
@@ -504,15 +520,15 @@ QBrush ResourceFolderModel::rowBackground(int row) const
 {
     if (APPLICATION->settings()->get("ShowModIncompat").toBool() && m_resources[row]->hasIssues()) {
         return { QColor(255, 0, 0, 40) };
-    } else {
-        return {};
     }
+    return {};
 }
 
 QVariant ResourceFolderModel::data(const QModelIndex& index, int role) const
 {
-    if (!validateIndex(index))
+    if (!validateIndex(index)) {
         return {};
+    }
 
     int row = index.row();
     int column = index.column();
@@ -562,7 +578,8 @@ QVariant ResourceFolderModel::data(const QModelIndex& index, int role) const
             if (column == NameColumn) {
                 if (APPLICATION->settings()->get("ShowModIncompat").toBool() && at(row).hasIssues()) {
                     return QIcon::fromTheme("status-bad");
-                } else if (at(row).isSymLinkUnder(instDirPath()) || at(row).isMoreThanOneHardLink()) {
+                }
+                if (at(row).isSymLinkUnder(instDirPath()) || at(row).isMoreThanOneHardLink()) {
                     return QIcon::fromTheme("status-yellow");
                 }
             }
@@ -570,8 +587,9 @@ QVariant ResourceFolderModel::data(const QModelIndex& index, int role) const
             return {};
         }
         case Qt::CheckStateRole:
-            if (column == ActiveColumn)
+            if (column == ActiveColumn) {
                 return m_resources[row]->enabled() ? Qt::Checked : Qt::Unchecked;
+            }
             return {};
         default:
             return {};
@@ -581,8 +599,9 @@ QVariant ResourceFolderModel::data(const QModelIndex& index, int role) const
 bool ResourceFolderModel::setData(const QModelIndex& index, [[maybe_unused]] const QVariant& value, int role)
 {
     int row = index.row();
-    if (row < 0 || row >= rowCount(index.parent()) || !index.isValid())
+    if (row < 0 || row >= rowCount(index.parent()) || !index.isValid()) {
         return false;
+    }
 
     if (role == Qt::CheckStateRole) {
         return setResourceEnabled({ index }, EnableAction::TOGGLE);
@@ -629,7 +648,7 @@ QVariant ResourceFolderModel::headerData(int section, [[maybe_unused]] Qt::Orien
     return {};
 }
 
-void ResourceFolderModel::setupHeaderAction(QAction* act, int column)
+void ResourceFolderModel::setupHeaderAction(QAction* act, int column) const
 {
     Q_ASSERT(act);
 
@@ -638,15 +657,15 @@ void ResourceFolderModel::setupHeaderAction(QAction* act, int column)
 
 void ResourceFolderModel::saveColumns(QTreeView* tree)
 {
-    auto const stateSettingName = QString("UI/%1_Page/Columns").arg(id());
-    auto const overrideSettingName = QString("UI/%1_Page/ColumnsOverride").arg(id());
-    auto const visibilitySettingName = QString("UI/%1_Page/ColumnsVisibility").arg(id());
+    const auto stateSettingName = QString("UI/%1_Page/Columns").arg(id());
+    const auto overrideSettingName = QString("UI/%1_Page/ColumnsOverride").arg(id());
+    const auto visibilitySettingName = QString("UI/%1_Page/ColumnsVisibility").arg(id());
 
     auto stateSetting = m_instance->settings()->getSetting(stateSettingName);
     stateSetting->set(QString::fromUtf8(tree->header()->saveState().toBase64()));
 
     // neither passthrough nor override settings works for this usecase as I need to only set the global when the gate is false
-    auto settings = m_instance->settings();
+    auto* settings = m_instance->settings();
     if (!settings->get(overrideSettingName).toBool()) {
         settings = APPLICATION->settings();
     }
@@ -662,9 +681,9 @@ void ResourceFolderModel::saveColumns(QTreeView* tree)
 
 void ResourceFolderModel::loadColumns(QTreeView* tree)
 {
-    auto const stateSettingName = QString("UI/%1_Page/Columns").arg(id());
-    auto const overrideSettingName = QString("UI/%1_Page/ColumnsOverride").arg(id());
-    auto const visibilitySettingName = QString("UI/%1_Page/ColumnsVisibility").arg(id());
+    const auto stateSettingName = QString("UI/%1_Page/Columns").arg(id());
+    const auto overrideSettingName = QString("UI/%1_Page/ColumnsOverride").arg(id());
+    const auto visibilitySettingName = QString("UI/%1_Page/ColumnsVisibility").arg(id());
 
     auto stateSetting = m_instance->settings()->getOrRegisterSetting(stateSettingName, "");
     tree->header()->restoreState(QByteArray::fromBase64(stateSetting->get().toString().toUtf8()));
@@ -679,7 +698,7 @@ void ResourceFolderModel::loadColumns(QTreeView* tree)
         }
     };
 
-    auto const defaultValue = Json::fromMap({
+    const auto defaultValue = Json::fromMap({
         { "Image", true },
         { "Version", true },
         { "Last Modified", true },
@@ -687,7 +706,7 @@ void ResourceFolderModel::loadColumns(QTreeView* tree)
         { "Pack Format", true },
     });
     // neither passthrough nor override settings works for this usecase as I need to only set the global when the gate is false
-    auto settings = m_instance->settings();
+    auto* settings = m_instance->settings();
     if (!settings->getOrRegisterSetting(overrideSettingName, false)->get().toBool()) {
         settings = APPLICATION->settings();
     }
@@ -705,11 +724,11 @@ void ResourceFolderModel::loadColumns(QTreeView* tree)
 
 QMenu* ResourceFolderModel::createHeaderContextMenu(QTreeView* tree)
 {
-    auto menu = new QMenu(tree);
+    auto* menu = new QMenu(tree);
 
     {  // action to decide if the visibility is per instance or not
-        auto act = new QAction(tr("Override Columns Visibility"), menu);
-        auto const overrideSettingName = QString("UI/%1_Page/ColumnsOverride").arg(id());
+        auto* act = new QAction(tr("Override Columns Visibility"), menu);
+        const auto overrideSettingName = QString("UI/%1_Page/ColumnsOverride").arg(id());
 
         act->setCheckable(true);
         act->setChecked(m_instance->settings()->getOrRegisterSetting(overrideSettingName, false)->get().toBool());
@@ -725,9 +744,10 @@ QMenu* ResourceFolderModel::createHeaderContextMenu(QTreeView* tree)
 
     for (int col = 0; col < columnCount(); ++col) {
         // Skip creating actions for columns that should not be hidden
-        if (!m_columnsHideable.at(col))
+        if (!m_columnsHideable.at(col)) {
             continue;
-        auto act = new QAction(menu);
+        }
+        auto* act = new QAction(menu);
         setupHeaderAction(act, col);
 
         act->setCheckable(true);
@@ -736,8 +756,9 @@ QMenu* ResourceFolderModel::createHeaderContextMenu(QTreeView* tree)
         connect(act, &QAction::toggled, tree, [this, col, tree](bool toggled) {
             tree->setColumnHidden(col, !toggled);
             for (int c = 0; c < columnCount(); ++c) {
-                if (m_column_resize_modes.at(c) == QHeaderView::ResizeToContents)
+                if (m_column_resize_modes.at(c) == QHeaderView::ResizeToContents) {
                     tree->resizeColumnToContents(c);
+                }
             }
             saveColumns(tree);
         });
@@ -763,8 +784,9 @@ SortType ResourceFolderModel::columnToSortKey(size_t column) const
 bool ResourceFolderModel::ProxyModel::filterAcceptsRow(int source_row, [[maybe_unused]] const QModelIndex& source_parent) const
 {
     auto* model = qobject_cast<ResourceFolderModel*>(sourceModel());
-    if (!model)
+    if (!model) {
         return true;
+    }
 
     const auto& resource = model->at(source_row);
 
@@ -782,12 +804,13 @@ bool ResourceFolderModel::ProxyModel::lessThan(const QModelIndex& source_left, c
     // proceed.
 
     auto column_sort_key = model->columnToSortKey(source_left.column());
-    auto const& resource_left = model->at(source_left.row());
-    auto const& resource_right = model->at(source_right.row());
+    const auto& resource_left = model->at(source_left.row());
+    const auto& resource_right = model->at(source_right.row());
 
     auto compare_result = resource_left.compare(resource_right, column_sort_key);
-    if (compare_result == 0)
+    if (compare_result == 0) {
         return QSortFilterProxyModel::lessThan(source_left, source_right);
+    }
 
     return compare_result < 0;
 }
@@ -800,8 +823,9 @@ QString ResourceFolderModel::instDirPath() const
 void ResourceFolderModel::onParseFailed(int ticket, QString resource_id)
 {
     auto iter = m_active_parse_tasks.constFind(ticket);
-    if (iter == m_active_parse_tasks.constEnd() || !m_resources_index.contains(resource_id))
+    if (iter == m_active_parse_tasks.constEnd() || !m_resources_index.contains(resource_id)) {
         return;
+    }
 
     auto removed_index = m_resources_index[resource_id];
     auto removed_it = m_resources.begin() + removed_index;
@@ -813,7 +837,7 @@ void ResourceFolderModel::onParseFailed(int ticket, QString resource_id)
     // update index
     m_resources_index.clear();
     int idx = 0;
-    for (auto const& mod : qAsConst(m_resources)) {
+    for (const auto& mod : qAsConst(m_resources)) {
         m_resources_index[mod->internal_id()] = idx;
         idx++;
     }
@@ -827,13 +851,13 @@ void ResourceFolderModel::applyUpdates(QSet<QString>& current_set, QSet<QString>
         QSet<QString> kept_set = current_set;
         kept_set.intersect(new_set);
 
-        for (auto const& kept : kept_set) {
+        for (const auto& kept : kept_set) {
             auto row_it = m_resources_index.constFind(kept);
             Q_ASSERT(row_it != m_resources_index.constEnd());
             auto row = row_it.value();
 
             auto& new_resource = new_resources[kept];
-            auto const& current_resource = m_resources.at(row);
+            const auto& current_resource = m_resources.at(row);
 
             if (new_resource->dateTimeChanged() == current_resource->dateTimeChanged()) {
                 // no significant change
@@ -851,7 +875,7 @@ void ResourceFolderModel::applyUpdates(QSet<QString>& current_set, QSet<QString>
             if (current_resource->isResolving()) {
                 auto ticket = current_resource->resolutionTicket();
                 if (m_active_parse_tasks.contains(ticket)) {
-                    auto task = (*m_active_parse_tasks.find(ticket)).get();
+                    auto* task = (*m_active_parse_tasks.find(ticket)).get();
                     task->abort();
                 }
             }
@@ -870,8 +894,9 @@ void ResourceFolderModel::applyUpdates(QSet<QString>& current_set, QSet<QString>
         removed_set.subtract(new_set);
 
         QList<int> removed_rows;
-        for (auto& removed : removed_set)
+        for (const auto& removed : removed_set) {
             removed_rows.append(m_resources_index[removed]);
+        }
 
         std::sort(removed_rows.begin(), removed_rows.end(), std::greater<int>());
 
@@ -883,7 +908,7 @@ void ResourceFolderModel::applyUpdates(QSet<QString>& current_set, QSet<QString>
             if ((*removed_it)->isResolving()) {
                 auto ticket = (*removed_it)->resolutionTicket();
                 if (m_active_parse_tasks.contains(ticket)) {
-                    auto task = (*m_active_parse_tasks.find(ticket)).get();
+                    auto* task = (*m_active_parse_tasks.find(ticket)).get();
                     task->abort();
                 }
             }
@@ -900,11 +925,11 @@ void ResourceFolderModel::applyUpdates(QSet<QString>& current_set, QSet<QString>
         added_set.subtract(current_set);
 
         // When you have a Qt build with assertions turned on, proceeding here will abort the application
-        if (added_set.size() > 0) {
+        if (!added_set.empty()) {
             beginInsertRows(QModelIndex(), static_cast<int>(m_resources.size()),
                             static_cast<int>(m_resources.size() + added_set.size() - 1));
 
-            for (auto& added : added_set) {
+            for (const auto& added : added_set) {
                 auto res = new_resources[added];
                 res->updateIssues(m_instance);
                 m_resources.append(res);
@@ -919,7 +944,7 @@ void ResourceFolderModel::applyUpdates(QSet<QString>& current_set, QSet<QString>
     {
         m_resources_index.clear();
         int idx = 0;
-        for (auto const& mod : qAsConst(m_resources)) {
+        for (const auto& mod : qAsConst(m_resources)) {
             m_resources_index[mod->internal_id()] = idx;
             idx++;
         }
@@ -928,17 +953,19 @@ void ResourceFolderModel::applyUpdates(QSet<QString>& current_set, QSet<QString>
 Resource::Ptr ResourceFolderModel::find(QString id)
 {
     auto iter =
-        std::find_if(m_resources.constBegin(), m_resources.constEnd(), [&](Resource::Ptr const& r) { return r->internal_id() == id; });
-    if (iter == m_resources.constEnd())
+        std::find_if(m_resources.constBegin(), m_resources.constEnd(), [&](const Resource::Ptr& r) { return r->internal_id() == id; });
+    if (iter == m_resources.constEnd()) {
         return nullptr;
+    }
     return *iter;
 }
 QList<Resource*> ResourceFolderModel::allResources()
 {
     QList<Resource*> result;
     result.reserve(m_resources.size());
-    for (const Resource ::Ptr& resource : m_resources)
+    for (const Resource ::Ptr& resource : m_resources) {
         result.append((resource.get()));
+    }
     return result;
 }
 
@@ -946,8 +973,9 @@ QList<Resource*> ResourceFolderModel::selectedResources(const QModelIndexList& i
 {
     QList<Resource*> result;
     for (const QModelIndex& index : indexes) {
-        if (index.column() != 0)
+        if (index.column() != 0) {
             continue;
+        }
         result.append(&at(index.row()));
     }
     return result;

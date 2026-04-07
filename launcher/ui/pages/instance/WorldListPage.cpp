@@ -104,7 +104,7 @@ WorldListPage::WorldListPage(MinecraftInstance* inst, WorldList* worlds, QWidget
     ui->worldTreeView->setIconSize(QSize(64, 64));
     connect(ui->worldTreeView, &QTreeView::customContextMenuRequested, this, &WorldListPage::ShowContextMenu);
 
-    auto head = ui->worldTreeView->header();
+    auto* head = ui->worldTreeView->header();
     head->setSectionResizeMode(0, QHeaderView::Stretch);
     head->setSectionResizeMode(1, QHeaderView::ResizeToContents);
     head->setSectionResizeMode(4, QHeaderView::ResizeToContents);
@@ -121,7 +121,7 @@ void WorldListPage::openedImpl()
         ui->toolBar->removeAction(ui->actionJoin);
     }
 
-    auto const setting_name = QString("WideBarVisibility_%1").arg(id());
+    const auto setting_name = QString("WideBarVisibility_%1").arg(id());
     m_wide_bar_setting = APPLICATION->settings()->getOrRegisterSetting(setting_name);
 
     ui->toolBar->setVisibilityState(QByteArray::fromBase64(m_wide_bar_setting->get().toString().toUtf8()));
@@ -142,7 +142,7 @@ WorldListPage::~WorldListPage()
 
 void WorldListPage::ShowContextMenu(const QPoint& pos)
 {
-    auto menu = ui->toolBar->createContextMenu(this, tr("Context menu"));
+    auto* menu = ui->toolBar->createContextMenu(this, tr("Context menu"));
     menu->exec(ui->worldTreeView->mapToGlobal(pos));
     delete menu;
 }
@@ -179,8 +179,9 @@ bool WorldListPage::eventFilter(QObject* obj, QEvent* ev)
         return QWidget::eventFilter(obj, ev);
     }
     QKeyEvent* keyEvent = static_cast<QKeyEvent*>(ev);
-    if (obj == ui->worldTreeView)
+    if (obj == ui->worldTreeView) {
         return worldListFilter(keyEvent);
+    }
     return QWidget::eventFilter(obj, ev);
 }
 
@@ -188,8 +189,9 @@ void WorldListPage::on_actionRemove_triggered()
 {
     auto proxiedIndex = getSelectedWorld();
 
-    if (!proxiedIndex.isValid())
+    if (!proxiedIndex.isValid()) {
         return;
+    }
 
     auto result = CustomMessageBox::selectable(this, tr("Confirm Deletion"),
                                                tr("You are about to delete \"%1\".\n"
@@ -220,13 +222,14 @@ void WorldListPage::on_actionData_Packs_triggered()
         return;
     }
 
-    if (!worldSafetyNagQuestion(tr("Manage Data Packs")))
+    if (!worldSafetyNagQuestion(tr("Manage Data Packs"))) {
         return;
+    }
 
     const QString fullPath = m_worlds->data(index, WorldList::FolderRole).toString();
     const QString folder = FS::PathCombine(fullPath, "datapacks");
 
-    auto dialog = new QDialog(this);
+    auto* dialog = new QDialog(this);
     dialog->setWindowTitle(tr("Data packs for %1").arg(m_worlds->data(index, WorldList::NameRole).toString()));
     dialog->setWindowModality(Qt::WindowModal);
 
@@ -241,18 +244,18 @@ void WorldListPage::on_actionData_Packs_triggered()
 
     provider.addPageCreator([this] { return new DataPackPage(m_inst, m_datapackModel.get(), this); });
 
-    auto layout = new QVBoxLayout(dialog);
+    auto* layout = new QVBoxLayout(dialog);
 
-    auto focusStealer = new QPushButton(dialog);
+    auto* focusStealer = new QPushButton(dialog);
     layout->addWidget(focusStealer);
     focusStealer->setDefault(true);
     focusStealer->hide();
 
-    auto pageContainer = new PageContainer(&provider, {}, dialog);
+    auto* pageContainer = new PageContainer(&provider, {}, dialog);
     pageContainer->hidePageList();
     layout->addWidget(pageContainer);
 
-    auto buttonBox = new QDialogButtonBox(QDialogButtonBox::Close | QDialogButtonBox::Help);
+    auto* buttonBox = new QDialogButtonBox(QDialogButtonBox::Close | QDialogButtonBox::Help);
     connect(buttonBox, &QDialogButtonBox::rejected, dialog, &QDialog::reject);
     connect(buttonBox, &QDialogButtonBox::helpRequested, pageContainer, &PageContainer::help);
     layout->addWidget(buttonBox);
@@ -268,8 +271,9 @@ void WorldListPage::on_actionReset_Icon_triggered()
 {
     auto proxiedIndex = getSelectedWorld();
 
-    if (!proxiedIndex.isValid())
+    if (!proxiedIndex.isValid()) {
         return;
+    }
 
     if (m_worlds->resetIcon(proxiedIndex.row())) {
         ui->actionReset_Icon->setEnabled(false);
@@ -280,7 +284,7 @@ QModelIndex WorldListPage::getSelectedWorld()
 {
     auto index = ui->worldTreeView->selectionModel()->currentIndex();
 
-    auto proxy = (QSortFilterProxyModel*)ui->worldTreeView->model();
+    auto* proxy = (QSortFilterProxyModel*)ui->worldTreeView->model();
     return proxy->mapToSource(index);
 }
 
@@ -297,10 +301,11 @@ void WorldListPage::on_actionCopy_Seed_triggered()
 
 void WorldListPage::on_actionMCEdit_triggered()
 {
-    if (m_mceditStarting)
+    if (m_mceditStarting) {
         return;
+    }
 
-    auto mcedit = APPLICATION->mcedit();
+    auto* mcedit = APPLICATION->mcedit();
 
     const QString mceditPath = mcedit->path();
 
@@ -310,8 +315,9 @@ void WorldListPage::on_actionMCEdit_triggered()
         return;
     }
 
-    if (!worldSafetyNagQuestion(tr("Open World in MCEdit")))
+    if (!worldSafetyNagQuestion(tr("Open World in MCEdit"))) {
         return;
+    }
 
     auto fullPath = m_worlds->data(index, WorldList::FolderRole).toString();
 
@@ -423,11 +429,12 @@ void WorldListPage::on_actionCopy_triggered()
         return;
     }
 
-    if (!worldSafetyNagQuestion(tr("Copy World")))
+    if (!worldSafetyNagQuestion(tr("Copy World"))) {
         return;
+    }
 
     auto worldVariant = m_worlds->data(index, WorldList::ObjectRole);
-    auto world = (World*)worldVariant.value<void*>();
+    auto* world = (World*)worldVariant.value<void*>();
     bool ok = false;
     QString name =
         QInputDialog::getText(this, tr("World name"), tr("Enter a new name for the copy."), QLineEdit::Normal, world->name(), &ok);
@@ -444,11 +451,12 @@ void WorldListPage::on_actionRename_triggered()
         return;
     }
 
-    if (!worldSafetyNagQuestion(tr("Rename World")))
+    if (!worldSafetyNagQuestion(tr("Rename World"))) {
         return;
+    }
 
     auto worldVariant = m_worlds->data(index, WorldList::ObjectRole);
-    auto world = (World*)worldVariant.value<void*>();
+    auto* world = (World*)worldVariant.value<void*>();
 
     bool ok = false;
     QString name = QInputDialog::getText(this, tr("World name"), tr("Enter a new world name."), QLineEdit::Normal, world->name(), &ok);
@@ -470,7 +478,7 @@ void WorldListPage::on_actionJoin_triggered()
         return;
     }
     auto worldVariant = m_worlds->data(index, WorldList::ObjectRole);
-    auto world = (World*)worldVariant.value<void*>();
+    auto* world = (World*)worldVariant.value<void*>();
     APPLICATION->launch(m_inst, LaunchMode::Normal, std::make_shared<MinecraftTarget>(MinecraftTarget::parse(world->folderName(), true)));
 }
 

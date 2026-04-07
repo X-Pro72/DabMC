@@ -42,7 +42,7 @@ void Technic::TechnicPackProcessor::run(SettingsObject* globalSettings,
         instance.setIconKey(instIcon);
     }
 
-    auto components = instance.getPackProfile();
+    auto* components = instance.getPackProfile();
     components->buildingFromScratch();
 
     QByteArray data;
@@ -96,7 +96,10 @@ void Technic::TechnicPackProcessor::run(SettingsObject* globalSettings,
                 auto forgeVersionData = file->readAll();
                 INIFile iniFile;
                 iniFile.loadFile(forgeVersionData);
-                QString major, minor, revision, build;
+                QString major;
+                QString minor;
+                QString revision;
+                QString build;
                 major = iniFile["forge.major.number"].toString();
                 minor = iniFile["forge.minor.number"].toString();
                 revision = iniFile["forge.revision.number"].toString();
@@ -160,16 +163,16 @@ void Technic::TechnicPackProcessor::run(SettingsObject* globalSettings,
                     if (isVersionArg) {
                         neoforgeVersion = argument;
                         break;
-                    } else {
-                        isVersionArg = "--fml.neoForgeVersion" == argument || "--fml.forgeVersion" == argument;
                     }
+                    isVersionArg = "--fml.neoForgeVersion" == argument || "--fml.forgeVersion" == argument;
                 }
                 if (!neoforgeVersion.isEmpty()) {
                     components->setComponentVersion("net.neoforged", neoforgeVersion);
                 }
                 break;
-            } else if ((libraryName.startsWith("net.minecraftforge:forge:") || libraryName.startsWith("net.minecraftforge:fmlloader:")) &&
-                       libraryName.contains('-')) {
+            }
+            if ((libraryName.startsWith("net.minecraftforge:forge:") || libraryName.startsWith("net.minecraftforge:fmlloader:")) &&
+                libraryName.contains('-')) {
                 QString libraryVersion = libraryName.section(':', 2);
                 if (!libraryVersion.startsWith("1.7.10-")) {
                     components->setComponentVersion("net.minecraftforge", libraryName.section('-', 1));
@@ -178,16 +181,14 @@ void Technic::TechnicPackProcessor::run(SettingsObject* globalSettings,
                     components->setComponentVersion("net.minecraftforge", libraryName.section('-', 1, 1));
                 }
                 break;
-            } else {
-                // <Technic library name prefix> -> <our component name>
-                static QMap<QString, QString> loaderMap{ { "net.minecraftforge:minecraftforge:", "net.minecraftforge" },
-                                                         { "net.fabricmc:fabric-loader:", "net.fabricmc.fabric-loader" },
-                                                         { "org.quiltmc:quilt-loader:", "org.quiltmc.quilt-loader" } };
-                for (const auto& loader : loaderMap.keys()) {
-                    if (libraryName.startsWith(loader)) {
-                        components->setComponentVersion(loaderMap.value(loader), libraryName.section(':', 2));
-                        break;
-                    }
+            }  // <Technic library name prefix> -> <our component name>
+            static QMap<QString, QString> loaderMap{ { "net.minecraftforge:minecraftforge:", "net.minecraftforge" },
+                                                     { "net.fabricmc:fabric-loader:", "net.fabricmc.fabric-loader" },
+                                                     { "org.quiltmc:quilt-loader:", "org.quiltmc.quilt-loader" } };
+            for (const auto& loader : loaderMap.keys()) {
+                if (libraryName.startsWith(loader)) {
+                    components->setComponentVersion(loaderMap.value(loader), libraryName.section(':', 2));
+                    break;
                 }
             }
         }

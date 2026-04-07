@@ -67,8 +67,9 @@ CopyInstanceDialog::CopyInstanceDialog(BaseInstance* original, QWidget* parent)
     groups.prepend("");
     ui->groupBox->addItems(groups);
     int index = groups.indexOf(APPLICATION->instances()->getInstanceGroup(m_original->id()));
-    if (index == -1)
+    if (index == -1) {
         index = 0;
+    }
 
     ui->groupBox->setCurrentIndex(index);
     ui->groupBox->lineEdit()->setPlaceholderText(tr("No group"));
@@ -98,7 +99,7 @@ CopyInstanceDialog::CopyInstanceDialog(BaseInstance* original, QWidget* parent)
         ui->cloneSupportedLabel->setText(tr("Reflinks aren't supported on %1").arg(FS::getFilesystemTypeName(detectedFS)));
     }
 
-#if defined(Q_OS_WIN)
+#ifdef Q_OS_WIN
     ui->symbolicLinksCheckbox->setIcon(style()->standardIcon(QStyle::SP_VistaShield));
     ui->symbolicLinksCheckbox->setToolTip(tr("Use symbolic links instead of copying files.") + "\n" +
                                           tr("On Windows, symbolic links may require admin permission to create."));
@@ -107,7 +108,7 @@ CopyInstanceDialog::CopyInstanceDialog(BaseInstance* original, QWidget* parent)
     updateLinkOptions();
     updateUseCloneCheckbox();
 
-    auto HelpButton = ui->buttonBox->button(QDialogButtonBox::Help);
+    auto* HelpButton = ui->buttonBox->button(QDialogButtonBox::Help);
     connect(HelpButton, &QPushButton::clicked, this, &CopyInstanceDialog::help);
     HelpButton->setText(tr("Help"));
     ui->buttonBox->button(QDialogButtonBox::Cancel)->setText(tr("Cancel"));
@@ -122,7 +123,7 @@ CopyInstanceDialog::~CopyInstanceDialog()
 void CopyInstanceDialog::updateDialogState()
 {
     auto allowOK = !instName().isEmpty();
-    auto OkButton = ui->buttonBox->button(QDialogButtonBox::Ok);
+    auto* OkButton = ui->buttonBox->button(QDialogButtonBox::Ok);
     if (OkButton->isEnabled() != allowOK) {
         OkButton->setEnabled(allowOK);
     }
@@ -199,7 +200,7 @@ void CopyInstanceDialog::updateLinkOptions()
     ui->recursiveLinkCheckbox->setChecked(m_linkSupported && linksInUse && m_selectedOptions.isLinkRecursivelyEnabled());
     ui->dontLinkSavesCheckbox->setChecked(m_linkSupported && linksInUse && m_selectedOptions.isDontLinkSavesEnabled());
 
-#if defined(Q_OS_WIN)
+#ifdef Q_OS_WIN
     auto OkButton = ui->buttonBox->button(QDialogButtonBox::Ok);
     OkButton->setIcon(m_selectedOptions.isUseSymLinksEnabled() ? style()->standardIcon(QStyle::SP_VistaShield) : QIcon());
 #endif

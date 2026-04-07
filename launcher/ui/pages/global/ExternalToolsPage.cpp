@@ -66,7 +66,7 @@ ExternalToolsPage::~ExternalToolsPage()
 
 void ExternalToolsPage::loadSettings()
 {
-    auto s = APPLICATION->settings();
+    auto* s = APPLICATION->settings();
     ui->jprofilerPathEdit->setText(s->get("JProfilerPath").toString());
     ui->jvisualvmPathEdit->setText(s->get("JVisualVMPath").toString());
     ui->mceditPathEdit->setText(s->get("MCEditPath").toString());
@@ -76,7 +76,7 @@ void ExternalToolsPage::loadSettings()
 }
 void ExternalToolsPage::applySettings()
 {
-    auto s = APPLICATION->settings();
+    auto* s = APPLICATION->settings();
 
     s->set("JProfilerPath", ui->jprofilerPathEdit->text());
     s->set("JVisualVMPath", ui->jvisualvmPathEdit->text());
@@ -106,10 +106,10 @@ void ExternalToolsPage::on_jprofilerPathBtn_clicked()
         if (!APPLICATION->profilers()["jprofiler"]->check(cooked_dir, &error)) {
             QMessageBox::critical(this, tr("Error"), tr("Error while checking JProfiler install:\n%1").arg(error));
             continue;
-        } else {
-            ui->jprofilerPathEdit->setText(cooked_dir);
-            break;
         }
+        ui->jprofilerPathEdit->setText(cooked_dir);
+        break;
+
     } while (1);
 }
 void ExternalToolsPage::on_jprofilerCheckBtn_clicked()
@@ -135,10 +135,10 @@ void ExternalToolsPage::on_jvisualvmPathBtn_clicked()
         if (!APPLICATION->profilers()["jvisualvm"]->check(cooked_dir, &error)) {
             QMessageBox::critical(this, tr("Error"), tr("Error while checking VisualVM install:\n%1").arg(error));
             continue;
-        } else {
-            ui->jvisualvmPathEdit->setText(cooked_dir);
-            break;
         }
+        ui->jvisualvmPathEdit->setText(cooked_dir);
+        break;
+
     } while (1);
 }
 void ExternalToolsPage::on_jvisualvmCheckBtn_clicked()
@@ -168,10 +168,10 @@ void ExternalToolsPage::on_mceditPathBtn_clicked()
         if (!APPLICATION->mcedit()->check(cooked_dir, error)) {
             QMessageBox::critical(this, tr("Error"), tr("Error while checking MCEdit install:\n%1").arg(error));
             continue;
-        } else {
-            ui->mceditPathEdit->setText(cooked_dir);
-            break;
         }
+        ui->mceditPathEdit->setText(cooked_dir);
+        break;
+
     } while (1);
 }
 void ExternalToolsPage::on_mceditCheckBtn_clicked()
@@ -188,7 +188,7 @@ void ExternalToolsPage::on_jsonEditorBrowseBtn_clicked()
 {
     QString raw_file = QFileDialog::getOpenFileName(this, tr("Text Editor"),
                                                     ui->jsonEditorTextBox->text().isEmpty()
-#if defined(Q_OS_LINUX)
+#ifdef Q_OS_LINUX
                                                         ? QString("/usr/bin")
 #else
                                                         ? QStandardPaths::standardLocations(QStandardPaths::ApplicationsLocation).first()

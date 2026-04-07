@@ -13,7 +13,7 @@
 #include <QtConcurrent>
 
 DataMigrationTask::DataMigrationTask(const QString& sourcePath, const QString& targetPath, Filter pathMatcher)
-    : Task(), m_sourcePath(sourcePath), m_targetPath(targetPath), m_pathMatcher(pathMatcher), m_copy(sourcePath, targetPath)
+    : m_sourcePath(sourcePath), m_targetPath(targetPath), m_pathMatcher(pathMatcher), m_copy(sourcePath, targetPath)
 {
     m_copy.matcher(m_pathMatcher).whitelist(true);
 }
@@ -48,8 +48,9 @@ void DataMigrationTask::dryRunFinished()
     connect(&m_copy, &FS::copy::fileCopied, [&, this](const QString& relativeName) {
         QString shortenedName = relativeName;
         // shorten the filename to hopefully fit into one line
-        if (shortenedName.length() > 50)
+        if (shortenedName.length() > 50) {
             shortenedName = relativeName.left(20) + "…" + relativeName.right(29);
+        }
         setProgress(m_copy.totalCopied(), m_toCopy);
         setStatus(tr("Copying %1…").arg(shortenedName));
     });

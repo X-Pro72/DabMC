@@ -196,7 +196,8 @@ QDir getAssetsDir(const QString& assetsId, const QString& resourcesFolder)
     QString targetPath;
     if (index.isVirtual) {
         return virtualRoot;
-    } else if (index.mapToResources) {
+    }
+    if (index.mapToResources) {
         return QDir(resourcesFolder);
     }
     return virtualRoot;
@@ -249,8 +250,9 @@ bool reconstructAssets(QString assetsId, QString resourcesFolder)
 
             QString original_path = FS::PathCombine(objectDir.path(), tlk, asset_object.hash);
             QFile original(original_path);
-            if (!original.exists())
+            if (!original.exists()) {
                 continue;
+            }
 
             presentFiles.remove(target_path);
 
@@ -268,7 +270,7 @@ bool reconstructAssets(QString assetsId, QString resourcesFolder)
 
         // TODO: Write last used time to virtualRoot/.lastused
         if (removeLeftovers) {
-            for (auto& file : presentFiles) {
+            for (const auto& file : presentFiles) {
                 qDebug() << "Would remove" << file;
             }
         }
@@ -292,23 +294,23 @@ Net::NetRequest::Ptr AssetObject::getDownloadAction()
     return nullptr;
 }
 
-QString AssetObject::getLocalPath()
+QString AssetObject::getLocalPath() const
 {
     return "assets/objects/" + getRelPath();
 }
 
-QUrl AssetObject::getUrl()
+QUrl AssetObject::getUrl() const
 {
     auto resourceURL = AssetUpdateTask::resourceUrl();
     return resourceURL + getRelPath();
 }
 
-QString AssetObject::getRelPath()
+QString AssetObject::getRelPath() const
 {
     return hash.left(2) + "/" + hash;
 }
 
-NetJob::Ptr AssetsIndex::getDownloadJob()
+NetJob::Ptr AssetsIndex::getDownloadJob() const
 {
     auto job = makeShared<NetJob>(QObject::tr("Assets for %1").arg(id), APPLICATION->network());
     for (auto& object : objects.values()) {
@@ -317,7 +319,8 @@ NetJob::Ptr AssetsIndex::getDownloadJob()
             job->addNetAction(dl);
         }
     }
-    if (job->size())
+    if (job->size()) {
         return job;
+    }
     return nullptr;
 }

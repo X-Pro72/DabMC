@@ -108,19 +108,19 @@ NewInstanceDialog::NewInstanceDialog(const QString& initialGroup,
 
     // Bonk Qt over its stupid head and make sure it understands which button is the default one...
     // See: https://stackoverflow.com/questions/24556831/qbuttonbox-set-default-button
-    auto OkButton = m_buttons->button(QDialogButtonBox::Ok);
+    auto* OkButton = m_buttons->button(QDialogButtonBox::Ok);
     OkButton->setDefault(true);
     OkButton->setAutoDefault(true);
     OkButton->setText(tr("OK"));
     connect(OkButton, &QPushButton::clicked, this, &NewInstanceDialog::accept);
 
-    auto CancelButton = m_buttons->button(QDialogButtonBox::Cancel);
+    auto* CancelButton = m_buttons->button(QDialogButtonBox::Cancel);
     CancelButton->setDefault(false);
     CancelButton->setAutoDefault(false);
     CancelButton->setText(tr("Cancel"));
     connect(CancelButton, &QPushButton::clicked, this, &NewInstanceDialog::reject);
 
-    auto HelpButton = m_buttons->button(QDialogButtonBox::Help);
+    auto* HelpButton = m_buttons->button(QDialogButtonBox::Help);
     HelpButton->setDefault(false);
     HelpButton->setAutoDefault(false);
     HelpButton->setText(tr("Help"));
@@ -138,7 +138,7 @@ NewInstanceDialog::NewInstanceDialog(const QString& initialGroup,
     if (APPLICATION->settings()->get("NewInstanceGeometry").isValid()) {
         restoreGeometry(QByteArray::fromBase64(APPLICATION->settings()->get("NewInstanceGeometry").toString().toUtf8()));
     } else {
-        auto screen = parent->screen();
+        auto* screen = parent->screen();
         auto geometry = screen->availableSize();
         resize(width(), qMin(geometry.height() - 50, 710));
     }
@@ -176,8 +176,9 @@ QList<BasePage*> NewInstanceDialog::getPages()
     pages.append(new CustomPage(this));
     pages.append(importPage);
     pages.append(new AtlPage(this));
-    if (APPLICATION->capabilities() & Application::SupportsFlame)
+    if (APPLICATION->capabilities() & Application::SupportsFlame) {
         pages.append(new FlamePage(this));
+    }
     pages.append(new FtbPage(this));
     pages.append(new LegacyFTB::Page(this));
     pages.append(new FTBImportAPP::ImportFTBPage(this));
@@ -241,8 +242,9 @@ void NewInstanceDialog::setSuggestedIconFromFile(const QString& path, const QStr
 
 void NewInstanceDialog::setSuggestedIcon(const QString& key)
 {
-    if (key == "default")
+    if (key == "default") {
         return;
+    }
 
     auto icon = APPLICATION->icons()->getIcon(key);
     importIcon = false;
@@ -266,7 +268,7 @@ InstanceTask* NewInstanceDialog::extractTask()
 void NewInstanceDialog::updateDialogState()
 {
     auto allowOK = creationTask && !instName().isEmpty();
-    auto OkButton = m_buttons->button(QDialogButtonBox::Ok);
+    auto* OkButton = m_buttons->button(QDialogButtonBox::Ok);
     if (OkButton->isEnabled() != allowOK) {
         OkButton->setEnabled(allowOK);
     }
@@ -324,12 +326,12 @@ void NewInstanceDialog::importIconNow()
 
 void NewInstanceDialog::selectedPageChanged(BasePage* previous, BasePage* selected)
 {
-    auto prevPage = dynamic_cast<ModpackProviderBasePage*>(previous);
+    auto* prevPage = dynamic_cast<ModpackProviderBasePage*>(previous);
     if (prevPage) {
         m_searchTerm = prevPage->getSerachTerm();
     }
 
-    auto nextPage = dynamic_cast<ModpackProviderBasePage*>(selected);
+    auto* nextPage = dynamic_cast<ModpackProviderBasePage*>(selected);
     if (nextPage) {
         nextPage->setSearchTerm(m_searchTerm);
     }

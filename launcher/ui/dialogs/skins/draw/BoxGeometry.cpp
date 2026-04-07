@@ -34,39 +34,39 @@ struct VertexData {
 // is different.
 static const QList<QVector4D> vertices = {
     // Vertex data for face 0
-    QVector4D(-0.5f, -0.5f, 0.5f, 1.0f),  // v0
-    QVector4D(0.5f, -0.5f, 0.5f, 1.0f),   // v1
-    QVector4D(-0.5f, 0.5f, 0.5f, 1.0f),   // v2
-    QVector4D(0.5f, 0.5f, 0.5f, 1.0f),    // v3
+    QVector4D(-0.5F, -0.5F, 0.5F, 1.0F),  // v0
+    QVector4D(0.5F, -0.5F, 0.5F, 1.0F),   // v1
+    QVector4D(-0.5F, 0.5F, 0.5F, 1.0F),   // v2
+    QVector4D(0.5F, 0.5F, 0.5F, 1.0F),    // v3
     // Vertex data for face 1
-    QVector4D(0.5f, -0.5f, 0.5f, 1.0f),   // v4
-    QVector4D(0.5f, -0.5f, -0.5f, 1.0f),  // v5
-    QVector4D(0.5f, 0.5f, 0.5f, 1.0f),    // v6
-    QVector4D(0.5f, 0.5f, -0.5f, 1.0f),   // v7
+    QVector4D(0.5F, -0.5F, 0.5F, 1.0F),   // v4
+    QVector4D(0.5F, -0.5F, -0.5F, 1.0F),  // v5
+    QVector4D(0.5F, 0.5F, 0.5F, 1.0F),    // v6
+    QVector4D(0.5F, 0.5F, -0.5F, 1.0F),   // v7
 
     // Vertex data for face 2
-    QVector4D(0.5f, -0.5f, -0.5f, 1.0f),   // v8
-    QVector4D(-0.5f, -0.5f, -0.5f, 1.0f),  // v9
-    QVector4D(0.5f, 0.5f, -0.5f, 1.0f),    // v10
-    QVector4D(-0.5f, 0.5f, -0.5f, 1.0f),   // v11
+    QVector4D(0.5F, -0.5F, -0.5F, 1.0F),   // v8
+    QVector4D(-0.5F, -0.5F, -0.5F, 1.0F),  // v9
+    QVector4D(0.5F, 0.5F, -0.5F, 1.0F),    // v10
+    QVector4D(-0.5F, 0.5F, -0.5F, 1.0F),   // v11
 
     // Vertex data for face 3
-    QVector4D(-0.5f, -0.5f, -0.5f, 1.0f),  // v12
-    QVector4D(-0.5f, -0.5f, 0.5f, 1.0f),   // v13
-    QVector4D(-0.5f, 0.5f, -0.5f, 1.0f),   // v14
-    QVector4D(-0.5f, 0.5f, 0.5f, 1.0f),    // v15
+    QVector4D(-0.5F, -0.5F, -0.5F, 1.0F),  // v12
+    QVector4D(-0.5F, -0.5F, 0.5F, 1.0F),   // v13
+    QVector4D(-0.5F, 0.5F, -0.5F, 1.0F),   // v14
+    QVector4D(-0.5F, 0.5F, 0.5F, 1.0F),    // v15
 
     // Vertex data for face 4
-    QVector4D(-0.5f, -0.5f, -0.5f, 1.0f),  // v16
-    QVector4D(0.5f, -0.5f, -0.5f, 1.0f),   // v17
-    QVector4D(-0.5f, -0.5f, 0.5f, 1.0f),   // v18
-    QVector4D(0.5f, -0.5f, 0.5f, 1.0f),    // v19
+    QVector4D(-0.5F, -0.5F, -0.5F, 1.0F),  // v16
+    QVector4D(0.5F, -0.5F, -0.5F, 1.0F),   // v17
+    QVector4D(-0.5F, -0.5F, 0.5F, 1.0F),   // v18
+    QVector4D(0.5F, -0.5F, 0.5F, 1.0F),    // v19
 
     // Vertex data for face 5
-    QVector4D(-0.5f, 0.5f, 0.5f, 1.0f),   // v20
-    QVector4D(0.5f, 0.5f, 0.5f, 1.0f),    // v21
-    QVector4D(-0.5f, 0.5f, -0.5f, 1.0f),  // v22
-    QVector4D(0.5f, 0.5f, -0.5f, 1.0f),   // v23
+    QVector4D(-0.5F, 0.5F, 0.5F, 1.0F),   // v20
+    QVector4D(0.5F, 0.5F, 0.5F, 1.0F),    // v21
+    QVector4D(-0.5F, 0.5F, -0.5F, 1.0F),  // v22
+    QVector4D(0.5F, 0.5F, -0.5F, 1.0F),   // v23
 };
 
 // Indices for drawing cube faces using triangle strips.
@@ -86,10 +86,10 @@ static const QList<GLushort> indices = {
 };
 
 static const QList<VertexData> planeVertices = {
-    { QVector4D(-1.0f, -1.0f, -0.5f, 1.0f), QVector2D(0.0f, 0.0f) },  // Bottom-left
-    { QVector4D(1.0f, -1.0f, -0.5f, 1.0f), QVector2D(1.0f, 0.0f) },   // Bottom-right
-    { QVector4D(-1.0f, 1.0f, -0.5f, 1.0f), QVector2D(0.0f, 1.0f) },   // Top-left
-    { QVector4D(1.0f, 1.0f, -0.5f, 1.0f), QVector2D(1.0f, 1.0f) },    // Top-right
+    { QVector4D(-1.0F, -1.0F, -0.5F, 1.0F), QVector2D(0.0F, 0.0F) },  // Bottom-left
+    { QVector4D(1.0F, -1.0F, -0.5F, 1.0F), QVector2D(1.0F, 0.0F) },   // Bottom-right
+    { QVector4D(-1.0F, 1.0F, -0.5F, 1.0F), QVector2D(0.0F, 1.0F) },   // Top-left
+    { QVector4D(1.0F, 1.0F, -0.5F, 1.0F), QVector2D(1.0F, 1.0F) },    // Top-right
 };
 static const QList<GLushort> planeIndices = {
     0, 1, 2, 3, 3  // Face 0 - triangle strip ( v0,  v1,  v2,  v3)
@@ -117,19 +117,19 @@ QList<QVector2D> getCubeUVs(float u, float v, float width, float height, float d
 {
     auto toFaceVertices = [textureHeight, textureWidth](float x1, float y1, float x2, float y2) -> QList<QVector2D> {
         return {
-            QVector2D(x1 / textureWidth, 1.0 - y2 / textureHeight),
-            QVector2D(x2 / textureWidth, 1.0 - y2 / textureHeight),
-            QVector2D(x2 / textureWidth, 1.0 - y1 / textureHeight),
-            QVector2D(x1 / textureWidth, 1.0 - y1 / textureHeight),
+            QVector2D(x1 / textureWidth, 1.0 - (y2 / textureHeight)),
+            QVector2D(x2 / textureWidth, 1.0 - (y2 / textureHeight)),
+            QVector2D(x2 / textureWidth, 1.0 - (y1 / textureHeight)),
+            QVector2D(x1 / textureWidth, 1.0 - (y1 / textureHeight)),
         };
     };
 
     auto top = toFaceVertices(u + depth, v, u + width + depth, v + depth);
-    auto bottom = toFaceVertices(u + width + depth, v, u + width * 2 + depth, v + depth);
+    auto bottom = toFaceVertices(u + width + depth, v, u + (width * 2) + depth, v + depth);
     auto left = toFaceVertices(u, v + depth, u + depth, v + depth + height);
     auto front = toFaceVertices(u + depth, v + depth, u + width + depth, v + depth + height);
-    auto right = toFaceVertices(u + width + depth, v + depth, u + width + depth * 2, v + height + depth);
-    auto back = toFaceVertices(u + width + depth * 2, v + depth, u + width * 2 + depth * 2, v + height + depth);
+    auto right = toFaceVertices(u + width + depth, v + depth, u + width + (depth * 2), v + height + depth);
+    auto back = toFaceVertices(u + width + (depth * 2), v + depth, u + (width * 2) + (depth * 2), v + height + depth);
 
     auto uvRight = {
         right[0],
@@ -180,8 +180,7 @@ QList<QVector2D> getCubeUVs(float u, float v, float width, float height, float d
 }
 
 namespace opengl {
-BoxGeometry::BoxGeometry(QVector3D size, QVector3D position)
-    : QOpenGLFunctions(), m_indexBuf(QOpenGLBuffer::IndexBuffer), m_size(size), m_position(position)
+BoxGeometry::BoxGeometry(QVector3D size, QVector3D position) : m_indexBuf(QOpenGLBuffer::IndexBuffer), m_size(size), m_position(position)
 {
     initializeOpenGLFunctions();
 
@@ -262,7 +261,7 @@ void BoxGeometry::rotate(float angle, const QVector3D& vector)
 
 BoxGeometry* BoxGeometry::Plane()
 {
-    auto b = new BoxGeometry(QVector3D(), QVector3D());
+    auto* b = new BoxGeometry(QVector3D(), QVector3D());
 
     // Transfer vertex data to VBO 0
     b->m_vertexBuf.bind();

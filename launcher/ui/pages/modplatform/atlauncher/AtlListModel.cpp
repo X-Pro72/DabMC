@@ -139,14 +139,17 @@ void ListModel::requestFinished(QByteArray* responsePtr)
         }
 
         // ignore packs without a published version
-        if (pack.versions.length() == 0)
+        if (pack.versions.empty()) {
             continue;
+        }
         // only display public packs (for now)
-        if (pack.type != ATLauncher::PackType::Public)
+        if (pack.type != ATLauncher::PackType::Public) {
             continue;
+        }
         // ignore "system" packs (Vanilla, Vanilla with Forge, etc)
-        if (pack.system)
+        if (pack.system) {
             continue;
+        }
 
         newList.append(pack);
     }
@@ -195,7 +198,7 @@ void ListModel::requestLogo(QString file, QString url)
     }
 
     MetaEntryPtr entry = APPLICATION->metacache()->resolveEntry("ATLauncherPacks", QString("logos/%1").arg(file));
-    auto job = new NetJob(QString("ATLauncher Icon Download %1").arg(file), APPLICATION->network());
+    auto* job = new NetJob(QString("ATLauncher Icon Download %1").arg(file), APPLICATION->network());
     job->setAskRetry(false);
     job->addNetAction(Net::ApiDownload::makeCached(QUrl(url), entry));
 

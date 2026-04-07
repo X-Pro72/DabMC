@@ -52,7 +52,7 @@ bool FileIgnoreProxy::lessThan(const QModelIndex& left, const QModelIndex& right
     if (!fsm) {
         return QSortFilterProxyModel::lessThan(left, right);
     }
-    bool asc = sortOrder() == Qt::AscendingOrder ? true : false;
+    bool asc = sortOrder() == Qt::AscendingOrder;
 
     QFileInfo leftFileInfo = fsm->fileInfo(left);
     QFileInfo rightFileInfo = fsm->fileInfo(right);
@@ -81,8 +81,9 @@ bool FileIgnoreProxy::lessThan(const QModelIndex& left, const QModelIndex& right
 
 Qt::ItemFlags FileIgnoreProxy::flags(const QModelIndex& index) const
 {
-    if (!index.isValid())
+    if (!index.isValid()) {
         return Qt::NoItemFlags;
+    }
 
     auto sourceIndex = mapToSource(index);
     Qt::ItemFlags flags = sourceIndex.flags();
@@ -106,11 +107,11 @@ QVariant FileIgnoreProxy::data(const QModelIndex& index, int role) const
         auto cover = m_blocked.cover(blockedPath);
         if (!cover.isNull()) {
             return QVariant(Qt::Unchecked);
-        } else if (m_blocked.exists(blockedPath)) {
-            return QVariant(Qt::PartiallyChecked);
-        } else {
-            return QVariant(Qt::Checked);
         }
+        if (m_blocked.exists(blockedPath)) {
+            return QVariant(Qt::PartiallyChecked);
+        }
+        return QVariant(Qt::Checked);
     }
 
     return sourceIndex.data(role);
@@ -163,13 +164,12 @@ bool FileIgnoreProxy::setFilterState(QModelIndex index, Qt::CheckState state)
             while (1) {
                 auto node = fsm->index(row, 0, doing);
                 if (!node.isValid()) {
-                    if (!todo.size()) {
+                    if (todo.empty()) {
                         break;
-                    } else {
-                        doing = todo.pop();
-                        row = 0;
-                        continue;
                     }
+                    doing = todo.pop();
+                    row = 0;
+                    continue;
                 }
                 auto relpath = relPath(fsm->filePath(node));
                 if (blockedPath.startsWith(relpath))  // cover found?
@@ -191,8 +191,9 @@ bool FileIgnoreProxy::setFilterState(QModelIndex index, Qt::CheckState state)
         // update everything above index
         QModelIndex up = index.parent();
         while (1) {
-            if (!up.isValid())
+            if (!up.isValid()) {
                 break;
+            }
             emit dataChanged(up, up, { Qt::CheckStateRole });
             up = up.parent();
         }
@@ -203,13 +204,12 @@ bool FileIgnoreProxy::setFilterState(QModelIndex index, Qt::CheckState state)
         while (1) {
             auto node = this->index(row, 0, doing);
             if (!node.isValid()) {
-                if (!todo.size()) {
+                if (todo.empty()) {
                     break;
-                } else {
-                    doing = todo.pop();
-                    row = 0;
-                    continue;
                 }
+                doing = todo.pop();
+                row = 0;
+                continue;
             }
             emit dataChanged(node, node, { Qt::CheckStateRole });
             todo.push(node);
@@ -228,7 +228,7 @@ bool FileIgnoreProxy::shouldExpand(QModelIndex index)
         return false;
     }
     auto blockedPath = relPath(fsm->filePath(sourceIndex));
-    auto found = m_blocked.find(blockedPath);
+    const auto* found = m_blocked.find(blockedPath);
     if (found) {
         return !found->leaf();
     }
@@ -249,10 +249,7 @@ bool FileIgnoreProxy::filterAcceptsColumn(int source_column, const QModelIndex& 
 
     // adjust the columns you want to filter out here
     // return false for those that will be hidden
-    if (source_column == 2 || source_column == 3)
-        return false;
-
-    return true;
+    return !(source_column == 2 || source_column == 3);
 }
 
 bool FileIgnoreProxy::filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const
@@ -276,11 +273,7 @@ bool FileIgnoreProxy::ignoreFile(QFileInfo fileInfo) const
         }
     }
 
-    if (m_ignoreFilePaths.covers(relPath(fileInfo.absoluteFilePath()))) {
-        return true;
-    }
-
-    return false;
+    return m_ignoreFilePaths.covers(relPath(fileInfo.absoluteFilePath()));
 }
 
 bool FileIgnoreProxy::filterFile(const QFileInfo& file) const

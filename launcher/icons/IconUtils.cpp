@@ -39,7 +39,7 @@
 #include "FileSystem.h"
 
 namespace {
-static const QStringList validIconExtensions = { { "svg", "png", "ico", "gif", "jpg", "jpeg", "webp" } };
+const QStringList validIconExtensions = { { "svg", "png", "ico", "gif", "jpg", "jpeg", "webp" } };
 }
 
 namespace IconUtils {
@@ -52,8 +52,9 @@ QString findBestIconIn(const QString& folder, const QString& iconKey)
     while (it.hasNext()) {
         it.next();
         auto fileInfo = it.fileInfo();
-        if ((fileInfo.completeBaseName() == iconKey || fileInfo.fileName() == iconKey) && isIconSuffix(fileInfo.suffix()))
+        if ((fileInfo.completeBaseName() == iconKey || fileInfo.fileName() == iconKey) && isIconSuffix(fileInfo.suffix())) {
             return fileInfo.absoluteFilePath();
+        }
     }
     return {};
 }

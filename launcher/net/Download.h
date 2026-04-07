@@ -52,9 +52,9 @@ class Download : public NetRequest {
     Q_OBJECT
    public:
     using Ptr = shared_qobject_ptr<class Download>;
-    explicit Download() : NetRequest() { logCat = taskDownloadLogC; }
+    explicit Download() { logCat = taskDownloadLogC; }
 
-#if defined(LAUNCHER_APPLICATION)
+#ifdef LAUNCHER_APPLICATION
     static auto makeCached(QUrl url, MetaEntryPtr entry, Options options = Option::NoOptions) -> Download::Ptr;
 #endif
 

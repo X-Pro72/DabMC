@@ -29,7 +29,7 @@ class ModPage : public ResourcePage {
     static T* create(ModDownloadDialog* dialog, BaseInstance& instance)
     {
         auto page = new T(dialog, instance);
-        auto model = static_cast<ModModel*>(page->getModel());
+        auto* model = static_cast<ModModel*>(page->getModel());
 
         auto filter_widget = page->createFilterWidget();
         page->setFilterWidget(filter_widget);
@@ -43,9 +43,9 @@ class ModPage : public ResourcePage {
     }
 
     //: The plural version of 'mod'
-    inline QString resourcesString() const override { return tr("mods"); }
+    QString resourcesString() const override { return tr("mods"); }
     //: The singular version of 'mods'
-    inline QString resourceString() const override { return tr("mod"); }
+    QString resourceString() const override { return tr("mod"); }
 
     QMap<QString, QString> urlHandlers() const override;
 

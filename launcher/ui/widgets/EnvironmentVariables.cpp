@@ -34,7 +34,7 @@ EnvironmentVariables::EnvironmentVariables(QWidget* parent) : QWidget(parent), u
     ui->list->header()->resizeSection(0, 200);
 
     connect(ui->add, &QPushButton::clicked, this, [this] {
-        auto item = new QTreeWidgetItem(ui->list);
+        auto* item = new QTreeWidgetItem(ui->list);
         item->setText(0, "ENV_VAR");
         item->setText(1, "value");
         item->setFlags(item->flags() | Qt::ItemIsEditable);
@@ -45,8 +45,9 @@ EnvironmentVariables::EnvironmentVariables(QWidget* parent) : QWidget(parent), u
     });
 
     connect(ui->remove, &QPushButton::clicked, this, [this] {
-        for (QTreeWidgetItem* item : ui->list->selectedItems())
+        for (QTreeWidgetItem* item : ui->list->selectedItems()) {
             ui->list->takeTopLevelItem(ui->list->indexOfTopLevelItem(item));
+        }
     });
 
     connect(ui->clear, &QPushButton::clicked, this, [this] { ui->list->clear(); });
@@ -68,7 +69,7 @@ void EnvironmentVariables::initialize(bool instance, bool override, const QMap<Q
     // populate
     ui->list->clear();
     for (auto iter = value.begin(); iter != value.end(); iter++) {
-        auto item = new QTreeWidgetItem(ui->list);
+        auto* item = new QTreeWidgetItem(ui->list);
         item->setText(0, iter.key());
         item->setText(1, iter.value().toString());
         item->setFlags(item->flags() | Qt::ItemIsEditable);
@@ -103,8 +104,9 @@ QMap<QString, QVariant> EnvironmentVariables::value() const
 {
     QMap<QString, QVariant> result;
     QTreeWidgetItem* item = ui->list->topLevelItem(0);
-    for (int i = 1; item != nullptr; item = ui->list->topLevelItem(i++))
+    for (int i = 1; item != nullptr; item = ui->list->topLevelItem(i++)) {
         result[item->text(0)] = item->text(1);
+    }
 
     return result;
 }

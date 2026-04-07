@@ -193,7 +193,8 @@ void MinecraftAccount::authFailed(QString reason)
 
 QString MinecraftAccount::displayName() const
 {
-    if (const QList validStates{ AccountState::Unchecked, AccountState::Working, AccountState::Offline, AccountState::Online }; !validStates.contains(accountState())) {
+    if (const QList validStates{ AccountState::Unchecked, AccountState::Working, AccountState::Offline, AccountState::Online };
+        !validStates.contains(accountState())) {
         return QString("⚠ %1").arg(profileName());
     }
     return profileName();
@@ -247,8 +248,9 @@ void MinecraftAccount::fillSession(AuthSessionPtr session)
     session->player_name = data.profileName();
     // profile ID
     session->uuid = data.profileId();
-    if (session->uuid.isEmpty())
+    if (session->uuid.isEmpty()) {
         session->uuid = uuidFromUsername(session->player_name).toString(QUuid::Id128);
+    }
     // 'legacy' or 'mojang', depending on account type
     session->user_type = typeString();
     if (!session->access_token.isEmpty()) {

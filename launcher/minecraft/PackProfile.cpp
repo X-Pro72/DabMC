@@ -70,7 +70,7 @@
 
 #include "ui/dialogs/CustomMessageBox.h"
 
-PackProfile::PackProfile(MinecraftInstance* instance) : QAbstractListModel()
+PackProfile::PackProfile(MinecraftInstance* instance)
 {
     d.reset(new PackProfileData);
     d->m_instance = instance;
@@ -357,7 +357,7 @@ Task::Ptr PackProfile::getCurrentTask()
 
 void PackProfile::resolve(Net::Mode netmode)
 {
-    auto updateTask = new ComponentUpdateTask(ComponentUpdateTask::Mode::Resolution, netmode, this);
+    auto* updateTask = new ComponentUpdateTask(ComponentUpdateTask::Mode::Resolution, netmode, this);
     d->m_updateTask.reset(updateTask);
     connect(updateTask, &ComponentUpdateTask::succeeded, this, &PackProfile::updateSucceeded);
     connect(updateTask, &ComponentUpdateTask::failed, this, &PackProfile::updateFailed);
@@ -407,7 +407,7 @@ void PackProfile::insertComponent(size_t index, ComponentPtr component)
 
 void PackProfile::componentDataChanged()
 {
-    auto objPtr = qobject_cast<Component*>(sender());
+    auto* objPtr = qobject_cast<Component*>(sender());
     if (!objPtr) {
         qCWarning(instanceProfileC) << d->m_instance->name() << "|" << "PackProfile got dataChanged signal from a non-Component!";
         return;
@@ -514,21 +514,24 @@ ComponentPtr PackProfile::getComponent(size_t index)
 
 QVariant PackProfile::data(const QModelIndex& index, int role) const
 {
-    if (!index.isValid())
+    if (!index.isValid()) {
         return QVariant();
+    }
 
     int row = index.row();
     int column = index.column();
 
-    if (row < 0 || row >= d->components.size())
+    if (row < 0 || row >= d->components.size()) {
         return QVariant();
+    }
 
     auto patch = d->components.at(row);
 
     switch (role) {
         case Qt::CheckStateRole: {
-            if (column == NameColumn)
+            if (column == NameColumn) {
                 return patch->isEnabled() ? Qt::Checked : Qt::Unchecked;
+            }
             return QVariant();
         }
         case Qt::DisplayRole: {
@@ -538,9 +541,8 @@ QVariant PackProfile::data(const QModelIndex& index, int role) const
                 case VersionColumn: {
                     if (patch->isCustom()) {
                         return QString("%1 (Custom)").arg(patch->getVersion());
-                    } else {
-                        return patch->getVersion();
                     }
+                    return patch->getVersion();
                 }
                 default:
                     return QVariant();
@@ -638,20 +640,24 @@ void PackProfile::move(const int index, const MoveDirection direction)
         theirIndex = index + 1;
     }
 
-    if (index < 0 || index >= d->components.size())
+    if (index < 0 || index >= d->components.size()) {
         return;
-    if (theirIndex >= rowCount())
+    }
+    if (theirIndex >= rowCount()) {
         theirIndex = rowCount() - 1;
-    if (theirIndex == -1)
+    }
+    if (theirIndex == -1) {
         theirIndex = rowCount() - 1;
-    if (index == theirIndex)
+    }
+    if (index == theirIndex) {
         return;
+    }
     int togap = theirIndex > index ? theirIndex + 1 : theirIndex;
 
     auto from = getComponent(index);
     auto to = getComponent(theirIndex);
 
-    if (!from || !to || !to->isMoveable() || !from->isMoveable()) {
+    if (!from || !to || !Component::isMoveable() || !Component::isMoveable()) {
         return;
     }
     beginMoveRows(QModelIndex(), index, index, QModelIndex(), togap);
@@ -681,8 +687,9 @@ void PackProfile::installCustomJar(QString selectedFile)
 bool PackProfile::installComponents(QStringList selectedFiles)
 {
     const QString patchDir = FS::PathCombine(d->m_instance->instanceRoot(), "patches");
-    if (!FS::ensureFolderPathExists(patchDir))
+    if (!FS::ensureFolderPathExists(patchDir)) {
         return false;
+    }
 
     bool result = true;
     for (const QString& source : selectedFiles) {
@@ -758,7 +765,10 @@ bool PackProfile::removeComponent_internal(ComponentPtr patch)
         if (!jarMod->isLocal()) {
             return true;
         }
-        QStringList jar, temp1, temp2, temp3;
+        QStringList jar;
+        QStringList temp1;
+        QStringList temp2;
+        QStringList temp3;
         jarMod->getApplicableFiles(d->m_instance->runtimeContext(), jar, temp1, temp2, temp3, d->m_instance->jarmodsPath().absolutePath());
         QFileInfo finfo(jar[0]);
         if (finfo.exists()) {
@@ -895,12 +905,14 @@ bool PackProfile::installAgents_internal(QStringList filepaths)
 {
     // FIXME code duplication
     const QString patchDir = FS::PathCombine(d->m_instance->instanceRoot(), "patches");
-    if (!FS::ensureFolderPathExists(patchDir))
+    if (!FS::ensureFolderPathExists(patchDir)) {
         return false;
+    }
 
     const QString libDir = d->m_instance->getLocalLibraryPath();
-    if (!FS::ensureFolderPathExists(libDir))
+    if (!FS::ensureFolderPathExists(libDir)) {
         return false;
+    }
 
     for (const QString& source : filepaths) {
         const QFileInfo sourceInfo(source);
@@ -913,8 +925,9 @@ bool PackProfile::installAgents_internal(QStringList filepaths)
         const QFileInfo targetInfo(target);
         Q_ASSERT(!targetInfo.exists());
 
-        if (!QFile::copy(source, target))
+        if (!QFile::copy(source, target)) {
             return false;
+        }
 
         auto versionFile = std::make_shared<VersionFile>();
 
@@ -925,7 +938,7 @@ bool PackProfile::installAgents_internal(QStringList filepaths)
         agent->setDisplayName(sourceInfo.completeBaseName());
         agent->setHint("local");
 
-        versionFile->agents.append(Agent{agent, QString()});
+        versionFile->agents.append(Agent{ agent, QString() });
 
         versionFile->name = targetName;
         versionFile->uid = targetId;
@@ -988,14 +1001,12 @@ bool PackProfile::setComponentVersion(const QString& uid, const QString& version
             return true;
         }
         return false;
-    } else {
-        // add new
-        auto component = makeShared<Component>(this, uid);
-        component->m_version = version;
-        component->m_important = important;
-        appendComponent(component);
-        return true;
-    }
+    }  // add new
+    auto component = makeShared<Component>(this, uid);
+    component->m_version = version;
+    component->m_important = important;
+    appendComponent(component);
+    return true;
 }
 
 QString PackProfile::getComponentVersion(const QString& uid) const
@@ -1033,22 +1044,26 @@ std::optional<ModPlatform::ModLoaderTypes> PackProfile::getModLoaders()
         }
     }
 
-    if (!has_any_loader)
+    if (!has_any_loader) {
         return {};
+    }
     return result;
 }
 
 std::optional<ModPlatform::ModLoaderTypes> PackProfile::getSupportedModLoaders()
 {
     auto loadersOpt = getModLoaders();
-    if (!loadersOpt.has_value())
+    if (!loadersOpt.has_value()) {
         return loadersOpt;
+    }
     auto loaders = loadersOpt.value();
     // TODO: remove this or add version condition once Quilt drops official Fabric support
-    if (loaders & ModPlatform::Quilt)
+    if (loaders & ModPlatform::Quilt) {
         loaders |= ModPlatform::Fabric;
-    if (getComponentVersion("net.minecraft") == "1.20.1" && (loaders & ModPlatform::NeoForge))
+    }
+    if (getComponentVersion("net.minecraft") == "1.20.1" && (loaders & ModPlatform::NeoForge)) {
         loaders |= ModPlatform::Forge;
+    }
     return loaders;
 }
 

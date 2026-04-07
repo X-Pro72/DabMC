@@ -136,8 +136,9 @@ QList<Net::NetRequest::Ptr> Library::getDownloads(const RuntimeContext& runtimeC
         if (stale) {
             entry->setStale(true);
         }
-        if (!entry->isStale())
+        if (!entry->isStale()) {
             return true;
+        }
         Net::Download::Options options;
         if (stale) {
             options |= Net::Download::Option::AcceptLocalFiles;
@@ -168,20 +169,20 @@ QList<Net::NetRequest::Ptr> Library::getDownloads(const RuntimeContext& runtimeC
                     nat32Classifier.replace("${arch}", "32");
                     auto nat64Classifier = nativeClassifier;
                     nat64Classifier.replace("${arch}", "64");
-                    auto nat32info = m_mojangDownloads->getDownloadInfo(nat32Classifier);
+                    auto* nat32info = m_mojangDownloads->getDownloadInfo(nat32Classifier);
                     if (nat32info) {
                         auto cooked_storage = raw_storage;
                         cooked_storage.replace("${arch}", "32");
                         add_download(cooked_storage, nat32info->url, nat32info->sha1);
                     }
-                    auto nat64info = m_mojangDownloads->getDownloadInfo(nat64Classifier);
+                    auto* nat64info = m_mojangDownloads->getDownloadInfo(nat64Classifier);
                     if (nat64info) {
                         auto cooked_storage = raw_storage;
                         cooked_storage.replace("${arch}", "64");
                         add_download(cooked_storage, nat64info->url, nat64info->sha1);
                     }
                 } else {
-                    auto info = m_mojangDownloads->getDownloadInfo(nativeClassifier);
+                    auto* info = m_mojangDownloads->getDownloadInfo(nativeClassifier);
                     if (info) {
                         add_download(raw_storage, info->url, info->sha1);
                     }
@@ -209,9 +210,8 @@ QList<Net::NetRequest::Ptr> Library::getDownloads(const RuntimeContext& runtimeC
 
             if (m_repositoryURL.endsWith('/')) {
                 return m_repositoryURL + raw_storage;
-            } else {
-                return m_repositoryURL + QChar('/') + raw_storage;
             }
+            return m_repositoryURL + QChar('/') + raw_storage;
         }();
         if (raw_storage.contains("${arch}")) {
             QString cooked_storage = raw_storage;
@@ -245,8 +245,9 @@ bool Library::isActive(const RuntimeContext& runtimeContext) const
         Rule::Action ruleResult = Rule::Disallow;
         for (auto rule : m_rules) {
             Rule::Action temp = rule.apply(runtimeContext);
-            if (temp != Rule::Defer)
+            if (temp != Rule::Defer) {
                 ruleResult = temp;
+            }
         }
         result = result && (ruleResult == Rule::Allow);
     }
@@ -290,11 +291,13 @@ QString Library::getCompatibleNative(const RuntimeContext& runtimeContext) const
     // try to match precise classifier "[os]-[arch]"
     auto entry = m_nativeClassifiers.constFind(runtimeContext.getClassifier());
     // try to match imprecise classifier on legacy architectures "[os]"
-    if (entry == m_nativeClassifiers.constEnd() && runtimeContext.isLegacyArch())
+    if (entry == m_nativeClassifiers.constEnd() && runtimeContext.isLegacyArch()) {
         entry = m_nativeClassifiers.constFind(runtimeContext.system);
+    }
 
-    if (entry == m_nativeClassifiers.constEnd())
+    if (entry == m_nativeClassifiers.constEnd()) {
         return QString();
+    }
 
     return entry.value();
 }
@@ -373,8 +376,9 @@ QString Library::filename(const RuntimeContext& runtimeContext) const
  */
 QString Library::displayName(const RuntimeContext& runtimeContext) const
 {
-    if (!m_displayname.isEmpty())
+    if (!m_displayname.isEmpty()) {
         return m_displayname;
+    }
     return filename(runtimeContext);
 }
 

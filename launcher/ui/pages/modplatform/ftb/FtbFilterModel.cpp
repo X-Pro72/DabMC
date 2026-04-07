@@ -32,7 +32,7 @@ FilterModel::FilterModel(QObject* parent) : QSortFilterProxyModel(parent)
     m_sortings.insert(tr("Sort by Name"), Sorting::ByName);
 }
 
-const QMap<QString, FilterModel::Sorting> FilterModel::getAvailableSortings()
+QMap<QString, FilterModel::Sorting> FilterModel::getAvailableSortings()
 {
     return m_sortings;
 }
@@ -77,9 +77,11 @@ bool FilterModel::lessThan(const QModelIndex& left, const QModelIndex& right) co
 
     if (m_currentSorting == ByPlays) {
         return leftPack.plays < rightPack.plays;
-    } else if (m_currentSorting == ByInstalls) {
+    }
+    if (m_currentSorting == ByInstalls) {
         return leftPack.installs < rightPack.installs;
-    } else if (m_currentSorting == ByName) {
+    }
+    if (m_currentSorting == ByName) {
         return StringUtils::naturalCompare(leftPack.name, rightPack.name, Qt::CaseSensitive) >= 0;
     }
 

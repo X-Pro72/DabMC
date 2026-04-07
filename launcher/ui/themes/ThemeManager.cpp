@@ -62,10 +62,11 @@ ThemeManager::~ThemeManager()
 QString ThemeManager::addTheme(std::unique_ptr<ITheme> theme)
 {
     QString id = theme->id();
-    if (m_themes.find(id) == m_themes.end())
+    if (!m_themes.contains(id)) {
         m_themes.emplace(id, std::move(theme));
-    else
+    } else {
         themeWarningLog() << "Theme(" << id << ") not added to prevent id duplication";
+    }
     return id;
 }
 
@@ -80,10 +81,11 @@ ITheme* ThemeManager::getTheme(QString themeId)
 QString ThemeManager::addIconTheme(IconTheme theme)
 {
     QString id = theme.id();
-    if (m_icons.find(id) == m_icons.end())
+    if (!m_icons.contains(id)) {
         m_icons.emplace(id, std::move(theme));
-    else
+    } else {
         themeWarningLog() << "IconTheme(" << id << ") not added to prevent id duplication";
+    }
     return id;
 }
 
@@ -113,16 +115,18 @@ void ThemeManager::initializeIcons()
         themeDebugLog() << "Loaded Built-In Icon Theme" << id;
     }
 
-    if (!m_iconThemeFolder.mkpath("."))
+    if (!m_iconThemeFolder.mkpath(".")) {
         themeWarningLog() << "Couldn't create icon theme folder";
+    }
     themeDebugLog() << "Icon Theme Folder Path:" << m_iconThemeFolder.absolutePath();
 
     QDirIterator directoryIterator(m_iconThemeFolder.path(), QDir::Dirs | QDir::NoDotAndDotDot);
     while (directoryIterator.hasNext()) {
         QDir dir(directoryIterator.next());
         IconTheme theme(dir.dirName(), dir.path());
-        if (!theme.load())
+        if (!theme.load()) {
             continue;
+        }
 
         addIconTheme(std::move(theme));
         themeDebugLog() << "Loaded Custom Icon Theme from" << dir.path();
@@ -153,8 +157,9 @@ void ThemeManager::initializeWidgets()
     // TODO: need some way to differentiate same name themes in different subdirectories
     //  (maybe smaller grey text next to theme name in dropdown?)
 
-    if (!m_applicationThemeFolder.mkpath("."))
+    if (!m_applicationThemeFolder.mkpath(".")) {
         themeWarningLog() << "Couldn't create theme folder";
+    }
     themeDebugLog() << "Theme Folder Path:" << m_applicationThemeFolder.absolutePath();
 
     QDirIterator directoryIterator(m_applicationThemeFolder.path(), QDir::Dirs | QDir::NoDotAndDotDot);
@@ -218,12 +223,12 @@ QList<CatPack*> ThemeManager::getValidCatPacks()
 
 bool ThemeManager::isValidIconTheme(const QString& id)
 {
-    return !id.isEmpty() && m_icons.find(id) != m_icons.end();
+    return !id.isEmpty() && m_icons.contains(id);
 }
 
 bool ThemeManager::isValidApplicationTheme(const QString& id)
 {
-    return !id.isEmpty() && m_themes.find(id) != m_themes.end();
+    return !id.isEmpty() && m_themes.contains(id);
 }
 
 QDir ThemeManager::getIconThemesFolder()
@@ -243,7 +248,7 @@ QDir ThemeManager::getCatPacksFolder()
 
 void ThemeManager::setIconTheme(const QString& name)
 {
-    if (m_icons.find(name) == m_icons.end()) {
+    if (!m_icons.contains(name)) {
         themeWarningLog() << "Tried to set invalid icon theme:" << name;
         return;
     }
@@ -269,7 +274,7 @@ void ThemeManager::setApplicationTheme(const QString& name, bool initial)
 
 void ThemeManager::applyCurrentlySelectedTheme(bool initial)
 {
-    auto settings = APPLICATION->settings();
+    auto* settings = APPLICATION->settings();
     setIconTheme(settings->get("IconTheme").toString());
     themeDebugLog() << "<> Icon theme set.";
     auto applicationTheme = settings->get("ApplicationTheme").toString();
@@ -287,9 +292,8 @@ QString ThemeManager::getCatPack(QString catName)
         auto& catPack = catIter->second;
         themeDebugLog() << "applying catpack" << catPack->id();
         return catPack->path();
-    } else {
-        themeWarningLog() << "Tried to get invalid catPack:" << catName;
     }
+    themeWarningLog() << "Tried to get invalid catPack:" << catName;
 
     return m_catPacks.begin()->second->path();
 }
@@ -297,10 +301,11 @@ QString ThemeManager::getCatPack(QString catName)
 QString ThemeManager::addCatPack(std::unique_ptr<CatPack> catPack)
 {
     QString id = catPack->id();
-    if (m_catPacks.find(id) == m_catPacks.end())
+    if (!m_catPacks.contains(id)) {
         m_catPacks.emplace(id, std::move(catPack));
-    else
+    } else {
         themeWarningLog() << "CatPack(" << id << ") not added to prevent id duplication";
+    }
     return id;
 }
 
@@ -313,8 +318,9 @@ void ThemeManager::initializeCatPacks()
     for (auto [id, name] : defaultCats) {
         addCatPack(std::unique_ptr<CatPack>(new BasicCatPack(id, name)));
     }
-    if (!m_catPacksFolder.mkpath("."))
+    if (!m_catPacksFolder.mkpath(".")) {
         themeWarningLog() << "Couldn't create catpacks folder";
+    }
     themeDebugLog() << "CatPacks Folder Path:" << m_catPacksFolder.absolutePath();
 
     QStringList supportedImageFormats;

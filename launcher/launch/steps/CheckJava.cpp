@@ -43,8 +43,8 @@
 
 void CheckJava::executeTask()
 {
-    auto instance = m_parent->instance();
-    auto settings = instance->settings();
+    auto* instance = m_parent->instance();
+    auto* settings = instance->settings();
 
     QString javaPathSetting = settings->get("JavaPath").toString();
     m_javaPath = FS::ResolveExecutable(javaPathSetting);
@@ -66,9 +66,8 @@ void CheckJava::executeTask()
         }
         emitFailed(QString("Java path is not valid."));
         return;
-    } else {
-        emit logLine("Java path is:\n  " + m_javaPath, MessageLevel::Launcher);
     }
+    emit logLine("Java path is:\n  " + m_javaPath, MessageLevel::Launcher);
 
     if (JavaUtils::getJavaCheckPath().isEmpty()) {
         const char* reason = QT_TR_NOOP("Java checker library could not be found. Please check your installation.");
@@ -98,13 +97,12 @@ void CheckJava::executeTask()
         connect(m_JavaChecker.get(), &JavaChecker::checkFinished, this, &CheckJava::checkJavaFinished);
         m_JavaChecker->start();
         return;
-    } else {
-        auto verString = instance->settings()->get("JavaVersion").toString();
-        auto archString = instance->settings()->get("JavaArchitecture").toString();
-        auto realArchString = settings->get("JavaRealArchitecture").toString();
-        auto vendorString = instance->settings()->get("JavaVendor").toString();
-        printJavaInfo(verString, archString, realArchString, vendorString);
     }
+    auto verString = instance->settings()->get("JavaVersion").toString();
+    auto archString = instance->settings()->get("JavaArchitecture").toString();
+    auto realArchString = settings->get("JavaRealArchitecture").toString();
+    auto vendorString = instance->settings()->get("JavaVendor").toString();
+    printJavaInfo(verString, archString, realArchString, vendorString);
     m_parent->instance()->updateRuntimeContext();
     emitSucceeded();
 }
@@ -129,7 +127,7 @@ void CheckJava::checkJavaFinished(const JavaChecker::Result& result)
             return;
         }
         case JavaChecker::Result::Validity::Valid: {
-            auto instance = m_parent->instance();
+            auto* instance = m_parent->instance();
             printJavaInfo(result.javaVersion.toString(), result.mojangPlatform, result.realPlatform, result.javaVendor);
             instance->settings()->set("JavaVersion", result.javaVersion.toString());
             instance->settings()->set("JavaArchitecture", result.mojangPlatform);
@@ -145,7 +143,6 @@ void CheckJava::checkJavaFinished(const JavaChecker::Result& result)
 
 void CheckJava::printJavaInfo(const QString& version, const QString& architecture, const QString& realArchitecture, const QString& vendor)
 {
-    emit logLine(
-        QString("Java is version %1, using %2 (%3) architecture, from %4").arg(version, architecture, realArchitecture, vendor),
-        MessageLevel::Launcher);
+    emit logLine(QString("Java is version %1, using %2 (%3) architecture, from %4").arg(version, architecture, realArchitecture, vendor),
+                 MessageLevel::Launcher);
 }

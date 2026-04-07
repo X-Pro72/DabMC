@@ -78,7 +78,7 @@ QVariant VersionList::data(const QModelIndex& index, int role) const
         case ParentVersionRole: {
             // FIXME: HACK: this should be generic and be replaced by something else. Anything that is a hard 'equals' dep is a 'parent
             // uid'.
-            auto& reqs = version->requiredSet();
+            const auto& reqs = version->requiredSet();
             auto iter = std::find_if(reqs.begin(), reqs.end(), [](const Require& req) { return req.uid == "net.minecraft"; });
             if (iter != reqs.end()) {
                 return (*iter).equalsVersion;
@@ -159,7 +159,7 @@ Version::Ptr VersionList::getVersion(const QString& version)
 bool VersionList::hasVersion(QString version) const
 {
     auto ver = std::find_if(m_versions.constBegin(), m_versions.constEnd(),
-                            [version](Meta::Version::Ptr const& a) { return a->version() == version; });
+                            [version](const Meta::Version::Ptr& a) { return a->version() == version; });
     return (ver != m_versions.constEnd());
 }
 
@@ -205,10 +205,12 @@ void VersionList::clearExternalRecommends()
 // FIXME: this is dumb, we have 'recommended' as part of the metadata already...
 static const Meta::Version::Ptr& getBetterVersion(const Meta::Version::Ptr& a, const Meta::Version::Ptr& b)
 {
-    if (!a)
+    if (!a) {
         return b;
-    if (!b)
+    }
+    if (!b) {
         return a;
+    }
     if (a->type() == b->type()) {
         // newer of same type wins
         return (a->rawTime() > b->rawTime() ? a : b);
@@ -278,8 +280,9 @@ BaseVersion::Ptr VersionList::getRecommended() const
 
 void VersionList::waitToLoad()
 {
-    if (isLoaded())
+    if (isLoaded()) {
         return;
+    }
     QEventLoop ev;
     auto task = getLoadTask();
     connect(task.get(), &Task::finished, &ev, &QEventLoop::quit);
@@ -290,7 +293,7 @@ void VersionList::waitToLoad()
 Version::Ptr VersionList::getRecommendedForParent(const QString& uid, const QString& version)
 {
     auto foundExplicit = std::find_if(m_versions.begin(), m_versions.end(), [uid, version](Version::Ptr ver) -> bool {
-        auto& reqs = ver->requiredSet();
+        const auto& reqs = ver->requiredSet();
         auto parentReq = std::find_if(reqs.begin(), reqs.end(), [uid, version](const Require& req) -> bool {
             return req.uid == uid && req.equalsVersion == version;
         });
@@ -306,7 +309,7 @@ Version::Ptr VersionList::getLatestForParent(const QString& uid, const QString& 
 {
     Version::Ptr latestCompat = nullptr;
     for (auto ver : m_versions) {
-        auto& reqs = ver->requiredSet();
+        const auto& reqs = ver->requiredSet();
         auto parentReq = std::find_if(reqs.begin(), reqs.end(), [uid, version](const Require& req) -> bool {
             return req.uid == uid && req.equalsVersion == version;
         });

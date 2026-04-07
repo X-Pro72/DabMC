@@ -36,6 +36,8 @@
 #include "LaunchProfile.h"
 #include <Version.h>
 
+#include <algorithm>
+
 void LaunchProfile::clear()
 {
     m_minecraftVersion.clear();
@@ -57,8 +59,9 @@ void LaunchProfile::clear()
 
 static void applyString(const QString& from, QString& to)
 {
-    if (from.isEmpty())
+    if (from.isEmpty()) {
         return;
+    }
     to = from;
 }
 
@@ -130,8 +133,9 @@ static int findLibraryByName(QList<LibraryPtr>* haystack, const GradleSpecifier&
     for (int i = 0; i < haystack->size(); ++i) {
         if (haystack->at(i)->rawName().matchName(needle)) {
             // only one is allowed.
-            if (retval != -1)
+            if (retval != -1) {
                 return -1;
+            }
             retval = i;
         }
     }
@@ -141,7 +145,7 @@ static int findLibraryByName(QList<LibraryPtr>* haystack, const GradleSpecifier&
 void LaunchProfile::applyMods(const QList<LibraryPtr>& mods)
 {
     QList<LibraryPtr>* list = &m_mods;
-    for (auto& mod : mods) {
+    for (const auto& mod : mods) {
         auto modCopy = Library::limitedCopy(mod);
 
         // find the mod by name.
@@ -167,8 +171,9 @@ void LaunchProfile::applyCompatibleJavaMajors(QList<int>& javaMajor)
 
 void LaunchProfile::applyCompatibleJavaName(QString javaName)
 {
-    if (!javaName.isEmpty())
+    if (!javaName.isEmpty()) {
         m_compatibleJavaName = javaName;
+    }
 }
 
 void LaunchProfile::applyLibrary(LibraryPtr library, const RuntimeContext& runtimeContext)
@@ -227,7 +232,7 @@ void LaunchProfile::applyAgent(const Agent& agent, const RuntimeContext& runtime
     m_agents.append(agent);
 }
 
-const LibraryPtr LaunchProfile::getMainJar() const
+LibraryPtr LaunchProfile::getMainJar() const
 {
     return m_mainJar;
 }
@@ -241,9 +246,7 @@ void LaunchProfile::applyMainJar(LibraryPtr jar)
 
 void LaunchProfile::applyProblemSeverity(ProblemSeverity severity)
 {
-    if (m_problemSeverity < severity) {
-        m_problemSeverity = severity;
-    }
+    m_problemSeverity = std::max(m_problemSeverity, severity);
 }
 
 const QList<PatchProblem> LaunchProfile::getProblems() const
@@ -340,7 +343,7 @@ const QList<int>& LaunchProfile::getCompatibleJavaMajors() const
     return m_compatibleJavaMajors;
 }
 
-const QString LaunchProfile::getCompatibleJavaName() const
+QString LaunchProfile::getCompatibleJavaName() const
 {
     return m_compatibleJavaName;
 }
@@ -351,7 +354,8 @@ void LaunchProfile::getLibraryFiles(const RuntimeContext& runtimeContext,
                                     const QString& overridePath,
                                     const QString& tempPath) const
 {
-    QStringList native32, native64;
+    QStringList native32;
+    QStringList native64;
     jars.clear();
     nativeJars.clear();
     for (auto lib : getLibraries()) {
@@ -360,7 +364,7 @@ void LaunchProfile::getLibraryFiles(const RuntimeContext& runtimeContext,
     // NOTE: order is important here, add main jar last to the lists
     if (m_mainJar) {
         // FIXME: HACK!! jar modding is weird and unsystematic!
-        if (m_jarMods.size()) {
+        if (!m_jarMods.empty()) {
             QDir tempDir(tempPath);
             jars.append(tempDir.absoluteFilePath("minecraft.jar"));
         } else {

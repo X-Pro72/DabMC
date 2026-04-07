@@ -49,8 +49,9 @@
 void setupLinkToolTip(QLabel* label)
 {
     QObject::connect(label, &QLabel::linkHovered, [label](const QString& link) {
-        if (auto url = QUrl(link); !url.isValid() || (url.scheme() != "http" && url.scheme() != "https"))
+        if (auto url = QUrl(link); !url.isValid() || (url.scheme() != "http" && url.scheme() != "https")) {
             return;
+        }
         label->setToolTip(link);
     });
 }
@@ -86,18 +87,20 @@ void InfoFrame::updateWithMod(const Mod& m)
     QString text = "";
     QString name = "";
     QString link = m.homepage();
-    if (m.name().isEmpty())
+    if (m.name().isEmpty()) {
         name = m.internal_id();
-    else
+    } else {
         name = renderColorCodes(m.name());
+    }
 
-    if (link.isEmpty())
+    if (link.isEmpty()) {
         text = name;
-    else {
+    } else {
         text = "<a href=\"" + QUrl(link).toEncoded() + "\">" + name + "</a>";
     }
-    if (!m.authors().isEmpty())
+    if (!m.authors().isEmpty()) {
         text += " by " + m.authors().join(", ");
+    }
 
     setName(text);
 
@@ -149,10 +152,11 @@ void InfoFrame::updateWithResource(const Resource& resource)
     const QString homepage = resource.homepage();
     auto name = renderColorCodes(resource.name());
 
-    if (!homepage.isEmpty())
+    if (!homepage.isEmpty()) {
         setName("<a href=\"" + homepage + "\">" + name + "</a>");
-    else
+    } else {
         setName(name);
+    }
 
     setImage();
 }
@@ -179,7 +183,7 @@ QString InfoFrame::renderColorCodes(QString input)
     QString html("<html>");
     QList<QString> tags{};
 
-    auto it = input.constBegin();
+    const auto* it = input.constBegin();
     while (it != input.constEnd()) {
         // is current char § and is there a following char
         if (*it == u'§' && (it + 1) != input.constEnd()) {
@@ -287,10 +291,10 @@ void InfoFrame::setDescription(QString text)
         ui->descriptionLabel->setHidden(true);
         updateHiddenState();
         return;
-    } else {
-        ui->descriptionLabel->setHidden(false);
-        updateHiddenState();
     }
+    ui->descriptionLabel->setHidden(false);
+    updateHiddenState();
+
     ui->descriptionLabel->setToolTip("");
     QString intermediatetext = text.trimmed();
     bool prev(false);
@@ -341,10 +345,10 @@ void InfoFrame::setLicense(QString text)
         ui->licenseLabel->setHidden(true);
         updateHiddenState();
         return;
-    } else {
-        ui->licenseLabel->setHidden(false);
-        updateHiddenState();
     }
+    ui->licenseLabel->setHidden(false);
+    updateHiddenState();
+
     ui->licenseLabel->setToolTip("");
     QString intermediatetext = text.trimmed();
     bool prev(false);

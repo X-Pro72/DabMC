@@ -49,15 +49,15 @@
 
 namespace Net {
 
-#if defined(LAUNCHER_APPLICATION)
+#ifdef LAUNCHER_APPLICATION
 auto Download::makeCached(QUrl url, MetaEntryPtr entry, Options options) -> Download::Ptr
 {
     auto dl = makeShared<Download>();
     dl->m_url = url;
     dl->setObjectName(QString("CACHE:") + url.toString());
     dl->m_options = options;
-    auto md5Node = new ChecksumValidator(QCryptographicHash::Md5);
-    auto cachedNode = new MetaCacheSink(entry, md5Node, options.testFlag(Option::MakeEternal));
+    auto* md5Node = new ChecksumValidator(QCryptographicHash::Md5);
+    auto* cachedNode = new MetaCacheSink(entry, md5Node, options.testFlag(Option::MakeEternal));
     dl->m_sink.reset(cachedNode);
     return dl;
 }

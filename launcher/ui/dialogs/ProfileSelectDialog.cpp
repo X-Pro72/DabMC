@@ -45,7 +45,7 @@ ProfileSelectDialog::ProfileSelectDialog(const QString& message, int flags, QWid
 
     m_accounts = APPLICATION->accounts();
 
-    auto proxy = new HideCheckboxProxyModel(ui->view);
+    auto* proxy = new HideCheckboxProxyModel(ui->view);
     proxy->setSourceModel(m_accounts);
     ui->view->setModel(proxy);
 
@@ -90,7 +90,7 @@ bool ProfileSelectDialog::useAsInstDefaullt() const
 void ProfileSelectDialog::on_buttonBox_accepted()
 {
     QModelIndexList selection = ui->view->selectionModel()->selectedIndexes();
-    if (selection.size() > 0) {
+    if (!selection.empty()) {
         QModelIndex selected = selection.first();
         m_selected = selected.data(AccountList::PointerRole).value<MinecraftAccountPtr>();
     }

@@ -26,8 +26,8 @@
 #include "net/NetJob.h"
 
 #include "Application.h"
-#include "settings/SettingsObject.h"
 #include "BuildConfig.h"
+#include "settings/SettingsObject.h"
 #include "tasks/Task.h"
 
 namespace Meta {
@@ -74,7 +74,7 @@ class ParsingValidator : public Net::Validator {
 
 QUrl BaseEntity::url() const
 {
-    auto s = APPLICATION->settings();
+    auto* s = APPLICATION->settings();
     QString metaOverride = s->get("MetaURLOverride").toString();
     if (metaOverride.isEmpty()) {
         return QUrl(BuildConfig.META_URL).resolved(localFilename());
@@ -162,8 +162,9 @@ void BaseEntityLoadTask::executeTask()
      * The validator parses the file and loads it into the object.
      * If that fails, the file is not written to storage.
      */
-    if (!m_entity->m_sha256.isEmpty())
+    if (!m_entity->m_sha256.isEmpty()) {
         dl->addValidator(new Net::ChecksumValidator(QCryptographicHash::Algorithm::Sha256, m_entity->m_sha256));
+    }
     dl->addValidator(new ParsingValidator(m_entity));
     m_task->addNetAction(dl);
     m_task->setAskRetry(false);

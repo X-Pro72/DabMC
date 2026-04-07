@@ -85,13 +85,13 @@ namespace Meta {
 class Index;
 }
 
-#if defined(APPLICATION)
+#ifdef APPLICATION
 #undef APPLICATION
 #endif
 #define APPLICATION (static_cast<Application*>(QCoreApplication::instance()))
 
 // Used for checking if is a test
-#if defined(APPLICATION_DYN)
+#ifdef APPLICATION_DYN
 #undef APPLICATION_DYN
 #endif
 #define APPLICATION_DYN (dynamic_cast<Application*>(QCoreApplication::instance()))
@@ -121,7 +121,7 @@ class Application : public QApplication {
 
     qint64 timeSinceStart() const { return m_startTime.msecsTo(QDateTime::currentDateTime()); }
 
-    QIcon logo();
+    static QIcon logo();
 
     ThemeManager* themeManager() { return m_themeManager.get(); }
 
@@ -175,11 +175,11 @@ class Application : public QApplication {
     const QString& dataRoot() { return m_dataPath; }
 
     /// the java installed path the application is using
-    const QString javaPath();
+    QString javaPath();
 
-    bool isPortable() { return m_portable; }
+    bool isPortable() const { return m_portable; }
 
-    const Capabilities capabilities() { return m_capabilities; }
+    Capabilities capabilities() { return m_capabilities; }
 
     /*!
      * Opens a json file using either a system default editor, or, if not empty, the editor
@@ -192,14 +192,14 @@ class Application : public QApplication {
     ViewLogWindow* showLogWindow();
 
     void updateIsRunning(bool running);
-    bool updatesAreAllowed();
+    bool updatesAreAllowed() const;
 
     void ShowGlobalSettings(class QWidget* parent, QString open_page = QString());
 
     bool updaterEnabled();
-    QString updaterBinaryName();
+    static QString updaterBinaryName();
 
-    QUrl normalizeImportUrl(const QString& url);
+    static QUrl normalizeImportUrl(const QString& url);
 
    signals:
     void updateAllowedChanged(bool status);
@@ -220,7 +220,7 @@ class Application : public QApplication {
                 shared_qobject_ptr<MinecraftAccount> accountToUse = nullptr,
                 const QString& offlineName = QString());
     bool kill(BaseInstance* instance);
-    void closeCurrentWindow();
+    static void closeCurrentWindow();
 
    private slots:
     void on_windowClose();
@@ -229,7 +229,7 @@ class Application : public QApplication {
     void setupWizardFinished(int status);
 
    private:
-    bool handleDataMigration(const QString& currentData, const QString& oldData, const QString& name, const QString& configFile) const;
+    static bool handleDataMigration(const QString& currentData, const QString& oldData, const QString& name, const QString& configFile);
     bool createSetupWizard();
     void performMainStartupAction();
 

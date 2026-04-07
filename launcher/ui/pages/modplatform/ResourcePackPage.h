@@ -23,7 +23,7 @@ class ResourcePackResourcePage : public ResourcePage {
     static T* create(ResourcePackDownloadDialog* dialog, BaseInstance& instance)
     {
         auto page = new T(dialog, instance);
-        auto model = static_cast<ResourcePackResourceModel*>(page->getModel());
+        auto* model = static_cast<ResourcePackResourceModel*>(page->getModel());
 
         connect(model, &ResourceModel::versionListUpdated, page, &ResourcePage::versionListUpdated);
         connect(model, &ResourceModel::projectInfoUpdated, page, &ResourcePage::updateUi);
@@ -33,15 +33,15 @@ class ResourcePackResourcePage : public ResourcePage {
     }
 
     //: The plural version of 'resource pack'
-    inline QString resourcesString() const override { return tr("resource packs"); }
+    QString resourcesString() const override { return tr("resource packs"); }
     //: The singular version of 'resource packs'
-    inline QString resourceString() const override { return tr("resource pack"); }
+    QString resourceString() const override { return tr("resource pack"); }
 
     bool supportsFiltering() const override { return false; };
 
     QMap<QString, QString> urlHandlers() const override;
 
-    inline auto helpPage() const -> QString override { return "resourcepack-platform"; }
+    auto helpPage() const -> QString override { return "resourcepack-platform"; }
 
    protected:
     ResourcePackResourcePage(ResourceDownloadDialog* dialog, BaseInstance& instance);

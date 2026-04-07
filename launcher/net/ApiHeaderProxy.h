@@ -27,7 +27,7 @@ namespace Net {
 
 class ApiHeaderProxy : public HeaderProxy {
    public:
-    ApiHeaderProxy() : HeaderProxy() {}
+    ApiHeaderProxy() {}
     virtual ~ApiHeaderProxy() = default;
 
    public:
@@ -39,8 +39,9 @@ class ApiHeaderProxy : public HeaderProxy {
         } else if (request.url().host() == QUrl(BuildConfig.MODRINTH_PROD_URL).host() ||
                    request.url().host() == QUrl(BuildConfig.MODRINTH_STAGING_URL).host()) {
             QString token = APPLICATION->getModrinthAPIToken();
-            if (!token.isNull())
+            if (!token.isNull()) {
                 hdrs.append({ "Authorization", token.toUtf8() });
+            }
         }
         return hdrs;
     };

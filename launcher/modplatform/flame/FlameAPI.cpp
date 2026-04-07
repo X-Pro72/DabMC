@@ -21,7 +21,7 @@ std::pair<Task::Ptr, QByteArray*> FlameAPI::matchFingerprints(const QList<uint>&
 
     QJsonObject body_obj;
     QJsonArray fingerprints_arr;
-    for (auto& fp : fingerprints) {
+    for (const auto& fp : fingerprints) {
         fingerprints_arr.append(QString("%1").arg(fp));
     }
 
@@ -124,13 +124,13 @@ std::pair<Task::Ptr, QByteArray*> FlameAPI::getProjects(QStringList addonIds) co
     return { netJob, response };
 }
 
-std::pair<Task::Ptr, QByteArray*> FlameAPI::getFiles(const QStringList& fileIds) const
+std::pair<Task::Ptr, QByteArray*> FlameAPI::getFiles(const QStringList& fileIds)
 {
     auto netJob = makeShared<NetJob>(QString("Flame::GetFiles"), APPLICATION->network());
 
     QJsonObject body_obj;
     QJsonArray files_arr;
-    for (auto& fileId : fileIds) {
+    for (const auto& fileId : fileIds) {
         files_arr.append(fileId);
     }
 
@@ -147,7 +147,7 @@ std::pair<Task::Ptr, QByteArray*> FlameAPI::getFiles(const QStringList& fileIds)
     return { netJob, response };
 }
 
-std::pair<Task::Ptr, QByteArray*> FlameAPI::getFile(const QString& addonId, const QString& fileId) const
+std::pair<Task::Ptr, QByteArray*> FlameAPI::getFile(const QString& addonId, const QString& fileId)
 {
     auto netJob = makeShared<NetJob>(QString("Flame::GetFile"), APPLICATION->network());
     auto [action, response] =

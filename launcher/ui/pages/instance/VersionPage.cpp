@@ -92,7 +92,8 @@ class IconProxy : public QIdentityProxyModel {
                 auto string = var.toString();
                 if (string == "warning") {
                     return QIcon::fromTheme("status-yellow");
-                } else if (string == "error") {
+                }
+                if (string == "error") {
                     return QIcon::fromTheme("status-bad");
                 }
             }
@@ -123,7 +124,7 @@ void VersionPage::retranslate()
 
 void VersionPage::openedImpl()
 {
-    auto const setting_name = QString("WideBarVisibility_%1").arg(id());
+    const auto setting_name = QString("WideBarVisibility_%1").arg(id());
     m_wide_bar_setting = APPLICATION->settings()->getOrRegisterSetting(setting_name);
 
     ui->toolBar->setVisibilityState(QByteArray::fromBase64(m_wide_bar_setting->get().toString().toUtf8()));
@@ -150,7 +151,7 @@ VersionPage::VersionPage(MinecraftInstance* inst, QWidget* parent) : QMainWindow
 
     reloadPackProfile();
 
-    auto proxy = new IconProxy(ui->packageView);
+    auto* proxy = new IconProxy(ui->packageView);
     proxy->setSourceModel(m_profile);
 
     m_filterModel = new QSortFilterProxyModel(this);
@@ -165,7 +166,7 @@ VersionPage::VersionPage(MinecraftInstance* inst, QWidget* parent) : QMainWindow
     ui->packageView->setSelectionMode(QAbstractItemView::SingleSelection);
     ui->packageView->setContextMenuPolicy(Qt::CustomContextMenu);
 
-    auto smodel = ui->packageView->selectionModel();
+    auto* smodel = ui->packageView->selectionModel();
     connect(smodel, &QItemSelectionModel::currentChanged, this, &VersionPage::versionCurrent);
     connect(smodel, &QItemSelectionModel::currentChanged, this, &VersionPage::packageCurrent);
     connect(m_profile, &PackProfile::minecraftChanged, this, &VersionPage::updateVersionControls);
@@ -186,7 +187,7 @@ VersionPage::~VersionPage()
 
 void VersionPage::showContextMenu(const QPoint& pos)
 {
-    auto menu = ui->toolBar->createContextMenu(this, tr("Context menu"));
+    auto* menu = ui->toolBar->createContextMenu(this, tr("Context menu"));
     menu->exec(ui->packageView->mapToGlobal(pos));
     delete menu;
 }
@@ -213,9 +214,9 @@ void VersionPage::packageCurrent(const QModelIndex& current, [[maybe_unused]] co
             return;
     }
 
-    auto& problems = patch->getProblems();
+    const auto& problems = patch->getProblems();
     QString problemOut;
-    for (auto& problem : problems) {
+    for (const auto& problem : problems) {
         if (problem.m_severity == ProblemSeverity::Error) {
             problemOut += tr("Error: ");
         } else if (problem.m_severity == ProblemSeverity::Warning) {
@@ -234,12 +235,13 @@ void VersionPage::updateVersionControls()
 
 void VersionPage::updateButtons(int row)
 {
-    if (row == -1)
+    if (row == -1) {
         row = currentRow();
+    }
     auto patch = m_profile->getComponent(row);
     ui->actionRemove->setEnabled(patch && patch->isRemovable());
-    ui->actionMove_down->setEnabled(patch && patch->isMoveable());
-    ui->actionMove_up->setEnabled(patch && patch->isMoveable());
+    ui->actionMove_down->setEnabled(patch && Component::isMoveable());
+    ui->actionMove_up->setEnabled(patch && Component::isMoveable());
     ui->actionChange_version->setEnabled(patch && patch->isVersionChangeable(false));
     ui->actionEdit->setEnabled(patch && patch->isCustom());
     ui->actionCustomize->setEnabled(patch && patch->isCustomizable());
@@ -285,8 +287,9 @@ void VersionPage::on_actionRemove_triggered()
                                                      QMessageBox::Warning, QMessageBox::Yes | QMessageBox::No, QMessageBox::No)
                             ->exec();
 
-        if (response != QMessageBox::Yes)
+        if (response != QMessageBox::Yes) {
             return;
+        }
     }
     // FIXME: use actual model, not reloading.
     if (!m_profile->remove(index)) {
@@ -337,8 +340,9 @@ void VersionPage::on_actionAdd_Agents_triggered()
     QStringList list = GuiUtil::BrowseForFiles("agent", tr("Select agents"), tr("Java agents") + " (*.jar)",
                                                APPLICATION->settings()->get("CentralModsDir").toString(), this->parentWidget());
 
-    if (!list.isEmpty())
+    if (!list.isEmpty()) {
         m_profile->installAgents(list);
+    }
 
     updateButtons();
 }
@@ -402,8 +406,9 @@ void VersionPage::on_actionChange_version_triggered()
     if (!currentVersion.isEmpty()) {
         vselect.setCurrentVersion(currentVersion);
     }
-    if (!vselect.exec() || !vselect.selectedVersion())
+    if (!vselect.exec() || !vselect.selectedVersion()) {
         return;
+    }
 
     qDebug() << "Change" << uid << "to" << vselect.selectedVersion()->descriptor();
     bool important = false;
@@ -488,9 +493,7 @@ void VersionPage::versionCurrent(const QModelIndex& current, [[maybe_unused]] co
 
 void VersionPage::preselect(int row)
 {
-    if (row < 0) {
-        row = 0;
-    }
+    row = std::max(row, 0);
     if (row >= m_profile->rowCount(QModelIndex())) {
         row = m_profile->rowCount(QModelIndex()) - 1;
     }
@@ -572,8 +575,9 @@ void VersionPage::on_actionRevert_triggered()
                                                  QMessageBox::Warning, QMessageBox::Yes | QMessageBox::No, QMessageBox::No)
                         ->exec();
 
-    if (response != QMessageBox::Yes)
+    if (response != QMessageBox::Yes) {
         return;
+    }
 
     if (!m_profile->revertToBase(version)) {
         // TODO: some error box here

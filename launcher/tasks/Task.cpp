@@ -78,28 +78,33 @@ void Task::start()
 {
     switch (m_state) {
         case State::Inactive: {
-            if (m_show_debug)
+            if (m_show_debug) {
                 qCDebug(taskLogC) << "Task" << describe() << "starting for the first time";
+            }
             break;
         }
         case State::AbortedByUser: {
-            if (m_show_debug)
+            if (m_show_debug) {
                 qCDebug(taskLogC) << "Task" << describe() << "restarting for after being aborted by user";
+            }
             break;
         }
         case State::Failed: {
-            if (m_show_debug)
+            if (m_show_debug) {
                 qCDebug(taskLogC) << "Task" << describe() << "restarting for after failing at first";
+            }
             break;
         }
         case State::Succeeded: {
-            if (m_show_debug)
+            if (m_show_debug) {
                 qCDebug(taskLogC) << "Task" << describe() << "restarting for after succeeding at first";
+            }
             break;
         }
         case State::Running: {
-            if (ASSERT_NEVER(isRunning()) && m_show_debug)
+            if (ASSERT_NEVER(isRunning()) && m_show_debug) {
                 qCWarning(taskLogC) << "The launcher tried to start task" << describe() << "while it was already running!";
+            }
             return;
         }
     }
@@ -132,8 +137,9 @@ void Task::emitAborted()
     }
     m_state = State::AbortedByUser;
     m_failReason = tr("Aborted");
-    if (m_show_debug)
+    if (m_show_debug) {
         qCDebug(taskLogC) << "Task" << describe() << "aborted.";
+    }
     emit aborted();
     emit finished();
 }
@@ -146,13 +152,14 @@ void Task::emitSucceeded()
         return;
     }
     m_state = State::Succeeded;
-    if (m_show_debug)
+    if (m_show_debug) {
         qCDebug(taskLogC) << "Task" << describe() << "succeeded";
+    }
     emit succeeded();
     emit finished();
 }
 
-void Task::propagateStepProgress(TaskStepProgress const& task_progress)
+void Task::propagateStepProgress(const TaskStepProgress& task_progress)
 {
     emit stepProgress(task_progress);
 }

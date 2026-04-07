@@ -100,12 +100,14 @@ class InstallJavaPage : public QWidget, public BasePage {
 
     void openedImpl() override
     {
-        if (loaded)
+        if (loaded) {
             return;
+        }
 
         const auto versions = APPLICATION->metadataIndex()->get(uid);
-        if (!versions)
+        if (!versions) {
             return;
+        }
 
         initialize(versions);
         loaded = true;
@@ -113,7 +115,7 @@ class InstallJavaPage : public QWidget, public BasePage {
 
     void setParentContainer(BasePageContainer* container) override
     {
-        auto dialog = dynamic_cast<QDialog*>(dynamic_cast<PageContainer*>(container)->parent());
+        auto* dialog = dynamic_cast<QDialog*>(dynamic_cast<PageContainer*>(container)->parent());
         connect(javaVersionSelect->view(), &QAbstractItemView::doubleClicked, dialog, &QDialog::accept);
     }
 
@@ -164,7 +166,7 @@ class InstallJavaPage : public QWidget, public BasePage {
 
 static InstallJavaPage* pageCast(BasePage* page)
 {
-    auto result = dynamic_cast<InstallJavaPage*>(page);
+    auto* result = dynamic_cast<InstallJavaPage*>(page);
     Q_ASSERT(result != nullptr);
     return result;
 }
@@ -185,27 +187,27 @@ QStringList getRecommendedJavaVersionsFromVersionList(Meta::VersionList::Ptr lis
 InstallDialog::InstallDialog(const QString& uid, BaseInstance* instance, QWidget* parent)
     : QDialog(parent), container(new PageContainer(this, QString(), this)), buttons(new QDialogButtonBox(this))
 {
-    auto layout = new QVBoxLayout(this);
-    // small margins look ugly on macOS on modal windows
-    #ifndef Q_OS_MACOS
+    auto* layout = new QVBoxLayout(this);
+// small margins look ugly on macOS on modal windows
+#ifndef Q_OS_MACOS
     layout->setContentsMargins(0, 0, 0, 0);
-    #endif
+#endif
     container->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
     layout->addWidget(container);
 
-    auto buttonLayout = new QHBoxLayout(this);
-    // small margins look ugly on macOS on modal windows
-    #ifndef Q_OS_MACOS
+    auto* buttonLayout = new QHBoxLayout(this);
+// small margins look ugly on macOS on modal windows
+#ifndef Q_OS_MACOS
     buttonLayout->setContentsMargins(0, 0, 6, 6);
-    #endif
+#endif
 
-    auto refreshLayout = new QHBoxLayout(this);
+    auto* refreshLayout = new QHBoxLayout(this);
 
-    auto refreshButton = new QPushButton(tr("&Refresh"), this);
+    auto* refreshButton = new QPushButton(tr("&Refresh"), this);
     connect(refreshButton, &QPushButton::clicked, this, [this] { pageCast(container->selectedPage())->loadList(); });
     refreshLayout->addWidget(refreshButton);
 
-    auto recommendedCheckBox = new QCheckBox("Recommended", this);
+    auto* recommendedCheckBox = new QCheckBox("Recommended", this);
     recommendedCheckBox->setCheckState(Qt::CheckState::Checked);
     connect(recommendedCheckBox, &QCheckBox::stateChanged, this, [this](int state) {
         for (BasePage* page : container->getPages()) {
@@ -231,7 +233,7 @@ InstallDialog::InstallDialog(const QString& uid, BaseInstance* instance, QWidget
     resize(840, 480);
 
     QStringList recommendedJavas;
-    if (auto mcInst = dynamic_cast<MinecraftInstance*>(instance); mcInst) {
+    if (auto* mcInst = dynamic_cast<MinecraftInstance*>(instance); mcInst) {
         auto mc = mcInst->getPackProfile()->getComponent("net.minecraft");
         if (mc) {
             auto file = mc->getVersionFile();  // no need for load as it should already be loaded
@@ -255,8 +257,9 @@ InstallDialog::InstallDialog(const QString& uid, BaseInstance* instance, QWidget
                             pageCast(page)->setRecommendedMajors(recommendedJavas);
                         }
                     });
-                    if (!newTask->isRunning())
+                    if (!newTask->isRunning()) {
                         newTask->start();
+                    }
                 } else {
                     recommendedJavas = getRecommendedJavaVersionsFromVersionList(versions);
                 }
@@ -264,10 +267,11 @@ InstallDialog::InstallDialog(const QString& uid, BaseInstance* instance, QWidget
         }
     }
     for (BasePage* page : container->getPages()) {
-        if (page->id() == uid)
+        if (page->id() == uid) {
             container->selectPage(page->id());
+        }
 
-        auto cast = pageCast(page);
+        auto* cast = pageCast(page);
         cast->setRecommend(true);
         connect(cast, &InstallJavaPage::selectionChanged, this, [this, cast] { validate(cast); });
         if (!recommendedJavas.isEmpty()) {
@@ -289,9 +293,9 @@ QList<BasePage*> InstallDialog::getPages()
         // Azul
         new InstallJavaPage("com.azul.java", "azul", tr("Azul Zulu")),
         // IBM
-	/* Must watch out in case the AdoptOpenJDK infrastructure is deprecated.
-        In case of happening, IBM does not seem to provide as of today (03/2026) an API like Adoptium does and rather uses GitHub directly in its website: `developer.ibm.com`.
-        GitHub is known for rate limiting requests that do not use an API key from an account. */
+        /* Must watch out in case the AdoptOpenJDK infrastructure is deprecated.
+        In case of happening, IBM does not seem to provide as of today (03/2026) an API like Adoptium does and rather uses GitHub directly
+        in its website: `developer.ibm.com`. GitHub is known for rate limiting requests that do not use an API key from an account. */
         new InstallJavaPage("com.ibm.java", "openj9_hex_custom", tr("IBM Semeru Open")),
     };
 }
@@ -329,7 +333,7 @@ void InstallDialog::done(int result)
                         deletePath();
                         return;
                 }
-#if defined(Q_OS_MACOS)
+#ifdef Q_OS_MACOS
                 auto seq = makeShared<SequentialTask>(tr("Install Java"));
                 seq->addTask(task);
                 seq->addTask(makeShared<Java::SymlinkTask>(final_path));

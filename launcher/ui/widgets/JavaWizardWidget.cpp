@@ -12,6 +12,7 @@
 #include <QSpinBox>
 #include <QToolButton>
 #include <QVBoxLayout>
+#include <algorithm>
 
 #include "DesktopServices.h"
 #include "FileSystem.h"
@@ -154,8 +155,9 @@ void JavaWizardWidget::setupUi()
         m_veriticalJavaLayout->addWidget(m_autodownloadCheckBox);
         connect(m_autodetectJavaCheckBox, &QCheckBox::stateChanged, this, [this] {
             m_autodownloadCheckBox->setEnabled(m_autodetectJavaCheckBox->isChecked());
-            if (!m_autodetectJavaCheckBox->isChecked())
+            if (!m_autodetectJavaCheckBox->isChecked()) {
                 m_autodownloadCheckBox->setChecked(false);
+            }
         });
 
         connect(m_autodownloadCheckBox, &QCheckBox::stateChanged, this, [this] {
@@ -188,7 +190,7 @@ void JavaWizardWidget::initialize()
     m_versionWidget->initialize(APPLICATION->javalist());
     m_versionWidget->selectSearch();
     m_versionWidget->setResizeOn(2);
-    auto s = APPLICATION->settings();
+    auto* s = APPLICATION->settings();
     // Memory
     observedMinMemory = s->get("MinMemAlloc").toInt();
     observedMaxMemory = s->get("MaxMemAlloc").toInt();
@@ -283,8 +285,7 @@ int JavaWizardWidget::maxHeapSize() const
 {
     auto min = m_minMemSpinBox->value();
     auto max = m_maxMemSpinBox->value();
-    if (max < min)
-        max = min;
+    max = std::max(max, min);
     return max;
 }
 
@@ -292,8 +293,7 @@ int JavaWizardWidget::minHeapSize() const
 {
     auto min = m_minMemSpinBox->value();
     auto max = m_maxMemSpinBox->value();
-    if (min > max)
-        min = max;
+    min = std::min(min, max);
     return min;
 }
 
@@ -358,7 +358,7 @@ void JavaWizardWidget::on_javaBrowseBtn_clicked()
 
 void JavaWizardWidget::javaDownloadBtn_clicked()
 {
-    auto jdialog = new Java::InstallDialog({}, nullptr, this);
+    auto* jdialog = new Java::InstallDialog({}, nullptr, this);
     jdialog->exec();
 }
 

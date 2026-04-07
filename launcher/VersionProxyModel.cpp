@@ -57,8 +57,9 @@ class VersionFilterModel : public QSortFilterProxyModel {
         const QString& search = m_parent->search();
         const QModelIndex idx = sourceModel()->index(source_row, 0, source_parent);
 
-        if (!search.isEmpty() && !sourceModel()->data(idx, BaseVersionList::VersionRole).toString().contains(search, Qt::CaseInsensitive))
+        if (!search.isEmpty() && !sourceModel()->data(idx, BaseVersionList::VersionRole).toString().contains(search, Qt::CaseInsensitive)) {
             return false;
+        }
 
         for (auto it = filters.begin(); it != filters.end(); ++it) {
             auto data = sourceModel()->data(idx, it.key());
@@ -99,10 +100,12 @@ VersionProxyModel::VersionProxyModel(QObject* parent) : QAbstractProxyModel(pare
 
 QVariant VersionProxyModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
-    if (section < 0 || section >= m_columns.size())
+    if (section < 0 || section >= m_columns.size()) {
         return QVariant();
-    if (orientation != Qt::Horizontal)
+    }
+    if (orientation != Qt::Horizontal) {
         return QVariant();
+    }
     auto column = m_columns[section];
     if (role == Qt::DisplayRole) {
         switch (column) {
@@ -192,7 +195,8 @@ QVariant VersionProxyModel::data(const QModelIndex& index, int role) const
                 auto value = sourceModel()->data(parentIndex, BaseVersionList::RecommendedRole);
                 if (value.toBool()) {
                     return tr("Recommended");
-                } else if (hasLatest) {
+                }
+                if (hasLatest) {
                     auto latest = sourceModel()->data(parentIndex, BaseVersionList::LatestRole);
                     if (latest.toBool()) {
                         return tr("Latest");
@@ -206,7 +210,8 @@ QVariant VersionProxyModel::data(const QModelIndex& index, int role) const
                 auto recommenced = sourceModel()->data(parentIndex, BaseVersionList::RecommendedRole);
                 if (recommenced.toBool()) {
                     return QIcon::fromTheme("star");
-                } else if (hasLatest) {
+                }
+                if (hasLatest) {
                     auto latest = sourceModel()->data(parentIndex, BaseVersionList::LatestRole);
                     if (latest.toBool()) {
                         return QIcon::fromTheme("bug");
@@ -260,10 +265,12 @@ QModelIndex VersionProxyModel::index(int row, int column, const QModelIndex& par
     if (parent.isValid()) {
         return QModelIndex();
     }
-    if (row < 0 || row >= sourceModel()->rowCount())
+    if (row < 0 || row >= sourceModel()->rowCount()) {
         return QModelIndex();
-    if (column < 0 || column >= columnCount())
+    }
+    if (column < 0 || column >= columnCount()) {
         return QModelIndex();
+    }
     return QAbstractItemModel::createIndex(row, column);
 }
 
@@ -282,8 +289,9 @@ int VersionProxyModel::rowCount(const QModelIndex& parent) const
 
 void VersionProxyModel::sourceDataChanged(const QModelIndex& source_top_left, const QModelIndex& source_bottom_right)
 {
-    if (source_top_left.parent() != source_bottom_right.parent())
+    if (source_top_left.parent() != source_bottom_right.parent()) {
         return;
+    }
 
     // whole row is getting changed
     auto topLeft = createIndex(source_top_left.row(), 0);
@@ -293,7 +301,7 @@ void VersionProxyModel::sourceDataChanged(const QModelIndex& source_top_left, co
 
 void VersionProxyModel::setSourceModel(QAbstractItemModel* replacingRaw)
 {
-    auto replacing = dynamic_cast<BaseVersionList*>(replacingRaw);
+    auto* replacing = dynamic_cast<BaseVersionList*>(replacingRaw);
 
     m_columns.clear();
     if (!replacing) {

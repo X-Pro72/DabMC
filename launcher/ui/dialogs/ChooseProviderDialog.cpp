@@ -75,7 +75,7 @@ void ChooseProviderDialog::addProviders()
     int btn_index = 0;
     QRadioButton* btn;
 
-    for (auto& provider : { ModPlatform::ResourceProvider::MODRINTH, ModPlatform::ResourceProvider::FLAME }) {
+    for (const auto& provider : { ModPlatform::ResourceProvider::MODRINTH, ModPlatform::ResourceProvider::FLAME }) {
         btn = new QRadioButton(ModPlatform::ProviderCapabilities::readableName(provider), this);
         m_providers.addButton(btn, btn_index++);
         ui->providersLayout->addWidget(btn);
@@ -84,8 +84,9 @@ void ChooseProviderDialog::addProviders()
 
 void ChooseProviderDialog::disableInput()
 {
-    for (auto& btn : m_providers.buttons())
+    for (auto& btn : m_providers.buttons()) {
         btn->setEnabled(false);
+    }
 
     ui->skipOneButton->setEnabled(false);
     ui->skipAllButton->setEnabled(false);
