@@ -39,7 +39,7 @@
 #include <meta/VersionList.h>
 #include "ATLPackManifest.h"
 
-#include "InstanceTask.h"
+#include "InstanceCreationTask.h"
 #include "meta/Version.h"
 #include "minecraft/MinecraftInstance.h"
 #include "minecraft/PackProfile.h"
@@ -78,7 +78,7 @@ class UserInteractionSupport {
     virtual ~UserInteractionSupport() = default;
 };
 
-class PackInstallTask : public InstanceTask {
+class PackInstallTask : public InstanceCreationTask {
     Q_OBJECT
 
    public:

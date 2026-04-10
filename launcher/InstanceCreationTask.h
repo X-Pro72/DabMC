@@ -1,53 +1,71 @@
 #pragma once
 
-#include "BaseVersion.h"
-#include "InstanceTask.h"
-#include "minecraft/MinecraftInstance.h"
+#include <QDir>
+#include "settings/SettingsObject.h"
+#include "tasks/Task.h"
 
-class InstanceCreationTask : public InstanceTask {
-    Q_OBJECT
+/* Helpers */
+enum class InstanceNameChange { ShouldChange, ShouldKeep };
+[[nodiscard]] InstanceNameChange askForChangingInstanceName(QWidget* parent, const QString& oldName, const QString& newName);
+enum class ShouldUpdate { Update, SkipUpdating, Cancel };
+[[nodiscard]] ShouldUpdate askIfShouldUpdate(QWidget* parent, QString originalVersionName);
+enum class ShouldDeleteSaves { NotAsked, Yes, No };
+[[nodiscard]] ShouldDeleteSaves askIfShouldDeleteSaves(QWidget* parent);
+
+class InstanceCreationTask : public Task {
    public:
-    InstanceCreationTask() = default;
+    InstanceCreationTask() {}
     virtual ~InstanceCreationTask() = default;
 
-    bool abort() override;
+    void setParentSettings(SettingsObject* settings) { m_globalSettings = settings; }
+
+    void setStagingPath(const QString& stagingPath) { m_stagingPath = stagingPath; }
+
+    void setIcon(const QString& icon) { m_instIcon = icon; }
+
+    void setGroup(const QString& group) { m_instGroup = group; }
+    QString group() const { return m_instGroup; }
+
+    bool shouldConfirmUpdate() const { return m_confirmUpdate; }
+    void setConfirmUpdate(bool confirm) { m_confirmUpdate = confirm; }
+
+    bool shouldOverride() const { return m_overrideExisting; }
+
+    QString originalInstanceID() const { return m_originalInstanceId; };
+
+    QString modifiedName() const;
+    QString originalName() const;
+    QString name() const;
+    QString version() const;
+
+    void setName(QString name) { m_modifiedName = name; }
+    void setOriginalName(QString name, QString version);
 
    protected:
-    void executeTask() final override;
-
-    /**
-     * Tries to update an already existing instance.
-     *
-     * This can be implemented by subclasses to provide a way of updating an already existing
-     * instance, according to that implementation's concept of 'identity' (i.e. instances that
-     * are updates / downgrades of one another).
-     *
-     * If this returns true, createInstance() will not run, so you should do all update steps in here.
-     * Otherwise, createInstance() is run as normal.
-     */
-    virtual bool updateInstance() { return false; };
-
-    /**
-     * Creates a new instance.
-     *
-     * Returns the instance if it was created or nullptr otherwise.
-     */
-    virtual std::unique_ptr<MinecraftInstance> createInstance() { return nullptr; }
-
-    QString getError() const { return m_error_message; }
-
-   protected:
-    void setError(const QString& message) { m_error_message = message; };
+    void setOverride(bool override, QString instanceIdToOverride = {})
+    {
+        m_overrideExisting = override;
+        if (!instanceIdToOverride.isEmpty())
+            m_originalInstanceId = instanceIdToOverride;
+    }
     void scheduleToDelete(QWidget* parent, QDir dir, QString path, bool checkDisabled = false);
 
-   protected:
-    bool m_abort = false;
+   protected: /* data */
+    QString m_originalName;
+    QString m_originalVersion;
+
+    QString m_modifiedName;
+
+    SettingsObject* m_globalSettings;
+    QString m_instIcon;
+    QString m_instGroup;
+    QString m_stagingPath;
+
+    bool m_overrideExisting = false;
+    bool m_confirmUpdate = true;
+
+    QString m_originalInstanceId;
 
     QStringList m_filesToRemove;
     ShouldDeleteSaves m_shouldDeleteSaves;
-
-   private:
-    QString m_error_message;
-    std::unique_ptr<MinecraftInstance> m_instance;
-    Task::Ptr m_gameFilesTask;
 };

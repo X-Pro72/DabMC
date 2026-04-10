@@ -1,113 +1,83 @@
 #include "InstanceCreationTask.h"
 
-#include <QDebug>
-#include <QFile>
+#include "Application.h"
+#include "settings/SettingsObject.h"
+#include "ui/dialogs/CustomMessageBox.h"
 
-#include "InstanceTask.h"
-#include "minecraft/MinecraftLoadAndCheck.h"
-#include "tasks/SequentialTask.h"
+#include <QPushButton>
 
-bool InstanceCreationTask::abort()
+InstanceNameChange askForChangingInstanceName(QWidget* parent, const QString& oldName, const QString& newName)
 {
-    if (!canAbort()) {
-        return false;
-    }
+    auto dialog =
+        CustomMessageBox::selectable(parent, QObject::tr("Change instance name"),
+                                     QObject::tr("The instance's name seems to include the old version. Would you like to update it?\n\n"
+                                                 "Old name: %1\n"
+                                                 "New name: %2")
+                                         .arg(oldName, newName),
+                                     QMessageBox::Question, QMessageBox::No | QMessageBox::Yes);
+    auto result = dialog->exec();
 
-    m_abort = true;
-    if (m_gameFilesTask) {
-        return m_gameFilesTask->abort();
-    }
-
-    return true;
+    if (result == QMessageBox::Yes)
+        return InstanceNameChange::ShouldChange;
+    return InstanceNameChange::ShouldKeep;
 }
 
-void InstanceCreationTask::executeTask()
+ShouldUpdate askIfShouldUpdate(QWidget* parent, QString originalVersionName)
 {
-    setAbortable(true);
+    if (APPLICATION->settings()->get("SkipModpackUpdatePrompt").toBool())
+        return ShouldUpdate::SkipUpdating;
 
-    if (updateInstance()) {
-        emitSucceeded();
-        return;
-    }
+    auto info = CustomMessageBox::selectable(
+        parent, QObject::tr("Similar modpack was found!"),
+        QObject::tr(
+            "One or more of your instances are from this same modpack%1. Do you want to create a "
+            "separate instance, or update the existing one?\n\nNOTE: Make sure you made a backup of your important instance data before "
+            "updating, as worlds can be corrupted and some configuration may be lost (due to pack overrides).")
+            .arg(originalVersionName),
+        QMessageBox::Information, QMessageBox::Cancel);
+    QAbstractButton* update = info->addButton(QObject::tr("Update existing instance"), QMessageBox::AcceptRole);
+    QAbstractButton* skip = info->addButton(QObject::tr("Create new instance"), QMessageBox::ResetRole);
 
-    // When the user aborted in the update stage.
-    if (m_abort) {
-        emitAborted();
-        return;
-    }
+    info->exec();
 
-    m_instance = createInstance();
-    if (!m_instance) {
-        if (m_abort)
-            return;
+    if (info->clickedButton() == update)
+        return ShouldUpdate::Update;
+    if (info->clickedButton() == skip)
+        return ShouldUpdate::SkipUpdating;
+    return ShouldUpdate::Cancel;
+}
 
-        qWarning() << "Instance creation failed!";
-        if (!m_error_message.isEmpty()) {
-            qWarning() << "Reason:" << m_error_message;
-            emitFailed(tr("Error while creating new instance:\n%1").arg(m_error_message));
-        } else {
-            emitFailed(tr("Error while creating new instance."));
-        }
+QString InstanceCreationTask::name() const
+{
+    if (!m_modifiedName.isEmpty())
+        return modifiedName();
+    if (!m_originalVersion.isEmpty())
+        return QString("%1 %2").arg(m_originalName, m_originalVersion);
 
-        return;
-    }
+    return m_originalName;
+}
 
-    // If this is set, it means we're updating an instance. So, we now need to remove the
-    // files scheduled to, and we'd better not let the user abort in the middle of it, since it'd
-    // put the instance in an invalid state.
-    if (shouldOverride()) {
-        bool deleteFailed = false;
+QString InstanceCreationTask::originalName() const
+{
+    return m_originalName;
+}
 
-        setAbortable(false);
-        setStatus(tr("Removing old conflicting files..."));
-        qDebug() << "Removing old files";
+QString InstanceCreationTask::modifiedName() const
+{
+    if (!m_modifiedName.isEmpty())
+        return m_modifiedName;
+    return m_originalName;
+}
 
-        for (const QString& path : m_filesToRemove) {
-            if (!QFile::exists(path))
-                continue;
+QString InstanceCreationTask::version() const
+{
+    return m_originalVersion;
+}
 
-            qDebug() << "Removing" << path;
-
-            if (!QFile::remove(path)) {
-                qCritical() << "Could not remove" << path;
-                deleteFailed = true;
-            }
-        }
-
-        if (deleteFailed) {
-            emitFailed(tr("Failed to remove old conflicting files."));
-            return;
-        }
-    }
-
-    if (!m_abort) {
-        setAbortable(true);
-        setAbortButtonText(tr("Skip"));
-        qDebug() << "Downloading game files";
-
-        auto updateTasks = m_instance->createUpdateTask();
-        if (updateTasks.isEmpty()) {
-            emitSucceeded();
-            return;
-        }
-        auto task = makeShared<SequentialTask>();
-        task->addTask(makeShared<MinecraftLoadAndCheck>(m_instance.get(), Net::Mode::Online));
-        for (const auto& t : updateTasks) {
-            task->addTask(t);
-        }
-        connect(task.get(), &Task::finished, this, [this, task] {
-            if (task->wasSuccessful() || m_abort) {
-                emitSucceeded();
-            } else {
-                emitFailed(tr("Could not download game files: %1").arg(task->failReason()));
-            }
-        });
-        propagateFromOther(task.get());
-        setDetails(tr("Downloading game files"));
-
-        m_gameFilesTask = task;
-        m_gameFilesTask->start();
-    }
+void InstanceCreationTask::setOriginalName(QString name, QString version)
+{
+    m_originalName = name;
+    m_originalVersion = version;
 }
 
 void InstanceCreationTask::scheduleToDelete(QWidget* parent, QDir dir, QString path, bool checkDisabled)
@@ -132,4 +102,14 @@ void InstanceCreationTask::scheduleToDelete(QWidget* parent, QDir dir, QString p
             m_filesToRemove.append(dir.absoluteFilePath(path + ".disabled"));
         }
     }
+}
+
+ShouldDeleteSaves askIfShouldDeleteSaves(QWidget* parent)
+{
+    auto* dialog = CustomMessageBox::selectable(parent, QObject::tr("Delete Existing Save Files"),
+                                                QObject::tr("An earlier version of this mod pack installed save files.\n"
+                                                            "Would you like to remove those existing saves as part of this update?"),
+                                                QMessageBox::Question, QMessageBox::No | QMessageBox::Yes);
+    auto result = dialog->exec();
+    return result == QMessageBox::Yes ? ShouldDeleteSaves::Yes : ShouldDeleteSaves::No;
 }

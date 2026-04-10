@@ -1,8 +1,7 @@
 #pragma once
 
+#include "BaseVersion.h"
 #include "InstanceCreationTask.h"
-
-#include <utility>
 
 class VanillaCreationTask final : public InstanceCreationTask {
     Q_OBJECT
@@ -10,13 +9,13 @@ class VanillaCreationTask final : public InstanceCreationTask {
     VanillaCreationTask(BaseVersion::Ptr version) : InstanceCreationTask(), m_version(std::move(version)) {}
     VanillaCreationTask(BaseVersion::Ptr version, QString loader, BaseVersion::Ptr loader_version);
 
-    std::unique_ptr<MinecraftInstance> createInstance() override;
+    void executeTask() override;
 
    private:
     // Version to update to / create of the instance.
     BaseVersion::Ptr m_version;
 
-    bool m_using_loader = false;
+    bool m_usingLoader = false;
     QString m_loader;
-    BaseVersion::Ptr m_loader_version;
+    BaseVersion::Ptr m_loaderVersion;
 };

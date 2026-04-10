@@ -21,12 +21,12 @@
 #include <QFuture>
 #include <QFutureWatcher>
 
-#include "InstanceTask.h"
+#include "InstanceCreationTask.h"
 #include "PackHelpers.h"
 
 namespace FTBImportAPP {
 
-class PackInstallTask : public InstanceTask {
+class PackInstallTask : public InstanceCreationTask {
     Q_OBJECT
 
    public:

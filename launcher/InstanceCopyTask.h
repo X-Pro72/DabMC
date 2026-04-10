@@ -7,12 +7,12 @@
 #include "BaseVersion.h"
 #include "Filter.h"
 #include "InstanceCopyPrefs.h"
-#include "InstanceTask.h"
+#include "InstanceCreationTask.h"
 #include "net/NetJob.h"
 #include "settings/SettingsObject.h"
 #include "tasks/Task.h"
 
-class InstanceCopyTask : public InstanceTask {
+class InstanceCopyTask : public InstanceCreationTask {
     Q_OBJECT
    public:
     explicit InstanceCopyTask(BaseInstance* origInstance, const InstanceCopyPrefs& prefs);

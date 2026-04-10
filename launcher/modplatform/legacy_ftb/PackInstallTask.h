@@ -1,5 +1,5 @@
 #pragma once
-#include "InstanceTask.h"
+#include "InstanceCreationTask.h"
 #include "PackHelpers.h"
 #include "meta/Index.h"
 #include "meta/Version.h"
@@ -10,7 +10,7 @@
 
 namespace LegacyFTB {
 
-class PackInstallTask : public InstanceTask {
+class PackInstallTask : public InstanceCreationTask {
     Q_OBJECT
 
    public:

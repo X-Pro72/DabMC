@@ -18,9 +18,9 @@
 
 #include "Application.h"
 #include "BuildConfig.h"
+#include "InstanceCreationTask.h"
 #include "InstanceImportTask.h"
 #include "InstanceList.h"
-#include "InstanceTask.h"
 #include "Json.h"
 #include "Markdown.h"
 #include "StringUtils.h"
@@ -196,7 +196,7 @@ bool ManagedPackPage::shouldDisplay() const
     return m_inst->isManagedPack();
 }
 
-bool ManagedPackPage::runUpdateTask(InstanceTask* task)
+bool ManagedPackPage::runUpdateTask(InstanceCreationTask* task)
 {
     Q_ASSERT(task);
 
@@ -508,9 +508,8 @@ void ManagedPackPage::updatePack(const QUrl& url, QString versionID, QString ver
     if (versionName.isEmpty()) {
         extracted->setName(m_inst->name());
     } else {
-        InstanceName inst_name(m_inst->getManagedPackName(), versionName);
-        inst_name.setName(m_inst->name().replace(m_inst->getManagedPackVersionName(), versionName));
-        extracted->setName(inst_name);
+        extracted->setOriginalName(m_inst->getManagedPackName(), versionName);
+        extracted->setName(m_inst->name().replace(m_inst->getManagedPackVersionName(), versionName));
     }
     extracted->setGroup(APPLICATION->instances()->getInstanceGroup(m_inst->id()));
     extracted->setIcon(m_inst->iconKey());

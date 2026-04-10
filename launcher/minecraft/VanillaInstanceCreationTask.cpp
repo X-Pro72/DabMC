@@ -7,30 +7,30 @@
 #include "minecraft/PackProfile.h"
 #include "settings/INISettingsObject.h"
 
-VanillaCreationTask::VanillaCreationTask(BaseVersion::Ptr version, QString loader, BaseVersion::Ptr loader_version)
+VanillaCreationTask::VanillaCreationTask(BaseVersion::Ptr version, QString loader, BaseVersion::Ptr loaderVersion)
     : InstanceCreationTask()
     , m_version(std::move(version))
-    , m_using_loader(true)
+    , m_usingLoader(true)
     , m_loader(std::move(loader))
-    , m_loader_version(std::move(loader_version))
+    , m_loaderVersion(std::move(loaderVersion))
 {}
 
-std::unique_ptr<MinecraftInstance> VanillaCreationTask::createInstance()
+void VanillaCreationTask::executeTask()
 {
     setStatus(tr("Creating instance from version %1").arg(m_version->name()));
 
-    auto inst = std::make_unique<MinecraftInstance>(m_globalSettings, std::make_unique<INISettingsObject>(FS::PathCombine(m_stagingPath, "instance.cfg")),
-                           m_stagingPath);
+    auto inst = std::make_unique<MinecraftInstance>(
+        m_globalSettings, std::make_unique<INISettingsObject>(FS::PathCombine(m_stagingPath, "instance.cfg")), m_stagingPath);
     SettingsObject::Lock lock(inst->settings());
 
     auto components = inst->getPackProfile();
     components->buildingFromScratch();
     components->setComponentVersion("net.minecraft", m_version->descriptor(), true);
-    if (m_using_loader)
-        components->setComponentVersion(m_loader, m_loader_version->descriptor());
+    if (m_usingLoader)
+        components->setComponentVersion(m_loader, m_loaderVersion->descriptor());
 
     inst->setName(name());
     inst->setIconKey(m_instIcon);
 
-    return inst;
+    emitSucceeded();
 }

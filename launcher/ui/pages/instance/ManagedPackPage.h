@@ -21,7 +21,7 @@ namespace Ui {
 class ManagedPackPage;
 }
 
-class InstanceTask;
+class InstanceCreationTask;
 class InstanceWindow;
 
 class ManagedPackPage : public QWidget, public BasePage {
@@ -79,12 +79,12 @@ class ManagedPackPage : public QWidget, public BasePage {
    protected:
     ManagedPackPage(BaseInstance* inst, InstanceWindow* instance_window, QWidget* parent = nullptr);
 
-    /** Run the InstanceTask, with a progress dialog and all.
+    /** Run the InstanceCreationTask, with a progress dialog and all.
      *  Similar to MainWindow::instanceFromInstanceTask
      *
      *  Returns whether the task was successful.
      */
-    bool runUpdateTask(InstanceTask*);
+    bool runUpdateTask(InstanceCreationTask*);
 
     void updatePack(const QUrl& url, QString versionID = {}, QString versionName = {});
 

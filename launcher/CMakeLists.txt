@@ -12,8 +12,8 @@ set(CORE_SOURCES
     BaseVersionList.cpp
     InstanceList.h
     InstanceList.cpp
-    InstanceTask.h
-    InstanceTask.cpp
+    InstanceCreationTask.h
+    InstanceCreationTask.cpp
     LoggedProcess.h
     LoggedProcess.cpp
     MessageLevel.cpp
@@ -40,9 +40,7 @@ set(CORE_SOURCES
     RuntimeContext.h
     PSaveFile.h
 
-    # Basic instance manipulation tasks (derived from InstanceTask)
-    InstanceCreationTask.h
-    InstanceCreationTask.cpp
+    # Basic instance manipulation tasks (derived from InstanceCreationTask)
     InstanceCopyPrefs.h
     InstanceCopyPrefs.cpp
     InstanceCopyTask.h

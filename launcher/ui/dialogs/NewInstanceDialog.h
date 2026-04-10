@@ -37,7 +37,7 @@
 
 #include <QDialog>
 
-#include "InstanceTask.h"
+#include "InstanceCreationTask.h"
 #include "ui/pages/BasePageProvider.h"
 
 namespace Ui {
@@ -55,18 +55,18 @@ class NewInstanceDialog : public QDialog, public BasePageProvider {
    public:
     explicit NewInstanceDialog(const QString& initialGroup,
                                const QString& url = QString(),
-                               const QMap<QString, QString>& extra_info = {},
+                               const QMap<QString, QString>& extraInfo = {},
                                QWidget* parent = 0);
     ~NewInstanceDialog();
 
     void updateDialogState();
 
-    void setSuggestedPack(const QString& name = QString(), InstanceTask* task = nullptr);
-    void setSuggestedPack(const QString& name, QString version, InstanceTask* task = nullptr);
+    void setSuggestedPack(const QString& name = QString(), InstanceCreationTask* task = nullptr);
+    void setSuggestedPack(const QString& name, QString version, InstanceCreationTask* task = nullptr);
     void setSuggestedIconFromFile(const QString& path, const QString& name);
     void setSuggestedIcon(const QString& key);
 
-    InstanceTask* extractTask();
+    InstanceCreationTask* extractTask();
 
     QString dialogTitle() override;
     QList<BasePage*> getPages() override;
@@ -85,19 +85,19 @@ class NewInstanceDialog : public QDialog, public BasePageProvider {
     void selectedPageChanged(BasePage* previous, BasePage* selected);
 
    private:
-    Ui::NewInstanceDialog* ui = nullptr;
+    Ui::NewInstanceDialog* m_ui = nullptr;
     PageContainer* m_container = nullptr;
     QDialogButtonBox* m_buttons = nullptr;
 
-    QString InstIconKey;
-    ImportPage* importPage = nullptr;
-    std::unique_ptr<InstanceTask> creationTask;
+    QString m_instIconKey;
+    ImportPage* m_importPage = nullptr;
+    std::unique_ptr<InstanceCreationTask> m_creationTask;
 
-    bool importIcon = false;
-    QString importIconPath;
-    QString importIconName;
+    bool m_importIcon = false;
+    QString m_importIconPath;
+    QString m_importIconName;
 
-    QString importVersion;
+    QString m_importVersion;
 
     QString m_searchTerm;
 
