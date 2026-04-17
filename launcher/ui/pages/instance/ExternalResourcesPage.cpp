@@ -45,7 +45,44 @@
 #include <QHeaderView>
 #include <QKeyEvent>
 #include <QMenu>
+#include <QStyledItemDelegate>
 #include <algorithm>
+
+class LockDelegate : public QStyledItemDelegate {
+   public:
+    explicit LockDelegate(QObject* parent = nullptr) : QStyledItemDelegate(parent) {}
+
+    void paint(QPainter* painter, const QStyleOptionViewItem& opt, const QModelIndex& index) const override
+    {
+        QStyleOptionViewItem option(opt);
+        initStyleOption(&option, index);
+
+        bool locked = index.data(Qt::UserRole).toBool();
+
+        const QIcon& icon = QIcon::fromTheme(locked ? "lock" : "unlock");
+
+        // Draw default background / selection
+        option.text.clear();
+        option.icon = QIcon();
+
+        option.widget->style()->drawControl(QStyle::CE_ItemViewItem, &option, painter);
+
+        int size = qMin(option.rect.width(), option.rect.height()) * 0.75;
+        QRect iconRect(option.rect.center().x() - size / 2, option.rect.center().y() - size / 2, size, size);
+
+        icon.paint(painter, iconRect);
+    }
+
+    bool editorEvent(QEvent* event, QAbstractItemModel* model, const QStyleOptionViewItem& option, const QModelIndex& index) override
+    {
+        if (event->type() == QEvent::MouseButtonRelease) {
+            bool locked = index.data(Qt::UserRole).toBool();
+            model->setData(index, !locked, Qt::UserRole);
+            return true;
+        }
+        return event->type() == QEvent::MouseButtonDblClick;  // if double click ignore it
+    }
+};
 
 ExternalResourcesPage::ExternalResourcesPage(BaseInstance* instance, ResourceFolderModel* model, QWidget* parent)
     : QMainWindow(parent), m_instance(instance), ui(new Ui::ExternalResourcesPage), m_model(model)
@@ -61,6 +98,10 @@ ExternalResourcesPage::ExternalResourcesPage(BaseInstance* instance, ResourceFol
     m_filterModel->setSourceModel(m_model);
     m_filterModel->setFilterKeyColumn(-1);
     ui->treeView->setModel(m_filterModel);
+
+    // keep the Update at the end of the list(otherwise there will be a need to iterate over the columns)
+    int lockColumn = model->columnNames(false).size() - 1;
+    ui->treeView->setItemDelegateForColumn(lockColumn, new LockDelegate(ui->treeView));
     // must come after setModel
     ui->treeView->setResizeModes(m_model->columnResizeModes());
 
@@ -80,6 +121,9 @@ ExternalResourcesPage::ExternalResourcesPage(BaseInstance* instance, ResourceFol
 
     connect(ui->treeView, &ModListView::customContextMenuRequested, this, &ExternalResourcesPage::ShowContextMenu);
     connect(ui->treeView, &ModListView::activated, this, &ExternalResourcesPage::itemActivated);
+
+    connect(ui->actionEnableUpdates, &QAction::triggered, this, &ExternalResourcesPage::enableUpdates);
+    connect(ui->actionDisableUpdates, &QAction::triggered, this, &ExternalResourcesPage::disableUpdates);
 
     auto selection_model = ui->treeView->selectionModel();
 
@@ -316,6 +360,8 @@ void ExternalResourcesPage::updateActions()
     const bool hasSelection = ui->treeView->selectionModel()->hasSelection();
     const QModelIndexList selection = m_filterModel->mapSelectionToSource(ui->treeView->selectionModel()->selection()).indexes();
     const QList<Resource*> selectedResources = m_model->selectedResources(selection);
+    const bool hasMeta = hasSelection && std::any_of(selectedResources.begin(), selectedResources.end(),
+                                                     [](Resource* resource) { return resource->metadata(); });
 
     ui->actionUpdateItem->setEnabled(!m_model->empty());
     ui->actionResetItemMetadata->setEnabled(hasSelection);
@@ -328,6 +374,9 @@ void ExternalResourcesPage::updateActions()
 
     ui->actionViewHomepage->setEnabled(hasSelection && std::any_of(selectedResources.begin(), selectedResources.end(),
                                                                    [](Resource* resource) { return !resource->homepage().isEmpty(); }));
+
+    ui->actionEnableUpdates->setEnabled(hasMeta);
+    ui->actionDisableUpdates->setEnabled(hasMeta);
     ui->actionExportMetadata->setEnabled(!m_model->empty());
 }
 
@@ -347,4 +396,16 @@ QString ExternalResourcesPage::extraHeaderInfoString()
             return tr(" (%1 installed, %2 selected)").arg(m_model->size()).arg(count);
     }
     return tr(" (%1 installed)").arg(m_model->size());
+}
+
+void ExternalResourcesPage::enableUpdates()
+{
+    auto selection = m_filterModel->mapSelectionToSource(ui->treeView->selectionModel()->selection());
+    m_model->setModUpdate(selection.indexes(), EnableAction::ENABLE);
+}
+
+void ExternalResourcesPage::disableUpdates()
+{
+    auto selection = m_filterModel->mapSelectionToSource(ui->treeView->selectionModel()->selection());
+    m_model->setModUpdate(selection.indexes(), EnableAction::DISABLE);
 }

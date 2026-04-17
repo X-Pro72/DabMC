@@ -41,19 +41,21 @@
 
 #include "Version.h"
 
+#include "minecraft/mod/Resource.h"
+#include "minecraft/mod/ResourceFolderModel.h"
 #include "minecraft/mod/tasks/LocalDataPackParseTask.h"
 
 ResourcePackFolderModel::ResourcePackFolderModel(const QDir& dir, BaseInstance* instance, bool is_indexed, bool create_dir, QObject* parent)
     : ResourceFolderModel(dir, instance, is_indexed, create_dir, parent)
 {
-    m_column_names = QStringList({ "Enable", "Image", "Name", "Pack Format", "Last Modified", "Provider", "Size" });
-    m_column_names_translated =
-        QStringList({ tr("Enable"), tr("Image"), tr("Name"), tr("Pack Format"), tr("Last Modified"), tr("Provider"), tr("Size") });
+    m_column_names = QStringList({ "Enable", "Image", "Name", "Pack Format", "Last Modified", "Provider", "Size", "Update" });
+    m_column_names_translated = QStringList(
+        { tr("Enable"), tr("Image"), tr("Name"), tr("Pack Format"), tr("Last Modified"), tr("Provider"), tr("Size"), tr("Update") });
     m_column_sort_keys = { SortType::ENABLED, SortType::NAME,     SortType::NAME, SortType::PACK_FORMAT,
-                           SortType::DATE,    SortType::PROVIDER, SortType::SIZE };
-    m_column_resize_modes = { QHeaderView::Interactive, QHeaderView::Interactive, QHeaderView::Stretch,    QHeaderView::Interactive,
-                              QHeaderView::Interactive, QHeaderView::Interactive, QHeaderView::Interactive };
-    m_columnsHideable = { false, true, false, true, true, true, true };
+                           SortType::DATE,    SortType::PROVIDER, SortType::SIZE, SortType::LOCK_UPDATE };
+    m_column_resize_modes = { QHeaderView::Interactive, QHeaderView::Interactive, QHeaderView::Stretch,     QHeaderView::Interactive,
+                              QHeaderView::Interactive, QHeaderView::Interactive, QHeaderView::Interactive, QHeaderView::Interactive };
+    m_columnsHideable = { false, true, false, true, true, true, true, true };
 }
 
 QVariant ResourcePackFolderModel::data(const QModelIndex& index, int role) const
@@ -91,6 +93,16 @@ QVariant ResourcePackFolderModel::data(const QModelIndex& index, int role) const
             if (column == ImageColumn) {
                 return QSize(32, 32);
             }
+            break;
+        case Qt::CheckStateRole:
+            if (column == ActiveColumn)
+                return at(row).enabled() ? Qt::Checked : Qt::Unchecked;
+            return {};
+        case Qt::UserRole:
+            if (column == LockUpdateCoumn)
+                return at(row).lockUpdate();
+            return {};
+        default:
             break;
     }
 
@@ -133,6 +145,7 @@ QVariant ResourcePackFolderModel::headerData(int section, [[maybe_unused]] Qt::O
                 case ImageColumn:
                 case ProviderColumn:
                 case SizeColumn:
+                case LockUpdateCoumn:
                     return columnNames().at(section);
                 default:
                     return {};
@@ -153,6 +166,8 @@ QVariant ResourcePackFolderModel::headerData(int section, [[maybe_unused]] Qt::O
                     return tr("The source provider of the resource pack.");
                 case SizeColumn:
                     return tr("The size of the resource pack.");
+                case LockUpdateCoumn:
+                    return tr("Should this mod be updated?");
                 default:
                     return {};
             }
