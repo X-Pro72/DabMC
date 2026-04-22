@@ -37,6 +37,7 @@ void FlameMod::loadIndexedPack(ModPlatform::IndexedPack& pack, QJsonObject& obj)
         }
     }
 
+    pack.resourceType = FlameAPI::getResourceType(obj["classId"].toInt(0));
     pack.extraDataLoaded = false;
     loadURLs(pack, obj);
 }

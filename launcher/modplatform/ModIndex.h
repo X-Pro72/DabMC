@@ -26,6 +26,7 @@
 #include <compare>
 #include <cstdint>
 #include <memory>
+#include "modplatform/ResourceType.h"
 
 class QIODevice;
 
@@ -180,6 +181,8 @@ struct IndexedPack {
     // Don't load by default, since some modplatform don't have that info
     bool extraDataLoaded = true;
     ExtraPackData extraData;
+
+    ResourceType resourceType = ResourceType::Unknown;
 
     // For internal use, not provided by APIs
     bool isVersionSelected(int index) const

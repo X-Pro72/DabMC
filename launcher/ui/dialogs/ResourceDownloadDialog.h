@@ -51,7 +51,7 @@ class ResourceDownloadDialog : public QDialog, public BasePageProvider {
    public:
     using DownloadTaskPtr = shared_qobject_ptr<ResourceDownloadTask>;
 
-    ResourceDownloadDialog(QWidget* parent, ResourceFolderModel* base_model);
+    ResourceDownloadDialog(QWidget* parent, ResourceFolderModel* base_model, BaseInstance* instance);
 
     void initializeContainer();
     void connectButtons();
@@ -94,6 +94,7 @@ class ResourceDownloadDialog : public QDialog, public BasePageProvider {
 
     QDialogButtonBox m_buttons;
     QVBoxLayout m_vertical_layout;
+    BaseInstance* m_instance = nullptr;
 };
 
 class ModDownloadDialog final : public ResourceDownloadDialog {
