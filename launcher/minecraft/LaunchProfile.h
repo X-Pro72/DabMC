@@ -92,6 +92,7 @@ class LaunchProfile : public ProblemProvider {
     bool hasTrait(const QString& trait) const;
     ProblemSeverity getProblemSeverity() const override;
     const QList<PatchProblem> getProblems() const override;
+    void setSkipMainJar(bool skip);
 
    private:
     /// the version of Minecraft - jar to use
@@ -156,4 +157,6 @@ class LaunchProfile : public ProblemProvider {
     QString m_compatibleJavaName;
 
     ProblemSeverity m_problemSeverity = ProblemSeverity::None;
+
+    bool m_skipMainJar = false;
 };
