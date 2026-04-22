@@ -123,9 +123,6 @@ void ResourceFolderLoadTask::executeTask()
         }
     }
 
-    for (auto mod : m_result->resources)
-        mod->moveToThread(m_thread_to_spawn_into);
-
     if (m_aborted)
         emit finished();
     else

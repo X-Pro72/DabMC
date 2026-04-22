@@ -39,12 +39,12 @@
 
 #include "ResourcePage.h"
 #include "modplatform/ModIndex.h"
-#include "ui/dialogs/CustomMessageBox.h"
 #include "ui_ResourcePage.h"
 
 #include <StringUtils.h>
 #include <QDesktopServices>
 #include <QKeyEvent>
+#include <QMessageBox>
 
 #include "Markdown.h"
 
@@ -55,8 +55,17 @@
 
 namespace ResourceDownload {
 
-ResourcePage::ResourcePage(ResourceDownloadDialog* parent, BaseInstance& base_instance)
-    : QWidget(parent), m_baseInstance(base_instance), m_ui(new Ui::ResourcePage), m_parentDialog(parent), m_fetchProgress(this, false)
+ResourcePage::ResourcePage(ResourceDownloadDialog* parent,
+                           BaseInstance& base_instance,
+                           ResourceDescriptor desc,
+                           ResourceProviderData provider)
+    : QWidget(parent)
+    , m_baseInstance(base_instance)
+    , m_ui(new Ui::ResourcePage)
+    , m_parentDialog(parent)
+    , m_fetchProgress(this, false)
+    , m_desc(std::move(desc))
+    , m_provider(std::move(provider))
 {
     m_ui->setupUi(this);
 
@@ -373,7 +382,7 @@ void ResourcePage::removeResourceFromDialog(const QString& pack_name)
 
 void ResourcePage::addResourceToPage(ModPlatform::IndexedPack::Ptr pack, ModPlatform::IndexedVersion& ver, ResourceFolderModel* base_model)
 {
-    bool is_indexed = !APPLICATION->settings()->get("ModMetadataDisabled").toBool();
+    bool is_indexed = m_desc.isIndexed && !APPLICATION->settings()->get("ModMetadataDisabled").toBool();
     m_model->addPack(pack, ver, base_model, is_indexed);
 }
 
@@ -455,8 +464,18 @@ void ResourcePage::onResourceToggle(const QModelIndex& index)
     }
 }
 
-void ResourcePage::openUrl(const QUrl& url)
+void ResourcePage::openUrl(const QUrl& _url)
 {
+    auto url = _url;
+    if (url.scheme().isEmpty()) {
+        QString query = url.query(QUrl::FullyDecoded);
+
+        if (query.startsWith("remoteUrl=")) {
+            // attempt to resolve url from warning page
+            query.remove(0, 10);
+            url = QUrl::fromPercentEncoding(query.toUtf8());  // double decoding is necessary
+        }
+    }
     // do not allow other url schemes for security reasons
     if (!(url.scheme() == "http" || url.scheme() == "https")) {
         qWarning() << "Unsupported scheme" << url.scheme();

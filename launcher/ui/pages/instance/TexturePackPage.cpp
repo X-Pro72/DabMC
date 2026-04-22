@@ -90,7 +90,7 @@ void TexturePackPage::downloadTexturePacks()
     if (m_instance->typeName() != "Minecraft")
         return;  // this is a null instance or a legacy instance
 
-    m_downloadDialog = new ResourceDownload::TexturePackDownloadDialog(this, m_model, m_instance);
+    m_downloadDialog = ResourceDownload::ResourceDownloadDialog::createTexturePack(this, m_model, m_instance);
     connect(this, &QObject::destroyed, m_downloadDialog, &QDialog::close);
     connect(m_downloadDialog, &QDialog::finished, this, &TexturePackPage::downloadDialogFinished);
     m_downloadDialog->open();
@@ -253,7 +253,7 @@ void TexturePackPage::changeTexturePackVersion()
     if (resource.metadata() == nullptr)
         return;
 
-    m_downloadDialog = new ResourceDownload::TexturePackDownloadDialog(this, m_model, m_instance);
+    m_downloadDialog = ResourceDownload::ResourceDownloadDialog::createTexturePack(this, m_model, m_instance);
     connect(this, &QObject::destroyed, m_downloadDialog, &QDialog::close);
     connect(m_downloadDialog, &QDialog::finished, this, &TexturePackPage::downloadDialogFinished);
 

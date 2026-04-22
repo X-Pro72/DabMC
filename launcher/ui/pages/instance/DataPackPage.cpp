@@ -67,7 +67,7 @@ void DataPackPage::downloadDataPacks()
     if (m_instance->typeName() != "Minecraft")
         return;  // this is a null instance or a legacy instance
 
-    m_downloadDialog = new ResourceDownload::DataPackDownloadDialog(this, m_model, m_instance);
+    m_downloadDialog = ResourceDownload::ResourceDownloadDialog::createDataPack(this, m_model, m_instance);
     connect(this, &QObject::destroyed, m_downloadDialog, &QDialog::close);
     connect(m_downloadDialog, &QDialog::finished, this, &DataPackPage::downloadDialogFinished);
 
@@ -231,9 +231,9 @@ void DataPackPage::changeDataPackVersion()
     if (resource.metadata() == nullptr)
         return;
 
-    ResourceDownload::DataPackDownloadDialog mdownload(this, m_model, m_instance);
-    mdownload.setResourceMetadata(resource.metadata());
-    if (mdownload.exec()) {
+    m_downloadDialog = ResourceDownload::ResourceDownloadDialog::createDataPack(this, m_model, m_instance);
+    m_downloadDialog->setResourceMetadata(resource.metadata());
+    if (m_downloadDialog->exec()) {
         auto tasks = new ConcurrentTask("Download Data Packs", APPLICATION->settings()->get("NumberOfConcurrentDownloads").toInt());
         connect(tasks, &Task::failed, [this, tasks](QString reason) {
             CustomMessageBox::selectable(this, tr("Error"), reason, QMessageBox::Critical)->show();
@@ -251,7 +251,7 @@ void DataPackPage::changeDataPackVersion()
             tasks->deleteLater();
         });
 
-        for (auto& task : mdownload.getTasks()) {
+        for (auto& task : m_downloadDialog->getTasks()) {
             tasks->addTask(task);
         }
 
