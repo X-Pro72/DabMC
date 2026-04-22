@@ -54,12 +54,6 @@ class CheckUpdateTask : public Task {
     auto getUpdates() -> std::vector<Update>&& { return std::move(m_updates); }
     auto getDependencies() -> QList<std::shared_ptr<GetModDependenciesTask::PackDependency>>&& { return std::move(m_deps); }
 
-   public slots:
-    bool abort() override = 0;
-
-   protected slots:
-    void executeTask() override = 0;
-
    signals:
     void checkFailed(Resource* failed, QString reason, QUrl recover_url = {});
 

@@ -19,6 +19,7 @@
 
 class QSortFilterProxyModel;
 
+// NOLINTBEGIN(bugprone-macro-parentheses)
 /* A macro to define useful functions to handle Resource* -> T* more easily on derived classes */
 #define RESOURCE_HELPERS(T)                                         \
     T& at(int index)                                                \
@@ -50,6 +51,7 @@ class QSortFilterProxyModel;
                                                                     \
         return result;                                              \
     }
+// NOLINTEND(bugprone-macro-parentheses)
 
 /** A basic model for external resources.
  *
@@ -125,7 +127,7 @@ class ResourceFolderModel : public QAbstractListModel {
 
     Resource::Ptr find(QString id);
 
-    QDir const& dir() const { return m_dir; }
+    const QDir& dir() const { return m_dir; }
 
     /** Checks whether there's any parse tasks being done.
      *
