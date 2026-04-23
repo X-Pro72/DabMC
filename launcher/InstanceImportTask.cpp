@@ -46,7 +46,9 @@
 #include "icons/IconList.h"
 #include "icons/IconUtils.h"
 
+#include "modplatform/ModIndex.h"
 #include "modplatform/flame/FlameInstanceCreationTask.h"
+#include "modplatform/helpers/GetModPackExtraInfoTask.h"
 #include "modplatform/modrinth/ModrinthInstanceCreationTask.h"
 #include "modplatform/technic/TechnicPackProcessor.h"
 
@@ -58,6 +60,7 @@
 #include <QFileInfo>
 #include <QtConcurrentRun>
 #include <memory>
+#include <utility>
 
 InstanceImportTask::InstanceImportTask(const QUrl& sourceUrl, QWidget* parent, QMap<QString, QString>&& extra_info)
     : m_sourceUrl(sourceUrl), m_extra_info(extra_info), m_parent(parent)
@@ -80,7 +83,7 @@ void InstanceImportTask::executeTask()
 
     if (m_sourceUrl.isLocalFile()) {
         m_archivePath = m_sourceUrl.toLocalFile();
-        processZipPack();
+        processExtraInfoPack();
     } else {
         setStatus(tr("Downloading modpack:\n%1").arg(m_sourceUrl.toString()));
 
@@ -429,4 +432,40 @@ void InstanceImportTask::processModrinth()
     m_task.reset(inst_creation_task);
     setAbortable(true);
     m_task->start();
+}
+
+void InstanceImportTask::processExtraInfoPack()
+{
+    if (!m_extra_info.isEmpty()) {
+        processZipPack();
+        return;
+    }
+    auto populateExtraInfo = [this](GetModPackExtraInfoTask* task) {
+        m_extra_info.insert("pack_id", task->getVersion().addonId.toString());
+        m_extra_info.insert("pack_version_id", task->getVersion().fileId.toString());
+        m_original_version = task->getVersion().version;
+        setIcon(task->getLogoName());
+    };
+    auto modrinthTask = makeShared<GetModPackExtraInfoTask>(m_archivePath, ModPlatform::ResourceProvider::MODRINTH);
+    connect(modrinthTask.get(), &Task::succeeded, [populateExtraInfo, modrinthTask] { populateExtraInfo(modrinthTask.get()); });
+    auto progressStep = std::make_shared<TaskStepProgress>();
+    connect(modrinthTask.get(), &Task::finished, this, [this, progressStep] {
+        progressStep->state = TaskStepState::Succeeded;
+        stepProgress(*progressStep);
+        processZipPack();
+    });
+
+    connect(modrinthTask.get(), &Task::aborted, this, &InstanceImportTask::emitAborted);
+    connect(modrinthTask.get(), &Task::stepProgress, this, &InstanceImportTask::propagateStepProgress);
+
+    connect(modrinthTask.get(), &Task::progress, this, [this, progressStep](qint64 current, qint64 total) {
+        progressStep->update(current, total);
+        stepProgress(*progressStep);
+    });
+    connect(modrinthTask.get(), &Task::status, this, [this, progressStep](QString status) {
+        progressStep->status = std::move(status);
+        stepProgress(*progressStep);
+    });
+    m_task.reset(modrinthTask);
+    modrinthTask->start();
 }
