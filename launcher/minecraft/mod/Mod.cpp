@@ -48,6 +48,11 @@
 #include "minecraft/mod/ModDetails.h"
 #include "minecraft/mod/tasks/LocalModParseTask.h"
 #include "modplatform/ModIndex.h"
+#include "Application.h"
+#include "meta/Index.h"
+#include "ui/widgets/VersionSelectWidget.h"
+#include "ui/widgets/VersionListView.h"
+#include <sstream> 
 
 Mod::Mod(const QFileInfo& file) : Resource(file), m_local_details()
 {
@@ -200,9 +205,128 @@ auto Mod::side() const -> QString
 auto Mod::mcVersions() const -> QString
 {
     if (metadata())
-        return metadata()->mcVersions.join(", ");
-
+         return groupMcVersions();
     return {};
+}
+
+auto Mod::groupMcVersions() const -> QString
+{
+    static QStringList s_releasedMcVersions = []() {
+         // Gets all of minecrafts vanilla versions
+        auto vlist = APPLICATION->metadataIndex()->get("net.minecraft");
+        VersionSelectWidget* versionList = new VersionSelectWidget(nullptr);
+        versionList->initialize(vlist.get());
+        //Filters to only main released versions (like 1.19.2, 1.8.9)
+        versionList->setFilter(BaseVersionList::TypeRole, Filters::regexp(QRegularExpression("(release)")));
+        auto model = versionList->view()->model();
+        
+        // Versions get ordered latest to oldest
+        QStringList filteredVersions;
+        // extracts each version number from model
+        for (int row = 0; row < model->rowCount(); ++row) {
+            QModelIndex index = model->index(row, 0);
+            QVariant data = model->data(index, BaseVersionList::VersionRole);
+            filteredVersions << data.toString();
+        }
+        return filteredVersions;
+    }();
+    
+    QStringList filteredVersions = s_releasedMcVersions;
+
+    QStringList groupedVersions;
+
+    if (metadata()) {
+        std::vector<QString> myvector; 
+        for (QString i : metadata()->mcVersions) {
+            if (i.size() >= 10) {
+                // snapshot get filtered out, can add separte control fro them here
+            } else {
+                myvector.push_back(i);
+            }
+        }
+        std::sort(myvector.begin(), myvector.end(), versionsSort);
+        QStringList ungroupedVersions(myvector.begin(), myvector.end());
+        
+        QString first = ungroupedVersions[0];
+        int count = 0;
+        int ungroupedSize = ungroupedVersions.size();
+        bool grouping = false;
+        for (int i = filteredVersions.size() - 1; i >= 0; --i) {
+            if (grouping) {
+                // traversing the ungrouped versions and checking if they match the order of releases
+                if (! filteredVersions[i].compare(ungroupedVersions[count])) {
+                    count += 1;
+                    if (count >= ungroupedSize) {
+                        break;
+                    }
+                } 
+                // next version doesnt match, break grouping, append and update next grouping
+                else {
+                    grouping = false;
+                    // check if grouping occured
+                    if (! first.compare(ungroupedVersions[count - 1])) {
+                        (groupedVersions).append(first);
+                    } else {
+                        QString groupBuff = first.append('-').append(ungroupedVersions[count - 1]);
+                        (groupedVersions).append(groupBuff);
+                    }
+                    // set up next grouping
+                    first = ungroupedVersions[count];
+                }
+            } else {
+                // traverses all oldest to newest versions until modded version starts
+                if (! filteredVersions.at(i).compare(first)) {
+                    grouping = true;
+                    count += 1;
+                    if (count >= ungroupedSize) {
+                        break;
+                    }
+                }
+            }
+        }
+        // case for last version included in mod
+        if (grouping) {
+            if (! first.compare(ungroupedVersions[count - 1])) {
+                (groupedVersions).append(first);
+            } else {
+                QString groupBuff = first.append('-').append(ungroupedVersions[count - 1]);
+                (groupedVersions).append(groupBuff);
+            }
+        }
+        return (groupedVersions).join(", ");
+    }
+    return {};
+       
+
+}
+
+// return false if a > b
+bool Mod::versionsSort(QString a, QString b)
+{
+    std::string stringA = a.toStdString();
+    std::string stringB = b.toStdString();
+    std::stringstream streamA(stringA);
+    std::stringstream streamB(stringB);
+    std::string bufA;
+    std::string bufB;
+
+    while (getline(streamA, bufA, '.') && getline(streamB, bufB, '.')) {
+        int intA = atoi(bufA.c_str());
+        int intB = atoi(bufB.c_str());
+        if (intA == intB) {
+            continue;
+        } else if (intA > intB) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+    // one is an 1.x instead of 1.x.y so the small length string is the lower version
+    if (stringA.size() > stringB.size()) {
+        return false;
+    } else {
+        return true;
+    }
 }
 
 auto Mod::releaseType() const -> QString
