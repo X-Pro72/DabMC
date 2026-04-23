@@ -41,7 +41,6 @@
 #include <QProcess>
 
 #include "Commandline.h"
-#include "FileSystem.h"
 #include "java/JavaUtils.h"
 
 JavaChecker::JavaChecker(QString path, QString args, int minMem, int maxMem, int permGen, int id)
@@ -61,8 +60,10 @@ void JavaChecker::executeTask()
 #endif
 
     QStringList args;
-
-    process.reset(new QProcess());
+    if (m_process) {
+        m_process->deleteLater();
+    }
+    m_process = new QProcess(this);
     if (m_args.size()) {
         auto extraArgs = Commandline::splitArgs(m_args);
         args.append(extraArgs);
@@ -78,25 +79,25 @@ void JavaChecker::executeTask()
     }
 
     args.append({ "-jar", checkerJar });
-    process->setArguments(args);
-    process->setProgram(m_path);
-    process->setProcessChannelMode(QProcess::SeparateChannels);
-    process->setProcessEnvironment(CleanEnviroment());
+    m_process->setArguments(args);
+    m_process->setProgram(m_path);
+    m_process->setProcessChannelMode(QProcess::SeparateChannels);
+    m_process->setProcessEnvironment(CleanEnviroment());
     qDebug() << "Running java checker:" << m_path << args.join(" ");
 
-    connect(process.get(), &QProcess::finished, this, &JavaChecker::finished);
-    connect(process.get(), &QProcess::errorOccurred, this, &JavaChecker::error);
-    connect(process.get(), &QProcess::readyReadStandardOutput, this, &JavaChecker::stdoutReady);
-    connect(process.get(), &QProcess::readyReadStandardError, this, &JavaChecker::stderrReady);
-    connect(&killTimer, &QTimer::timeout, this, &JavaChecker::timeout);
-    killTimer.setSingleShot(true);
-    killTimer.start(15000);
-    process->start();
+    connect(m_process, &QProcess::finished, this, &JavaChecker::finished);
+    connect(m_process, &QProcess::errorOccurred, this, &JavaChecker::error);
+    connect(m_process, &QProcess::readyReadStandardOutput, this, &JavaChecker::stdoutReady);
+    connect(m_process, &QProcess::readyReadStandardError, this, &JavaChecker::stderrReady);
+    connect(&m_killTimer, &QTimer::timeout, this, &JavaChecker::timeout);
+    m_killTimer.setSingleShot(true);
+    m_killTimer.start(15000);
+    m_process->start();
 }
 
 void JavaChecker::stdoutReady()
 {
-    QByteArray data = process->readAllStandardOutput();
+    QByteArray data = m_process->readAllStandardOutput();
     QString added = QString::fromLocal8Bit(data);
     added.remove('\r');
     m_stdout += added;
@@ -104,7 +105,7 @@ void JavaChecker::stdoutReady()
 
 void JavaChecker::stderrReady()
 {
-    QByteArray data = process->readAllStandardError();
+    QByteArray data = m_process->readAllStandardError();
     QString added = QString::fromLocal8Bit(data);
     added.remove('\r');
     m_stderr += added;
@@ -112,9 +113,11 @@ void JavaChecker::stderrReady()
 
 void JavaChecker::finished(int exitcode, QProcess::ExitStatus status)
 {
-    killTimer.stop();
-    QProcessPtr _process = process;
-    process.reset();
+    m_killTimer.stop();
+    if (m_process) {
+        m_process->deleteLater();
+        m_process = nullptr;
+    }
 
     Result result = {
         m_path,
@@ -181,10 +184,10 @@ void JavaChecker::error(QProcess::ProcessError err)
     if (err == QProcess::FailedToStart) {
         qDebug() << "Java checker has failed to start.";
         qDebug() << "Process environment:";
-        qDebug() << process->environment();
+        qDebug() << m_process->environment();
         qDebug() << "Native environment:";
         qDebug() << QProcessEnvironment::systemEnvironment().toStringList();
-        killTimer.stop();
+        m_killTimer.stop();
         emit checkFinished({ m_path, m_id });
     }
     emitSucceeded();
@@ -193,8 +196,16 @@ void JavaChecker::error(QProcess::ProcessError err)
 void JavaChecker::timeout()
 {
     // NO MERCY. NO ABUSE.
-    if (process) {
+    if (m_process) {
         qDebug() << "Java checker has been killed by timeout.";
-        process->kill();
+        m_process->kill();
+    }
+}
+
+JavaChecker::~JavaChecker()
+{
+    if (m_process) {
+        m_process->deleteLater();
+        m_process = nullptr;
     }
 }

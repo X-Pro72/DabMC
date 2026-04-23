@@ -9,7 +9,6 @@
 class JavaChecker : public Task {
     Q_OBJECT
    public:
-    using QProcessPtr = shared_qobject_ptr<QProcess>;
     using Ptr = shared_qobject_ptr<JavaChecker>;
 
     struct Result {
@@ -26,6 +25,7 @@ class JavaChecker : public Task {
     };
 
     explicit JavaChecker(QString path, QString args, int minMem = 0, int maxMem = 0, int permGen = 0, int id = 0);
+    virtual ~JavaChecker();
 
    signals:
     void checkFinished(const Result& result);
@@ -34,8 +34,8 @@ class JavaChecker : public Task {
     virtual void executeTask() override;
 
    private:
-    QProcessPtr process;
-    QTimer killTimer;
+    QProcess* m_process = nullptr;
+    QTimer m_killTimer;
     QString m_stdout;
     QString m_stderr;
 
