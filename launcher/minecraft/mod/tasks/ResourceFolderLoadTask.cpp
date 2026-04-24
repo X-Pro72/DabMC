@@ -39,6 +39,7 @@
 #include "Application.h"
 #include "FileSystem.h"
 #include "minecraft/mod/MetadataHandler.h"
+#include "minecraft/mod/ShaderPack.h"
 
 #include <QThread>
 
@@ -82,8 +83,21 @@ void ResourceFolderLoadTask::executeTask()
 
         Resource* resource = m_create_func(entry);
 
+        // Check if this is a shader pack - shaders allow multiple versions with same name
+        bool is_shader = dynamic_cast<ShaderPack*>(resource) != nullptr;
+
         if (resource->enabled()) {
-            if (m_result->resources.contains(resource->internal_id())) {
+            // For shaders, check if metadata exists for this exact file (by internal_id)
+            // This allows multiple versions while still associating metadata correctly
+            if (is_shader && m_result->resources.contains(resource->internal_id())) {
+                // Metadata exists for this exact file - associate it
+                auto existing = m_result->resources[resource->internal_id()];
+                if (existing->metadata()) {
+                    resource->setMetadata(existing->metadata());
+                }
+                m_result->resources[resource->internal_id()].reset(resource);
+                m_result->resources[resource->internal_id()]->setStatus(ResourceStatus::INSTALLED);
+            } else if (!is_shader && m_result->resources.contains(resource->internal_id())) {
                 m_result->resources[resource->internal_id()]->setStatus(ResourceStatus::INSTALLED);
                 // Delete the object we just created, since a valid one is already in the mods list.
                 delete resource;
@@ -93,7 +107,20 @@ void ResourceFolderLoadTask::executeTask()
             }
         } else {
             QString chopped_id = resource->internal_id().chopped(9);
-            if (m_result->resources.contains(chopped_id)) {
+            // For disabled shaders, check if metadata exists for the enabled version
+            if (is_shader) {
+                // Check if there's metadata for the enabled version (without .disabled)
+                QString enabled_id = resource->internal_id();
+                enabled_id.chop(9);  // Remove ".disabled"
+                if (m_result->resources.contains(enabled_id)) {
+                    auto existing = m_result->resources[enabled_id];
+                    if (existing->metadata()) {
+                        resource->setMetadata(existing->metadata());
+                    }
+                }
+                m_result->resources[resource->internal_id()].reset(resource);
+                m_result->resources[resource->internal_id()]->setStatus(ResourceStatus::NO_METADATA);
+            } else if (m_result->resources.contains(chopped_id)) {
                 m_result->resources[resource->internal_id()].reset(resource);
 
                 auto metadata = m_result->resources[chopped_id]->metadata();

@@ -47,11 +47,20 @@ class ShaderPack : public Resource {
 
     ShaderPackFormat packFormat() const { return m_pack_format; }
 
-    ShaderPack(QObject* parent = nullptr) : Resource(parent) {}
-    ShaderPack(QFileInfo file_info) : Resource(file_info) {}
+    ShaderPack(QObject* parent = nullptr);
+    ShaderPack(QFileInfo file_info);
+
+    // Override setFile to ensure internal_id remains unique for shaders
+    void setFile(QFileInfo file_info);
 
     /** Thread-safe. */
     void setPackFormat(ShaderPackFormat new_format);
+
+    /** Get the version of the shader pack from metadata */
+    auto version() const -> QString;
+
+    /** Override compare to support version sorting */
+    [[nodiscard]] int compare(const Resource& other, SortType type) const override;
 
     bool valid() const override;
 
