@@ -236,7 +236,7 @@ bool ModFolderModel::isValid()
     return m_dir.exists() && m_dir.isReadable();
 }
 
-void ModFolderModel::onParseSucceeded(int ticket, QString mod_id)
+void ModFolderModel::onParseSucceeded(int ticket, const QString& mod_id)
 {
     auto iter = m_active_parse_tasks.constFind(ticket);
     if (iter == m_active_parse_tasks.constEnd())
@@ -255,7 +255,6 @@ void ModFolderModel::onParseSucceeded(int ticket, QString mod_id)
     if (result && resource) {
         auto* mod = static_cast<Mod*>(resource.get());
         mod->finishResolvingWithDetails(std::move(result->details));
-
     }
     emit dataChanged(index(row, RequiresColumn), index(row, RequiredByColumn));
 }
