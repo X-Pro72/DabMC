@@ -693,7 +693,7 @@ void ResourceFolderModel::loadColumns(QTreeView* tree)
     auto stateSetting = m_instance->settings()->getOrRegisterSetting(stateSettingName, "");
     tree->header()->restoreState(QByteArray::fromBase64(stateSetting->get().toString().toUtf8()));
 
-    auto setVisible = [this, tree](QVariant value) {
+    auto setVisible = [this, tree](const QVariant& value) {
         auto visibility = Json::toMap(value.toString());
         for (auto i = 0; i < m_column_names.size(); ++i) {
             if (m_columnsHideable[i]) {
@@ -720,7 +720,10 @@ void ResourceFolderModel::loadColumns(QTreeView* tree)
 
     // allways connect the signal in case the setting is toggled on and off
     auto gSetting = APPLICATION->settings()->getOrRegisterSetting(visibilitySettingName, defaultValue);
-    connect(gSetting.get(), &Setting::SettingChanged, tree, [this, setVisible, overrideSettingName](const Setting&, QVariant value) {
+    connect(gSetting.get(), &Setting::SettingChanged, tree, [this, setVisible, overrideSettingName](const Setting&, const QVariant& value) {
+        if (!m_instance) {
+            return;
+        }
         if (!m_instance->settings()->get(overrideSettingName).toBool()) {
             setVisible(value);
         }
