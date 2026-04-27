@@ -61,7 +61,7 @@ class QSortFilterProxyModel;
 class ResourceFolderModel : public QAbstractListModel {
     Q_OBJECT
    public:
-    ResourceFolderModel(const QDir& dir, BaseInstance* instance, bool is_indexed, bool create_dir, QObject* parent = nullptr);
+    ResourceFolderModel(const QDir& dir, BaseInstance* instance, bool isIndexed, bool createDir, QObject* parent = nullptr);
     ~ResourceFolderModel() override;
 
     virtual QString id() const { return "resource"; }
@@ -93,13 +93,13 @@ class ResourceFolderModel : public QAbstractListModel {
      */
     virtual bool installResource(QString path);
 
-    virtual void installResourceWithFlameMetadata(QString path, ModPlatform::IndexedVersion& vers);
+    virtual void installResourceWithFlameMetadata(const QString& path, ModPlatform::IndexedVersion& vers);
 
     /** Uninstall (i.e. remove all data about it) a resource, given its file name.
      *
      *  Returns whether the removal was successful.
      */
-    virtual bool uninstallResource(const QString& file_name, bool preserve_metadata = false);
+    virtual bool uninstallResource(const QString& fileName, bool preserveMetadata = false);
     virtual bool deleteResources(const QModelIndexList&);
     virtual void deleteMetadata(const QModelIndexList&);
 
@@ -125,7 +125,7 @@ class ResourceFolderModel : public QAbstractListModel {
 
     Resource::Ptr find(QString id);
 
-    QDir const& dir() const { return m_dir; }
+    const QDir& dir() const { return m_dir; }
 
     /** Checks whether there's any parse tasks being done.
      *
@@ -137,12 +137,12 @@ class ResourceFolderModel : public QAbstractListModel {
     /* Qt behavior */
 
     /* Basic columns */
-    enum Columns { ActiveColumn = 0, NameColumn, DateColumn, ProviderColumn, SizeColumn, NUM_COLUMNS };
+    enum Columns { ActiveColumn = 0, NameColumn, DateColumn, ProviderColumn, SizeColumn, NumColumns };
 
     QStringList columnNames(bool translated = true) const { return translated ? m_column_names_translated : m_column_names; }
 
     int rowCount(const QModelIndex& parent = {}) const override { return parent.isValid() ? 0 : static_cast<int>(size()); }
-    int columnCount(const QModelIndex& parent = {}) const override { return parent.isValid() ? 0 : NUM_COLUMNS; }
+    int columnCount(const QModelIndex& parent = {}) const override { return parent.isValid() ? 0 : NumColumns; }
 
     Qt::DropActions supportedDropActions() const override;
 
@@ -159,7 +159,7 @@ class ResourceFolderModel : public QAbstractListModel {
 
     QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
 
-    void setupHeaderAction(QAction* act, int column);
+    void setupHeaderAction(QAction* act, int column) const;
     void saveColumns(QTreeView* tree);
     void loadColumns(QTreeView* tree);
     QMenu* createHeaderContextMenu(QTreeView* tree);
@@ -178,8 +178,8 @@ class ResourceFolderModel : public QAbstractListModel {
         explicit ProxyModel(QObject* parent = nullptr) : QSortFilterProxyModel(parent) {}
 
        protected:
-        bool filterAcceptsRow(int source_row, const QModelIndex& source_parent) const override;
-        bool lessThan(const QModelIndex& source_left, const QModelIndex& source_right) const override;
+        bool filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const override;
+        bool lessThan(const QModelIndex& sourceLeft, const QModelIndex& sourceRight) const override;
     };
 
     QString instDirPath() const;
@@ -206,7 +206,7 @@ class ResourceFolderModel : public QAbstractListModel {
      *  This task should load and parse all heavy info needed by a resource, such as parsing a manifest. It gets executed
      *  in the background, so it slowly updates the UI as tasks get done.
      */
-    [[nodiscard]] virtual Task* createParseTask(Resource&) { return nullptr; }
+    [[nodiscard]] virtual Task* createParseTask(Resource& /*unused*/) { return nullptr; }
 
     /** Standard implementation of the model update logic.
      *
@@ -214,10 +214,10 @@ class ResourceFolderModel : public QAbstractListModel {
      *  to act only on those disparities.
      *
      */
-    void applyUpdates(QSet<QString>& current_set, QSet<QString>& new_set, QMap<QString, Resource::Ptr>& new_resources);
+    void applyUpdates(QSet<QString>& currentSet, QSet<QString>& newSet, QMap<QString, Resource::Ptr>& newResources);
 
    protected slots:
-    void directoryChanged(QString);
+    void directoryChanged(const QString&);
 
     /** Called when the update task is successful.
      *
@@ -233,8 +233,8 @@ class ResourceFolderModel : public QAbstractListModel {
      *  This is just a simple reference implementation. You probably want to override it with your own logic in a subclass
      *  if the resource is complex and has more stuff to parse.
      */
-    virtual void onParseSucceeded(int ticket, QString resource_id);
-    virtual void onParseFailed(int ticket, QString resource_id);
+    virtual void onParseSucceeded(int ticket, const QString& resourceId);
+    virtual void onParseFailed(int ticket, const QString& resourceId);
 
    protected:
     // Represents the relationship between a column's index (represented by the list index), and it's sorting key.
