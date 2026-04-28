@@ -46,7 +46,7 @@
 QString BasicCatPack::path() const
 {
     const auto now = QDate::currentDate();
-    const auto birthday = QDate(now.year(), 11, 1);
+    const auto birthday = QDate(now.year(), 9, 24);
     const auto xmas = QDate(now.year(), 12, 25);
     const auto halloween = QDate(now.year(), 10, 31);
 
@@ -55,7 +55,7 @@ QString BasicCatPack::path() const
         cat += "-xmas";
     } else if (std::abs(now.daysTo(halloween)) <= 4) {
         cat += "-spooky";
-    } else if (std::abs(now.daysTo(birthday)) <= 12) {
+    } else if (std::abs(now.daysTo(birthday)) <= 7) {
         cat += "-bday";
     }
     return cat;
